@@ -75,7 +75,7 @@ export function SafeLocationScreen() {
               <LocationName>
                 <MapPin size={18} color={selectedId === loc.place_id ? '#FF6B6B' : '#636E72'} />
                 {loc.name}
-                <Badge><ShieldCheck size={10} inline style={{ marginRight: 2 }} /> Verificado</Badge>
+                <Badge><ShieldCheck size={10} style={{ marginRight: 2 }} /> Verificado</Badge>
               </LocationName>
               <Address>{loc.address}</Address>
             </LocationCard>

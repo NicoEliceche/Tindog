@@ -70,7 +70,7 @@ const SwitchContainer = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: ${({ theme }) => theme.spacing[4]};
-  background: ${({ theme }) => theme.color.backgroundSecondary || '#f8f9fa'};
+  background: ${({ theme }) => theme.color.neutral[50]};
   border-radius: ${({ theme }) => theme.radius.lg};
   cursor: pointer;
 `;
@@ -134,6 +134,20 @@ const AddButton = styled.button`
   align-items: center;
   gap: 4px;
   margin-top: 8px;
+`;
+
+const SubmitButton = styled(motion.button)`
+  background: ${({ theme }) => theme.color.primary};
+  color: ${({ theme }) => theme.color.textInverse};
+  min-height: 56px;
+  border-radius: ${({ theme }) => theme.radius.full};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  font-size: ${({ theme }) => theme.typography.size.lg};
+  box-shadow: 0 10px 20px rgba(255, 107, 107, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing[2]};
 `;
 
 export function PetFormScreen() {

@@ -60,5 +60,5 @@ export async function signMessage(message: string, privateKey: CryptoKey): Promi
     privateKey,
     encoded,
   );
-  return btoa(String.fromCharCode(...new Uint8Array(sigBytes)));
+  return btoa(String.fromCharCode(...Array.from(new Uint8Array(sigBytes))));
 }

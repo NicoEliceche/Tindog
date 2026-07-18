@@ -73,7 +73,7 @@ const StatCard = styled.div<{ variant?: 'primary' | 'secondary' }>`
 const StatValue = styled.div`
   font-size: 1.4rem;
   font-weight: 900;
-  color: ${({ theme }) => theme.color.textPrimary};
+  color: ${({ theme }) => theme.color.text};
 `;
 
 const StatLabel = styled.div`
