@@ -16,22 +16,23 @@ const Container = styled.div`
   overflow: hidden;
 `;
 
-const Paw = styled(motion.div)`
+const Paw = styled(motion.img)`
   position: absolute;
-  opacity: 0.08;
-  font-size: 2rem;
+  opacity: 0.15;
   user-select: none;
-  color: ${({ theme }) => theme.color.primary};
+  filter: saturate(0.5) contrast(0.8);
 `;
 
 export function FloatingPawsBackground() {
   const paws = useMemo(() => {
-    return Array.from({ length: 15 }).map((_, i) => ({
+    // Aumentamos a 45 patitas (el triple de 15)
+    return Array.from({ length: 45 }).map((_, i) => ({
       id: i,
       startX: Math.random() * 100,
       startY: Math.random() * 100,
-      size: 1.5 + Math.random() * 2,
-      duration: 20 + Math.random() * 30,
+      // Tamaño 100% más grande (de 1.5-3.5rem pasamos a 3-7rem aprox)
+      size: 60 + Math.random() * 80, 
+      duration: 30 + Math.random() * 60,
     }));
   }, []);
 
@@ -40,26 +41,25 @@ export function FloatingPawsBackground() {
       {paws.map((paw) => (
         <Paw
           key={paw.id}
+          src="/assets/patitas.png"
           initial={{ 
             left: `${paw.startX}%`, 
             top: `${paw.startY}%`,
             opacity: 0 
           }}
           animate={{
-            x: [0, 100, -100, 50, 0],
-            y: [0, -100, 100, -50, 0],
-            rotate: [0, 180, 360],
-            opacity: [0.03, 0.1, 0.03],
+            x: [0, 150, -150, 70, 0],
+            y: [0, -150, 150, -70, 0],
+            rotate: [0, 90, 180, 270, 360],
+            opacity: [0.05, 0.18, 0.05],
           }}
           transition={{
             duration: paw.duration,
             repeat: Infinity,
             ease: "linear"
           }}
-          style={{ fontSize: `${paw.size}rem` }}
-        >
-          🐾
-        </Paw>
+          style={{ width: `${paw.size}px`, height: 'auto' }}
+        />
       ))}
     </Container>
   );

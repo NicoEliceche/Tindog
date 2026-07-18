@@ -81,71 +81,90 @@ export function DiscoveryScreen() {
 
   return (
     <ScreenWrapper>
-      <SideInfo>
+      <SideInfo $align="left">
         <BigTitle>Encuentra el <span>Match</span> ideal para tu mejor amigo.</BigTitle>
-        <p style={{ fontSize: '1.2rem', color: '#636E72', maxWidth: '400px' }}>
+      </SideInfo>
+
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', maxWidth: '450px', position: 'relative' }}>
+        <Header>
+          <CircleButton $type="nope" as={motion.button} style={{ width: 44, height: 44 }}>
+            <Settings size={20} />
+          </CircleButton>
+          <img src="/assets/tindog_logo.png" alt="Tindog" height={34} />
+          <CircleButton $type="like" as={motion.button} style={{ width: 44, height: 44 }}>
+            <MessageCircle size={20} />
+          </CircleButton>
+        </Header>
+
+        <CardContainer>
+          <AnimatePresence mode="popLayout">
+            {pets.length > 1 && (
+              <SwipeCard
+                key={pets[1].id}
+                style={{ scale: 0.95, opacity: 0.5, y: 10, zIndex: 0 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.5 }}
+              >
+                <CardImageContainer>
+                  <CardImage src={pets[1].photos[0]} alt={pets[1].name} />
+                </CardImageContainer>
+              </SwipeCard>
+            )}
+
+            {pets.length > 0 ? (
+              <SwipeCard
+                key={pets[0].id}
+                style={{ x, rotate, opacity, zIndex: 1 }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                onDragEnd={handleDragEnd}
+                initial={{ scale: 0.95, opacity: 0, y: 10 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ 
+                  x: x.get() > 0 ? 1000 : -1000, 
+                  opacity: 0,
+                  rotate: x.get() > 0 ? 45 : -45,
+                  transition: { duration: 0.4 }
+                }}
+              >
+                <CardImageContainer>
+                  <CardImage src={pets[0].photos[0]} alt={pets[0].name} />
+                  <CardInfo>
+                    <PetName>{pets[0].name}, {pets[0].age}</PetName>
+                    <PetBreed>{pets[0].breed}</PetBreed>
+                  </CardInfo>
+                </CardImageContainer>
+              </SwipeCard>
+            ) : (
+              <div style={{ textAlign: 'center', color: '#636E72', zIndex: 1 }}>
+                <p>¡No hay más perritos cerca!</p>
+                <button onClick={() => setPets(MOCK_PETS)} style={{ marginTop: '1rem', color: '#FF6B6B', fontWeight: 'bold' }}>
+                  Recargar
+                </button>
+              </div>
+            )}
+          </AnimatePresence>
+
+          <ActionButtons>
+            <CircleButton $type="nope" whileTap={{ scale: 0.8 }} onClick={() => handleSwipe('left')}>
+              <X size={32} />
+            </CircleButton>
+            <CircleButton $type="super" whileTap={{ scale: 0.8 }} style={{ borderColor: '#4D96FF', color: '#4D96FF', width: 54, height: 54 }}>
+              <Star size={24} fill="currentColor" />
+            </CircleButton>
+            <CircleButton $type="like" whileTap={{ scale: 0.8 }} onClick={() => handleSwipe('right')}>
+              <Heart size={32} fill="currentColor" />
+            </CircleButton>
+
+          </ActionButtons>
+        </CardContainer>
+      </div>
+
+      <SideInfo $align="right">
+        <p style={{ fontSize: '1.4rem', color: '#636E72', fontWeight: 500, lineHeight: 1.4 }}>
           Desliza para conocer a los perritos más sociables de tu zona y agenda una cita increíble.
         </p>
       </SideInfo>
-
-      <Header>
-        <CircleButton $type="nope" as={motion.button} style={{ width: 44, height: 44 }}>
-          <Settings size={20} />
-        </CircleButton>
-        <img src="/assets/tindog_logo.png" alt="Tindog" height={34} />
-        <CircleButton $type="like" as={motion.button} style={{ width: 44, height: 44 }}>
-          <MessageCircle size={20} />
-        </CircleButton>
-      </Header>
-
-      <CardContainer>
-        <AnimatePresence mode="popLayout">
-          {pets.length > 0 ? (
-            <SwipeCard
-              key={pets[0].id}
-              style={{ x, rotate, opacity }}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              onDragEnd={handleDragEnd}
-              initial={{ scale: 0.95, opacity: 0, y: 10 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ 
-                x: x.get() > 0 ? 800 : -800, 
-                opacity: 0,
-                rotate: x.get() > 0 ? 45 : -45,
-                transition: { duration: 0.4 }
-              }}
-            >
-              <CardImageContainer>
-                <CardImage src={pets[0].photos[0]} alt={pets[0].name} />
-                <CardInfo>
-                  <PetName>{pets[0].name}, {pets[0].age}</PetName>
-                  <PetBreed>{pets[0].breed}</PetBreed>
-                </CardInfo>
-              </CardImageContainer>
-            </SwipeCard>
-          ) : (
-            <div style={{ textAlign: 'center', color: '#636E72' }}>
-              <p>¡No hay más perritos cerca!</p>
-              <button onClick={() => setPets(MOCK_PETS)} style={{ marginTop: '1rem', color: '#FF6B6B', fontWeight: 'bold' }}>
-                Recargar
-              </button>
-            </div>
-          )}
-        </AnimatePresence>
-
-        <ActionButtons>
-          <CircleButton $type="nope" whileTap={{ scale: 0.8 }} onClick={() => handleSwipe('left')}>
-            <X size={32} />
-          </CircleButton>
-          <CircleButton $type="super" whileTap={{ scale: 0.8 }} style={{ borderColor: '#4D96FF', color: '#4D96FF', width: 54, height: 54 }}>
-            <Star size={24} fill="currentColor" />
-          </CircleButton>
-          <CircleButton $type="like" whileTap={{ scale: 0.8 }} onClick={() => handleSwipe('right')}>
-            <Heart size={32} fill="currentColor" />
-          </CircleButton>
-        </ActionButtons>
-      </CardContainer>
 
       {/* Match Modal (Same as before but simplified logic) */}
       <AnimatePresence>

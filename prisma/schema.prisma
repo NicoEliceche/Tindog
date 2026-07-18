@@ -1,0 +1,142 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String?
+  pets          Pet[]
+  conversations Conversation[]
+  messages      Message[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Pet {
+  id                 String             @id @default(cuid())
+  // ... rest of fields
+  name               String
+  breed              String
+  gender             String
+  age                Int
+  weight             Float?
+  bio                String?
+  photos             String[]
+  personality_traits String[]
+  has_papers         Boolean            @default(false)
+  paper_types        String[]
+  is_competitor      Boolean            @default(false)
+  
+  owner              User               @relation(fields: [ownerId], references: [id])
+  ownerId            String
+  competitions       Competition[]
+  healthRecords      HealthRecord[]
+  breedingPrefs      BreedingPreference?
+  
+  fatherId           String?
+  motherId           String?
+  paternalGrandfatherId String?
+  paternalGrandmotherId String?
+  maternalGrandfatherId String?
+  maternalGrandmotherId String?
+  
+  coiPercentage      Float?
+  isVerifiedBreederPet Boolean          @default(false)
+  
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+model Conversation {
+  id         String              @id @default(cuid())
+  users      User[]
+  messages   Message[]
+  agreements BreedingAgreement[]
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+}
+
+model BreedingAgreement {
+  id             String       @id @default(cuid())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversationId String
+  creatorId      String
+  terms          String
+  status         String
+  pet1Id         String
+  pet2Id         String
+  appointment    Appointment?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Appointment {
+  id          String            @id @default(cuid())
+  agreement   BreedingAgreement @relation(fields: [agreementId], references: [id])
+  agreementId String            @unique
+  petIds      String[]
+  ownerIds    String[]
+  location    Location          @relation(fields: [locationId], references: [id])
+  locationId  String
+  datetime    DateTime
+  status      String            // 'scheduled', 'completed', 'cancelled'
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model Location {
+  id           String        @id @default(cuid())
+  name         String
+  address      String
+  placeId      String
+  type         String        // 'park', 'cafe', 'pet_store'
+  lat          Float
+  lng          Float
+  appointments Appointment[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  text           String
+  sender         User         @relation(fields: [senderId], references: [id])
+  senderId       String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversationId String
+  createdAt      DateTime     @default(now())
+}
+
+model Competition {
+  id      String @id @default(cuid())
+  name    String
+  year    Int
+  award   String?
+  pet     Pet    @relation(fields: [petId], references: [id])
+  petId   String
+}
+
+model BreedingPreference {
+  id               String  @id @default(cuid())
+  looking_for_pair Boolean @default(false)
+  terms            String?
+  last_heat_cycle  String?
+  pet              Pet     @relation(fields: [petId], references: [id])
+  petId            String  @unique
+}
+
+model HealthRecord {
+  id        String @id @default(cuid())
+  test_name String
+  result    String
+  date      String
+  pet       Pet    @relation(fields: [petId], references: [id])
+  petId     String
+}

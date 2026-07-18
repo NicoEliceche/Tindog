@@ -7,15 +7,16 @@ export const ScreenWrapper = styled.div`
   flex-direction: column;
   min-height: calc(100dvh - 80px);
   padding: ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.layout.screenPaddingH};
+  overflow-x: hidden;
   
   @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
     flex-direction: row;
-    gap: 4rem;
     align-items: center;
-    justify-content: center;
-    padding-top: 100px; /* Espacio para el header superior */
-    max-width: 1100px;
+    justify-content: space-between;
+    padding-top: 100px;
+    max-width: 1300px;
     margin: 0 auto;
+    gap: 2rem;
   }
 `;
 
@@ -27,17 +28,20 @@ export const Header = styled.header`
   margin-bottom: ${({ theme }) => theme.spacing[4]};
 
   @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
-    display: none; /* Oculto porque ya tenemos el Nav superior */
+    display: none;
   }
 `;
 
-export const SideInfo = styled.div`
+export const SideInfo = styled.div<{ $align?: 'left' | 'right' }>`
   display: none;
   @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
     display: flex;
     flex-direction: column;
     flex: 1;
-    gap: 2rem;
+    gap: 1.5rem;
+    text-align: ${({ $align }) => $align || 'left'};
+    align-items: ${({ $align }) => $align === 'right' ? 'flex-end' : 'flex-start'};
+    max-width: 380px;
   }
 `;
 
