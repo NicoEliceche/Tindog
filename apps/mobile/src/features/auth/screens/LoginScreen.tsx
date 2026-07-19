@@ -1,7 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { loginWithGoogleIdToken } from '../../../core/data/services/authService';
@@ -9,10 +7,30 @@ import { theme } from '../../../core/theme/tokens';
 import type { AuthResponse } from '../../../core/types/auth.types';
 import { styles } from './LoginScreen.styles';
 
-WebBrowser.maybeCompleteAuthSession();
-
 interface LoginScreenProps {
   onAuthenticated: (auth: AuthResponse) => void;
+}
+
+type GoogleSignInModule = typeof import('@react-native-google-signin/google-signin');
+
+const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+
+let isGoogleConfigured = false;
+
+function configureGoogleSignIn(GoogleSignin: GoogleSignInModule['GoogleSignin']) {
+  if (isGoogleConfigured) {
+    return;
+  }
+
+  GoogleSignin.configure({
+    webClientId: googleWebClientId,
+    iosClientId: googleIosClientId,
+    offlineAccess: false,
+    profileImageSize: 160,
+  });
+
+  isGoogleConfigured = true;
 }
 
 export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
@@ -20,58 +38,76 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const googleConfig = useMemo(
-    () => ({
-      androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-      iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-      scopes: ['openid', 'profile', 'email'],
-    }),
-    [],
-  );
+  const isConfigured = Boolean(googleWebClientId);
 
-  const [request, response, promptAsync] = Google.useAuthRequest(googleConfig);
+  const handleGoogleLogin = async () => {
+    setErrorMessage('');
 
-  const isConfigured = Boolean(
-    googleConfig.androidClientId || googleConfig.iosClientId || googleConfig.webClientId,
-  );
+    if (!isConfigured) {
+      setErrorMessage('Falta EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID en apps/mobile/.env.');
+      return;
+    }
 
-  useEffect(() => {
-    const authenticate = async () => {
-      if (response?.type !== 'success') {
+    setIsLoading(true);
+
+    try {
+      const {
+        GoogleSignin,
+        isSuccessResponse,
+      } = await import('@react-native-google-signin/google-signin');
+
+      configureGoogleSignIn(GoogleSignin);
+
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const response = await GoogleSignin.signIn();
+
+      if (!isSuccessResponse(response)) {
         return;
       }
 
-      const idToken = response.authentication?.idToken ?? response.params?.id_token;
+      const idToken = response.data.idToken;
 
       if (!idToken) {
         setErrorMessage('Google no devolvió un ID token para validar.');
         return;
       }
 
-      setIsLoading(true);
-      setErrorMessage('');
+      const auth = await loginWithGoogleIdToken(idToken);
+      onAuthenticated(auth);
+    } catch (error) {
+      const googleError = error as { code?: string; message?: string };
+
+      if (googleError.code === 'ERR_MODULE_NOT_FOUND' || googleError.message?.includes('RNGoogleSignin')) {
+        setErrorMessage('Google Sign-In requiere instalar la development build de Tindog.');
+        return;
+      }
 
       try {
-        const auth = await loginWithGoogleIdToken(idToken);
-        onAuthenticated(auth);
+        const { isErrorWithCode, statusCodes } = await import('@react-native-google-signin/google-signin');
+
+        if (isErrorWithCode(error)) {
+          if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+            return;
+          }
+
+          if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+            setErrorMessage('Google Play Services no está disponible o está desactualizado.');
+            return;
+          }
+
+          if (error.code === statusCodes.IN_PROGRESS) {
+            setErrorMessage('Ya hay un inicio de sesión en curso.');
+            return;
+          }
+        }
       } catch {
-        setErrorMessage('No pudimos iniciar sesión con Google.');
-      } finally {
-        setIsLoading(false);
+        setErrorMessage('Google Sign-In requiere instalar la development build de Tindog.');
+        return;
       }
-    };
 
-    authenticate();
-  }, [onAuthenticated, response]);
-
-  const handleGoogleLogin = async () => {
-    setErrorMessage('');
-
-    try {
-      await promptAsync();
-    } catch {
-      setErrorMessage('No se pudo abrir Google.');
+      setErrorMessage('No pudimos iniciar sesión con Google.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -100,11 +136,11 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Continuar con Google"
-            disabled={!request || isLoading || !isConfigured}
+            disabled={isLoading || !isConfigured}
             onPress={handleGoogleLogin}
             style={({ pressed }) => [
               styles.googleButton,
-              (!request || isLoading || !isConfigured) && { opacity: 0.48 },
+              (isLoading || !isConfigured) && { opacity: 0.48 },
               pressed && { opacity: 0.72 },
             ]}
           >
@@ -120,7 +156,7 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
 
           <Text style={styles.helper}>
             {!isConfigured
-              ? 'Faltan los EXPO_PUBLIC_GOOGLE_*_CLIENT_ID en apps/mobile/.env.'
+              ? 'Falta EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID en apps/mobile/.env.'
               : 'Usamos Google solo para confirmar tu identidad. Tindog guarda su propia sesión.'}
           </Text>
         </View>
