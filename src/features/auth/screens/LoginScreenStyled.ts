@@ -96,6 +96,43 @@ export const SubmitButton = styled(motion.button)`
   }
 `;
 
+export const GoogleButtonWrapper = styled.div`
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+`;
+
+export const Divider = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[3]};
+  color: ${({ theme }) => theme.color.textSecondary};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  text-transform: uppercase;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: ${({ theme }) => theme.color.border};
+  }
+`;
+
+export const ErrorMessage = styled.p`
+  color: ${({ theme }) => theme.color.error};
+  background: ${({ theme }) => theme.color.errorLight};
+  border-radius: ${({ theme }) => theme.radius.md};
+  padding: ${({ theme }) => theme.spacing[3]} ${({ theme }) => theme.spacing[4]};
+  font-size: ${({ theme }) => theme.typography.size.sm};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  text-align: center;
+`;
+
 export const LogoContainer = styled.div`
   display: flex;
   flex-direction: column;

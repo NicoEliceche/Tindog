@@ -13,6 +13,10 @@ model User {
   id            String         @id @default(cuid())
   email         String         @unique
   name          String?
+  avatarUrl     String?
+  googleSub     String?        @unique
+  authAccounts  AuthAccount[]
+  sessions      AuthSession[]
   pets          Pet[]
   conversations Conversation[]
   messages      Message[]
@@ -20,8 +24,29 @@ model User {
   updatedAt     DateTime       @updatedAt
 }
 
+model AuthAccount {
+  id                String   @id @default(cuid())
+  provider          String
+  providerAccountId String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+}
+
+model AuthSession {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
 model Pet {
-  id                 String             @id @default(cuid())
+  id                 String   @id @default(cuid())
   // ... rest of fields
   name               String
   breed              String
@@ -31,28 +56,28 @@ model Pet {
   bio                String?
   photos             String[]
   personality_traits String[]
-  has_papers         Boolean            @default(false)
+  has_papers         Boolean  @default(false)
   paper_types        String[]
-  is_competitor      Boolean            @default(false)
-  
-  owner              User               @relation(fields: [ownerId], references: [id])
-  ownerId            String
-  competitions       Competition[]
-  healthRecords      HealthRecord[]
-  breedingPrefs      BreedingPreference?
-  
-  fatherId           String?
-  motherId           String?
+  is_competitor      Boolean  @default(false)
+
+  owner         User                @relation(fields: [ownerId], references: [id])
+  ownerId       String
+  competitions  Competition[]
+  healthRecords HealthRecord[]
+  breedingPrefs BreedingPreference?
+
+  fatherId              String?
+  motherId              String?
   paternalGrandfatherId String?
   paternalGrandmotherId String?
   maternalGrandfatherId String?
   maternalGrandmotherId String?
-  
-  coiPercentage      Float?
-  isVerifiedBreederPet Boolean          @default(false)
-  
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+
+  coiPercentage        Float?
+  isVerifiedBreederPet Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Conversation {
@@ -87,7 +112,7 @@ model Appointment {
   location    Location          @relation(fields: [locationId], references: [id])
   locationId  String
   datetime    DateTime
-  status      String            // 'scheduled', 'completed', 'cancelled'
+  status      String // 'scheduled', 'completed', 'cancelled'
   notes       String?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
@@ -98,7 +123,7 @@ model Location {
   name         String
   address      String
   placeId      String
-  type         String        // 'park', 'cafe', 'pet_store'
+  type         String // 'park', 'cafe', 'pet_store'
   lat          Float
   lng          Float
   appointments Appointment[]
@@ -115,12 +140,12 @@ model Message {
 }
 
 model Competition {
-  id      String @id @default(cuid())
-  name    String
-  year    Int
-  award   String?
-  pet     Pet    @relation(fields: [petId], references: [id])
-  petId   String
+  id    String  @id @default(cuid())
+  name  String
+  year  Int
+  award String?
+  pet   Pet     @relation(fields: [petId], references: [id])
+  petId String
 }
 
 model BreedingPreference {
