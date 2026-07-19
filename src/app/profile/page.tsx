@@ -4,6 +4,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Settings, LogOut, ChevronRight, Bell, Shield } from 'lucide-react';
+import { withPublicBasePath } from '@core/routing/publicPath';
 
 const ProfileWrapper = styled.div`
   padding: ${({ theme }) => theme.spacing[8]} ${({ theme }) => theme.layout.screenPaddingH};
@@ -91,7 +92,7 @@ export default function ProfilePage() {
           <span>Configuración</span>
           <ChevronRight size={18} color="#D1D5DB" />
         </MenuItem>
-        <MenuItem onClick={() => window.location.replace('/')}>
+        <MenuItem onClick={() => window.location.replace(withPublicBasePath('/'))}>
           <LogOut size={20} color="#FF4D4D" />
           <span style={{ color: '#FF4D4D' }}>Cerrar Sesión</span>
         </MenuItem>
