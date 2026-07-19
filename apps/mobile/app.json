@@ -14,7 +14,8 @@
       "backgroundColor": "#FFF8F4"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nicoeliceche.tindog"
     },
     "android": {
       "package": "com.nicoeliceche.tindog",
