@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isGitHubPagesStaticBuild } from '@core/deploy/staticExport';
 import prisma from '@core/data/client/PrismaClient';
 import { getGoogleClientIds, verifyGoogleIdToken } from '@core/auth/google';
 import {
@@ -8,7 +9,6 @@ import {
 } from '@core/auth/session';
 import type { AuthResponse, AuthUser, GoogleAuthConfigResponse } from '@core/types/auth.types';
 
-export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 function getAllowedOrigins(): string[] {
@@ -16,6 +16,7 @@ function getAllowedOrigins(): string[] {
     process.env.CORS_ORIGIN,
     process.env.NEXT_PUBLIC_WEB_ORIGIN,
     'http://localhost:3000',
+    'https://nicoeliceche.github.io',
   ]
     .flatMap((value) => value?.split(',') ?? [])
     .map((value) => value.trim())
@@ -57,6 +58,10 @@ export async function OPTIONS(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  if (isGitHubPagesStaticBuild()) {
+    return withCors(NextResponse.json({ webClientId: '' } satisfies GoogleAuthConfigResponse), request);
+  }
+
   const webClientId = process.env.GOOGLE_WEB_CLIENT_ID;
 
   if (!webClientId) {
@@ -70,6 +75,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (isGitHubPagesStaticBuild()) {
+    return withCors(NextResponse.json({ error: 'API is hosted on Render' }, { status: 405 }), request);
+  }
+
   try {
     if (getGoogleClientIds().length === 0) {
       return withCors(

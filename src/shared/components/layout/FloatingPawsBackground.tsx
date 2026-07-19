@@ -4,6 +4,7 @@
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
+import { withPublicBasePath } from '@core/routing/publicPath';
 
 const Container = styled.div`
   position: fixed;
@@ -41,7 +42,7 @@ export function FloatingPawsBackground() {
       {paws.map((paw) => (
         <Paw
           key={paw.id}
-          src="/assets/patitas.png"
+          src={withPublicBasePath('/assets/patitas.png')}
           initial={{ 
             left: `${paw.startX}%`, 
             top: `${paw.startY}%`,

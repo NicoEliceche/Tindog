@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
+import { isGitHubPagesStaticBuild } from '@core/deploy/staticExport';
 import prisma from '@core/data/client/PrismaClient';
 
 export async function GET() {
+  if (isGitHubPagesStaticBuild()) {
+    return NextResponse.json([]);
+  }
+
   try {
     const pets = await prisma.pet.findMany({
       include: {
@@ -17,6 +22,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (isGitHubPagesStaticBuild()) {
+    return NextResponse.json({ error: 'API is hosted on Render' }, { status: 405 });
+  }
+
   try {
     const data = await request.json();
     

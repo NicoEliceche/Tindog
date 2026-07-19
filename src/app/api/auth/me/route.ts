@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isGitHubPagesStaticBuild } from '@core/deploy/staticExport';
 import { SESSION_COOKIE_NAME, hashSessionToken, verifySessionToken } from '@core/auth/session';
 import prisma from '@core/data/client/PrismaClient';
 
-export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
+  if (isGitHubPagesStaticBuild()) {
+    return NextResponse.json({ user: null });
+  }
+
   try {
     const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
 

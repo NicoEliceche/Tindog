@@ -4,6 +4,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchGoogleAuthConfig, login, loginWithGoogleIdToken } from '@core/data/services/authService';
+import { withPublicBasePath } from '@core/routing/publicPath';
 import {
   ScreenWrapper,
   LoginCard,
@@ -163,7 +164,7 @@ export function LoginScreen() {
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
         <LogoContainer>
-          <img src="/assets/tindog_logo.png" alt="Tindog Logo" width={140} />
+          <img src={withPublicBasePath('/assets/tindog_logo.png')} alt="Tindog Logo" width={140} />
         </LogoContainer>
         
         <Title>Bienvenido</Title>

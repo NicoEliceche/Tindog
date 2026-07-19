@@ -1,6 +1,7 @@
 // src/core/data/client/AxiosClient.ts
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { getOrCreateKeyPair, signMessage } from '@core/crypto/keyStorage';
+import { withPublicBasePath } from '@core/routing/publicPath';
 
 export interface CustomAxiosRequestConfig extends AxiosRequestConfig {
   _retry412?: boolean;
@@ -82,7 +83,7 @@ client.interceptors.response.use(
 
     // 401: sesión expirada
     if (status === 401) {
-      window.location.replace('/');
+      window.location.replace(withPublicBasePath('/'));
       return Promise.reject(error);
     }
 

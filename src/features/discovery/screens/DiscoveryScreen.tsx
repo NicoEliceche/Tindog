@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { AnimatePresence, useMotionValue, useTransform, motion } from 'framer-motion';
 import { Heart, X, Settings, MessageCircle, Star, Info } from 'lucide-react';
 import { Pet } from '@core/types/pet.types';
+import { withPublicBasePath } from '@core/routing/publicPath';
 import {
   ScreenWrapper,
   Header,
@@ -99,7 +100,7 @@ export function DiscoveryScreen() {
           <CircleButton $type="nope" as={motion.button} style={{ width: 44, height: 44 }}>
             <Settings size={20} />
           </CircleButton>
-          <img src="/assets/tindog_logo.png" alt="Tindog" height={34} />
+          <img src={withPublicBasePath('/assets/tindog_logo.png')} alt="Tindog" height={34} />
           <CircleButton $type="like" as={motion.button} style={{ width: 44, height: 44 }}>
             <MessageCircle size={20} />
           </CircleButton>

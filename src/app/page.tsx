@@ -5,6 +5,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { withPublicBasePath } from '@core/routing/publicPath';
 
 const HeroSection = styled.section`
   display: flex;
@@ -78,7 +79,7 @@ export default function LandingPage() {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8 }}
       >
-        <img src="/assets/tindog_logo.png" alt="Tindog Logo" style={{ width: '100%' }} />
+        <img src={withPublicBasePath('/assets/tindog_logo.png')} alt="Tindog Logo" style={{ width: '100%' }} />
       </LogoWrapper>
 
       <ContentBox

@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server';
+import { isGitHubPagesStaticBuild } from '@core/deploy/staticExport';
 import prisma from '@core/data/client/PrismaClient';
+
+export function generateStaticParams() {
+  return [{ id: 'chat-1' }, { id: 'chat-2' }, { id: 'chat-3' }, { id: '1' }, { id: '2' }];
+}
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  if (isGitHubPagesStaticBuild()) {
+    return NextResponse.json([]);
+  }
+
   try {
     const messages = await prisma.message.findMany({
       where: { conversationId: params.id },
@@ -21,6 +30,10 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  if (isGitHubPagesStaticBuild()) {
+    return NextResponse.json({ error: 'API is hosted on Render' }, { status: 405 });
+  }
+
   try {
     const { text, senderId } = await request.json();
     const message = await prisma.message.create({
