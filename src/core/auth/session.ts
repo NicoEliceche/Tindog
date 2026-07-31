@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { SignJWT, jwtVerify } from 'jose';
 import type { AuthUser } from '@core/types/auth.types';
+import type { AuthPlatform } from '@core/types/auth.types';
 
 export const SESSION_COOKIE_NAME = 'tindog_session';
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
@@ -19,7 +20,7 @@ export function hashSessionToken(token: string): string {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
-export async function createSessionToken(user: AuthUser): Promise<{
+export async function createSessionToken(user: AuthUser, platform: AuthPlatform): Promise<{
   token: string;
   tokenHash: string;
   expiresAt: Date;
@@ -28,6 +29,7 @@ export async function createSessionToken(user: AuthUser): Promise<{
     name: user.name,
     email: user.email,
     avatar: user.avatar,
+    platform,
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(user.id)
@@ -42,17 +44,25 @@ export async function createSessionToken(user: AuthUser): Promise<{
   };
 }
 
-export async function verifySessionToken(token: string): Promise<AuthUser> {
+export async function verifySessionToken(token: string): Promise<{ user: AuthUser; platform: AuthPlatform }> {
   const { payload } = await jwtVerify(token, getJwtSecret());
 
   if (!payload.sub || typeof payload.email !== 'string') {
     throw new Error('Invalid session token');
   }
 
+  const platform = payload.platform;
+  if (platform !== 'web' && platform !== 'android' && platform !== 'ios') {
+    throw new Error('Invalid session platform');
+  }
+
   return {
-    id: payload.sub,
-    name: typeof payload.name === 'string' ? payload.name : payload.email,
-    email: payload.email,
-    avatar: typeof payload.avatar === 'string' ? payload.avatar : undefined,
+    user: {
+      id: payload.sub,
+      name: typeof payload.name === 'string' ? payload.name : payload.email,
+      email: payload.email,
+      avatar: typeof payload.avatar === 'string' ? payload.avatar : undefined,
+    },
+    platform,
   };
 }

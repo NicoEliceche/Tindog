@@ -1,3 +1,5 @@
+export type AuthPlatform = 'web' | 'android' | 'ios';
+
 export interface AuthUser {
   id: string;
   name: string;
@@ -8,6 +10,7 @@ export interface AuthUser {
 export interface AuthResponse {
   token: string;
   user: AuthUser;
+  platform: AuthPlatform;
 }
 
 export interface GoogleAuthConfigResponse {

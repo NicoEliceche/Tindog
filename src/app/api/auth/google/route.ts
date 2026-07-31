@@ -7,44 +7,38 @@ import {
   SESSION_COOKIE_NAME,
   SESSION_MAX_AGE_SECONDS,
 } from '@core/auth/session';
-import type { AuthResponse, AuthUser, GoogleAuthConfigResponse } from '@core/types/auth.types';
+import type { AuthPlatform, AuthResponse, AuthUser, GoogleAuthConfigResponse } from '@core/types/auth.types';
+import { isAllowedAuthOrigin, withAuthCors } from '../cors';
 
 export const runtime = 'nodejs';
 
-function getAllowedOrigins(): string[] {
-  return [
-    process.env.CORS_ORIGIN,
-    process.env.NEXT_PUBLIC_WEB_ORIGIN,
-    'http://localhost:3000',
-    'https://nicoeliceche.github.io',
-  ]
-    .flatMap((value) => value?.split(',') ?? [])
-    .map((value) => value.trim())
-    .filter(Boolean);
+interface LoginBucket { count: number; resetsAt: number }
+const loginBuckets = new Map<string, LoginBucket>();
+
+function parsePlatform(value: unknown): AuthPlatform {
+  return value === 'android' || value === 'ios' ? value : 'web';
 }
 
-function withCors(response: NextResponse, request: NextRequest): NextResponse {
-  const origin = request.headers.get('origin');
-  const allowedOrigins = getAllowedOrigins();
+function requestIp(request: NextRequest): string {
+  return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || request.headers.get('x-real-ip')
+    || 'unknown';
+}
 
-  if (origin && allowedOrigins.includes(origin)) {
-    response.headers.set('Access-Control-Allow-Origin', origin);
-    response.headers.set('Vary', 'Origin');
+function loginAllowed(request: NextRequest): boolean {
+  const key = requestIp(request);
+  const now = Date.now();
+  const bucket = loginBuckets.get(key);
+  if (!bucket || bucket.resetsAt <= now) {
+    loginBuckets.set(key, { count: 1, resetsAt: now + 60_000 });
+    return true;
   }
-
-  response.headers.set('Access-Control-Allow-Credentials', 'true');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-
-  return response;
+  if (bucket.count >= 15) return false;
+  bucket.count += 1;
+  return true;
 }
 
-function toAuthUser(user: {
-  id: string;
-  email: string;
-  name: string | null;
-  avatarUrl: string | null;
-}): AuthUser {
+function toAuthUser(user: { id: string; email: string; name: string | null; avatarUrl: string | null }): AuthUser {
   return {
     id: user.id,
     email: user.email,
@@ -53,118 +47,94 @@ function toAuthUser(user: {
   };
 }
 
+function sessionCookie(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  const crossSite = Boolean(origin && origin !== request.nextUrl.origin);
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production' || crossSite,
+    sameSite: crossSite ? 'none' as const : 'lax' as const,
+    path: '/',
+    maxAge: SESSION_MAX_AGE_SECONDS,
+  };
+}
+
 export async function OPTIONS(request: NextRequest) {
-  return withCors(new NextResponse(null, { status: 204 }), request);
+  return withAuthCors(new NextResponse(null, { status: 204 }), request);
 }
 
 export async function GET(request: NextRequest) {
   if (isGitHubPagesStaticBuild()) {
-    return withCors(NextResponse.json({ webClientId: '' } satisfies GoogleAuthConfigResponse), request);
+    return withAuthCors(NextResponse.json({ webClientId: '' } satisfies GoogleAuthConfigResponse), request);
   }
-
   const webClientId = process.env.GOOGLE_WEB_CLIENT_ID;
-
   if (!webClientId) {
-    return withCors(
-      NextResponse.json({ error: 'GOOGLE_WEB_CLIENT_ID is not configured' }, { status: 500 }),
-      request,
-    );
+    return withAuthCors(NextResponse.json({ error: 'GOOGLE_WEB_CLIENT_ID is not configured' }, { status: 500 }), request);
   }
-
-  return withCors(NextResponse.json({ webClientId } satisfies GoogleAuthConfigResponse), request);
+  return withAuthCors(NextResponse.json({ webClientId } satisfies GoogleAuthConfigResponse), request);
 }
 
 export async function POST(request: NextRequest) {
   if (isGitHubPagesStaticBuild()) {
-    return withCors(NextResponse.json({ error: 'API is hosted on Render' }, { status: 405 }), request);
+    return withAuthCors(NextResponse.json({ error: 'API is hosted on Render' }, { status: 405 }), request);
+  }
+  if (!isAllowedAuthOrigin(request)) {
+    return withAuthCors(NextResponse.json({ error: 'Authentication request is not allowed' }, { status: 403 }), request);
+  }
+  if (!loginAllowed(request)) {
+    return withAuthCors(NextResponse.json({ error: 'Too many login attempts' }, { status: 429 }), request);
   }
 
   try {
     if (getGoogleClientIds().length === 0) {
-      return withCors(
-        NextResponse.json({ error: 'Google OAuth client IDs are not configured' }, { status: 500 }),
-        request,
-      );
+      return withAuthCors(NextResponse.json({ error: 'Google OAuth client IDs are not configured' }, { status: 500 }), request);
     }
-
     const body = await request.json();
     const idToken = typeof body.idToken === 'string' ? body.idToken : '';
-
+    const platform = parsePlatform(body.platform);
     if (!idToken) {
-      return withCors(NextResponse.json({ error: 'idToken is required' }, { status: 400 }), request);
+      return withAuthCors(NextResponse.json({ error: 'idToken is required' }, { status: 400 }), request);
     }
 
     const googleUser = await verifyGoogleIdToken(idToken);
-
     const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [{ googleSub: googleUser.sub }, { email: googleUser.email }],
-      },
+      where: { OR: [{ googleSub: googleUser.sub }, { email: googleUser.email }] },
     });
+    if (existingUser?.googleSub && existingUser.googleSub !== googleUser.sub) {
+      return withAuthCors(NextResponse.json({ error: 'Google account does not match the linked identity' }, { status: 409 }), request);
+    }
 
     const user = existingUser
       ? await prisma.user.update({
           where: { id: existingUser.id },
-          data: {
-            email: googleUser.email,
-            name: googleUser.name,
-            avatarUrl: googleUser.picture,
-            googleSub: googleUser.sub,
-          },
+          data: { email: googleUser.email, name: googleUser.name, avatarUrl: googleUser.picture, googleSub: googleUser.sub },
         })
       : await prisma.user.create({
-          data: {
-            email: googleUser.email,
-            name: googleUser.name,
-            avatarUrl: googleUser.picture,
-            googleSub: googleUser.sub,
-          },
+          data: { email: googleUser.email, name: googleUser.name, avatarUrl: googleUser.picture, googleSub: googleUser.sub },
         });
 
     await prisma.authAccount.upsert({
-      where: {
-        provider_providerAccountId: {
-          provider: 'google',
-          providerAccountId: googleUser.sub,
-        },
-      },
-      create: {
-        provider: 'google',
-        providerAccountId: googleUser.sub,
-        userId: user.id,
-      },
-      update: {
-        userId: user.id,
-      },
+      where: { provider_providerAccountId: { provider: 'google', providerAccountId: googleUser.sub } },
+      create: { provider: 'google', providerAccountId: googleUser.sub, userId: user.id },
+      update: { userId: user.id },
     });
 
     const authUser = toAuthUser(user);
-    const session = await createSessionToken(authUser);
-
+    const session = await createSessionToken(authUser, platform);
     await prisma.authSession.create({
-      data: {
-        userId: user.id,
-        tokenHash: session.tokenHash,
-        expiresAt: session.expiresAt,
-      },
+      data: { userId: user.id, tokenHash: session.tokenHash, platform, expiresAt: session.expiresAt },
     });
+    await prisma.authSession.deleteMany({ where: { userId: user.id, expiresAt: { lt: new Date() } } });
 
     const response = NextResponse.json({
-      token: session.token,
+      token: platform === 'web' ? '' : session.token,
       user: authUser,
+      platform,
     } satisfies AuthResponse);
-
-    response.cookies.set(SESSION_COOKIE_NAME, session.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: SESSION_MAX_AGE_SECONDS,
-    });
-
-    return withCors(response, request);
+    if (platform === 'web') response.cookies.set(SESSION_COOKIE_NAME, session.token, sessionCookie(request));
+    return withAuthCors(response, request);
   } catch (error) {
-    console.error('Google auth failed', error);
-    return withCors(NextResponse.json({ error: 'Google authentication failed' }, { status: 401 }), request);
+    console.error('Google authentication failed', error instanceof Error ? error.message : 'Unknown error');
+    return withAuthCors(NextResponse.json({ error: 'Google authentication failed' }, { status: 401 }), request);
   }
 }

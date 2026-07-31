@@ -8,15 +8,16 @@ export function generateStaticParams() {
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   if (isGitHubPagesStaticBuild()) {
     return NextResponse.json([]);
   }
 
   try {
+    const { id } = await params;
     const messages = await prisma.message.findMany({
-      where: { conversationId: params.id },
+      where: { conversationId: id },
       orderBy: { createdAt: 'asc' },
       include: { sender: true },
     });
@@ -28,19 +29,20 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   if (isGitHubPagesStaticBuild()) {
     return NextResponse.json({ error: 'API is hosted on Render' }, { status: 405 });
   }
 
   try {
+    const { id } = await params;
     const { text, senderId } = await request.json();
     const message = await prisma.message.create({
       data: {
         text,
         senderId,
-        conversationId: params.id,
+        conversationId: id,
       },
       include: { sender: true },
     });

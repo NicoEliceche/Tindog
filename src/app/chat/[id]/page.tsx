@@ -4,6 +4,7 @@ export function generateStaticParams() {
   return [{ id: '1' }, { id: '2' }, { id: 'chat-1' }, { id: 'chat-2' }, { id: 'chat-3' }];
 }
 
-export default function ChatRoomPage({ params }: { params: { id: string } }) {
-  return <ChatRoomScreen chatId={params.id} />;
+export default async function ChatRoomPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <ChatRoomScreen chatId={id} />;
 }
