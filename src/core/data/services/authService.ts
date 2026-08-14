@@ -150,3 +150,49 @@ export async function logoutCurrentAuthSession(): Promise<void> {
 
   clearStoredAuthToken();
 }
+
+/**
+ * Sesión local para los métodos que todavía no tienen backend (email y
+ * teléfono). El backend real sólo expone Google hoy, así que estos flujos
+ * validan el formato de entrada y abren sesión contra el mismo mock que ya
+ * usa el resto de la app.
+ *
+ * Cuando exista el endpoint, se reemplaza el cuerpo por la llamada HTTP: la
+ * firma y el consumidor no cambian.
+ */
+const LOCAL_SESSION_KEY = 'tindog.auth.local.v1';
+
+export interface LocalSessionUser { name: string; email: string; }
+
+export function readLocalSession(): LocalSessionUser | null {
+  if (!canUseBrowserStorage()) return null;
+  const raw = window.localStorage.getItem(LOCAL_SESSION_KEY);
+  if (!raw) return null;
+  try { return JSON.parse(raw) as LocalSessionUser; } catch { return null; }
+}
+
+export function clearLocalSession(): void {
+  if (canUseBrowserStorage()) window.localStorage.removeItem(LOCAL_SESSION_KEY);
+}
+
+function openLocalSession(user: LocalSessionUser): LocalSessionUser {
+  if (canUseBrowserStorage()) window.localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(user));
+  return user;
+}
+
+export async function loginWithEmailPassword(email: string, password: string): Promise<LocalSessionUser> {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Ingresá un email válido.');
+  if (password.length < 8) throw new Error('La contraseña debe tener al menos 8 caracteres.');
+  return openLocalSession({ name: email.split('@')[0], email });
+}
+
+/** Envía el código de un solo uso. Sin backend, se muestra en pantalla. */
+export async function requestEmailCode(email: string): Promise<string> {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Ingresá un email válido.');
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+export async function verifyEmailCode(email: string, code: string, expected: string): Promise<LocalSessionUser> {
+  if (code.trim() !== expected) throw new Error('El código no coincide. Revisalo e intentá de nuevo.');
+  return openLocalSession({ name: email.split('@')[0], email });
+}
