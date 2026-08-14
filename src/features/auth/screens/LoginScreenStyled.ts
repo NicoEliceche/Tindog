@@ -192,11 +192,126 @@ export const Divider = styled.div`
   }
 `;
 
-export const Future = styled.div`
+/** Botones de los métodos alternativos, apilados bajo el de Google. */
+export const MethodList = styled.div`
   display: flex;
-  justify-content: center;
-  gap: 28px;
-  color: ${({ theme }) => theme.color.textTertiary};
-  font-size: 0.75rem;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing[2]};
+`;
+
+export const MethodButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[3]};
+  width: 100%;
+  min-height: 48px;
+  padding: 0 ${({ theme }) => theme.spacing[4]};
+  border-radius: 999px;
+  color: ${({ theme }) => theme.color.text};
+  background: ${({ theme }) => theme.color.surfaceRaised};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.16s ease;
+
+  svg { color: ${({ theme }) => theme.color.primary}; flex-shrink: 0; }
+
+  &:hover {
+    border-color: ${({ theme }) => theme.color.borderFocus};
+    box-shadow: ${({ theme }) => theme.glow.subtle};
+  }
+
+  &:active { transform: scale(0.985); }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.primary};
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &:active { transform: none; }
+  }
+`;
+
+/** Formulario que reemplaza a la lista cuando se elige un método. */
+export const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing[3]};
+`;
+
+export const Field = styled.label`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: ${({ theme }) => theme.color.textSecondary};
+  font-size: 0.68rem;
   font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  input {
+    min-height: 48px;
+    padding: 0 ${({ theme }) => theme.spacing[4]};
+    border-radius: ${({ theme }) => theme.radius.lg};
+    color: ${({ theme }) => theme.color.text};
+    background: ${({ theme }) => theme.color.background};
+    border: 1px solid ${({ theme }) => theme.color.border};
+    font-size: 0.92rem;
+    font-weight: 500;
+    letter-spacing: normal;
+    text-transform: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  input::placeholder { color: ${({ theme }) => theme.color.textTertiary}; }
+
+  input:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.color.borderFocus};
+    box-shadow: ${({ theme }) => theme.glow.subtle};
+  }
+`;
+
+export const Submit = styled.button`
+  min-height: 50px;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.color.metalGoldSoft};
+  color: ${({ theme }) => theme.color.textInverse};
+  font-size: 0.9rem;
+  font-weight: 900;
+  box-shadow: ${({ theme }) => theme.glow.soft};
+  transition: box-shadow 0.2s ease, opacity 0.2s ease;
+
+  &:hover:not(:disabled) { box-shadow: ${({ theme }) => theme.glow.strong}; }
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+`;
+
+export const BackLink = styled.button`
+  align-self: center;
+  color: ${({ theme }) => theme.color.textSecondary};
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  &:hover { color: ${({ theme }) => theme.color.primary}; }
+`;
+
+/** Aviso del código de un solo uso mientras no haya envío real de mails. */
+export const CodeHint = styled.p`
+  padding: ${({ theme }) => theme.spacing[3]};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  background: ${({ theme }) => theme.color.primaryFaded};
+  border: 1px solid ${({ theme }) => theme.color.borderFocus};
+  color: ${({ theme }) => theme.color.text};
+  font-size: 0.78rem;
+  line-height: 1.5;
+
+  b { color: ${({ theme }) => theme.color.primary}; font-size: 1.05rem; letter-spacing: 2px; }
+`;
+
+/** Envoltorio del botón de Google: se oculta sin desmontarse. */
+export const GoogleSlot = styled.div<{ $hidden: boolean }>`
+  display: ${({ $hidden }) => ($hidden ? 'none' : 'flex')};
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing[2]};
 `;
