@@ -40,6 +40,14 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.primaryFaded,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  ownerDetails: {
+    flex: 1,
   },
   initials: {
     color: theme.colors.primary,
@@ -95,6 +103,15 @@ export const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.border,
   },
+  settingContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  settingCopy: {
+    flex: 1,
+  },
   settingText: {
     color: theme.colors.text,
     fontSize: theme.typography.size.md,
@@ -116,6 +133,29 @@ export const styles = StyleSheet.create({
   statusText: {
     color: theme.colors.success,
     fontSize: theme.typography.size.xs,
+    fontWeight: '900',
+  },
+  logoutButton: {
+    minHeight: theme.layout.touchTarget,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.radius.full,
+    borderWidth: 1,
+    borderColor: theme.colors.dangerBorder,
+    backgroundColor: theme.colors.dangerFaded,
+  },
+  logoutButtonPressed: {
+    opacity: 0.72,
+  },
+  logoutButtonDisabled: {
+    opacity: 0.5,
+  },
+  logoutText: {
+    color: theme.colors.danger,
+    fontSize: theme.typography.size.md,
     fontWeight: '900',
   },
 });

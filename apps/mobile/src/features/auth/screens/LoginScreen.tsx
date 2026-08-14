@@ -1,111 +1,129 @@
-import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { loginWithGoogleIdToken } from '../../../core/data/services/authService';
+import {
+  GoogleAuthApiFailure,
+  loginWithGoogleIdToken,
+} from '../../../core/data/services/authService';
 import { theme } from '../../../core/theme/tokens';
 import type { AuthResponse } from '../../../core/types/auth.types';
 import { styles } from './LoginScreen.styles';
+import {
+  getGoogleSignInConfigurationError,
+  GoogleSignInFailure,
+  signInWithGoogle,
+} from '../services/googleSignInService';
 
 interface LoginScreenProps {
   onAuthenticated: (auth: AuthResponse) => void;
 }
 
-type GoogleSignInModule = typeof import('@react-native-google-signin/google-signin');
+const logoSource = require('../../../../assets/tindog_patita_logo.png');
+const googleIconSource = require('../../../../assets/google_g_icon.png');
 
-const googleWebClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
-const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
 
-let isGoogleConfigured = false;
+interface AuthButtonProps {
+  label: string;
+  iconSource: number;
+  minHeight: number;
+  loading?: boolean;
+  disabled?: boolean;
+  onPress?: () => void;
+}
 
-function configureGoogleSignIn(GoogleSignin: GoogleSignInModule['GoogleSignin']) {
-  if (isGoogleConfigured) {
-    return;
-  }
-
-  GoogleSignin.configure({
-    webClientId: googleWebClientId,
-    iosClientId: googleIosClientId,
-    offlineAccess: false,
-    profileImageSize: 160,
-  });
-
-  isGoogleConfigured = true;
+function AuthButton({ label, iconSource, minHeight, loading = false, disabled = false, onPress }: AuthButtonProps) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      disabled={disabled || loading}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.authButton,
+        { minHeight },
+        (disabled || loading) && styles.authButtonDisabled,
+        pressed && !disabled && !loading && styles.authButtonPressed,
+      ]}
+    >
+      {loading ? (
+        <ActivityIndicator color={theme.colors.onPrimary} />
+      ) : (
+        <>
+          <Image source={iconSource} resizeMode="contain" style={styles.googleIcon} accessibilityIgnoresInvertColors />
+          <Text style={styles.authButtonText}>{label}</Text>
+        </>
+      )}
+    </Pressable>
+  );
 }
 
 export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
   const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const googleConfigurationError = getGoogleSignInConfigurationError();
 
-  const isConfigured = Boolean(googleWebClientId);
+  const isShort = height < 720;
+  const isLandscape = width > height;
+  const sidePadding = theme.spacing.lg;
+
+  const logoSize = clamp(
+    Math.round((isLandscape ? height : Math.min(width, height)) * (isShort ? 0.38 : 0.42)),
+    isLandscape ? 122 : 148,
+    isLandscape ? 160 : 196,
+  );
+  const logoBandHeight = Math.max(32, Math.round(logoSize * 0.18));
+  const titleSize = isShort ? 24 : 28;
+  const subtitleSize = isShort ? 13 : 14;
+  const kickerSize = isShort ? 12 : 13;
+  const cardPadding = isShort ? theme.spacing.md : theme.spacing.lg;
+  const sectionGap = isShort ? theme.spacing.sm : theme.spacing.md;
+  const buttonMinHeight = isShort ? 50 : 54;
+  const topPadding = Math.max(insets.top + (isShort ? 10 : 14), 16);
+  const bottomPadding = Math.max(insets.bottom + (isShort ? 10 : 14), 16);
+  const subtitleMaxWidth = Math.min((isLandscape ? width * 0.44 : width) - sidePadding * 2, 360);
 
   const handleGoogleLogin = async () => {
     setErrorMessage('');
 
-    if (!isConfigured) {
-      setErrorMessage('Falta EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID en apps/mobile/.env.');
+    if (googleConfigurationError) {
+      setErrorMessage(googleConfigurationError);
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const {
-        GoogleSignin,
-        isSuccessResponse,
-      } = await import('@react-native-google-signin/google-signin');
-
-      configureGoogleSignIn(GoogleSignin);
-
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      const response = await GoogleSignin.signIn();
-
-      if (!isSuccessResponse(response)) {
-        return;
-      }
-
-      const idToken = response.data.idToken;
+      const idToken = await signInWithGoogle();
 
       if (!idToken) {
-        setErrorMessage('Google no devolvió un ID token para validar.');
         return;
       }
 
       const auth = await loginWithGoogleIdToken(idToken);
       onAuthenticated(auth);
     } catch (error) {
-      const googleError = error as { code?: string; message?: string };
-
-      if (googleError.code === 'ERR_MODULE_NOT_FOUND' || googleError.message?.includes('RNGoogleSignin')) {
-        setErrorMessage('Google Sign-In requiere instalar la development build de Tindog.');
-        return;
-      }
-
-      try {
-        const { isErrorWithCode, statusCodes } = await import('@react-native-google-signin/google-signin');
-
-        if (isErrorWithCode(error)) {
-          if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-            return;
-          }
-
-          if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-            setErrorMessage('Google Play Services no está disponible o está desactualizado.');
-            return;
-          }
-
-          if (error.code === statusCodes.IN_PROGRESS) {
-            setErrorMessage('Ya hay un inicio de sesión en curso.');
-            return;
-          }
-        }
-      } catch {
-        setErrorMessage('Google Sign-In requiere instalar la development build de Tindog.');
-        return;
-      }
-
-      setErrorMessage('No pudimos iniciar sesión con Google.');
+      setErrorMessage(
+        error instanceof GoogleSignInFailure
+          ? error.message
+          : error instanceof GoogleAuthApiFailure
+            ? error.message
+          : 'No pudimos iniciar sesión con Google.',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -113,52 +131,87 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
 
   return (
     <View style={styles.screen}>
+      <LinearGradient
+        colors={theme.gradients.app}
+        start={{ x: 0.1, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+
+      <View style={styles.glowTop} />
+      <View style={styles.glowBottom} />
+
       <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: Math.max(insets.top + theme.spacing.xl, theme.spacing.xxl) },
-        ]}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.safeArea, { paddingTop: topPadding, paddingBottom: bottomPadding }]}
       >
-        <View style={styles.card}>
-          <View style={styles.brand}>
-            <View style={styles.logoMark} accessibilityLabel="Tindog">
-              <Text style={styles.logoText}>T</Text>
-            </View>
-            <Text style={styles.title}>Bienvenido a Tindog</Text>
-            <Text style={styles.subtitle}>
-              Inicia sesión con Google para sincronizar tus perros, chats y preferencias.
-            </Text>
-          </View>
-
-          {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Continuar con Google"
-            disabled={isLoading || !isConfigured}
-            onPress={handleGoogleLogin}
-            style={({ pressed }) => [
-              styles.googleButton,
-              (isLoading || !isConfigured) && { opacity: 0.48 },
-              pressed && { opacity: 0.72 },
+        <View style={[styles.layout, isLandscape && styles.layoutLandscape]}>
+        <View style={[styles.hero, isLandscape && styles.heroLandscape, { gap: sectionGap }]}>
+          <View
+            style={[
+              styles.logoFrame,
+              {
+                width: logoSize,
+                height: logoSize,
+                borderRadius: Math.round(logoSize * 0.22),
+              },
             ]}
           >
-            {isLoading ? (
-              <ActivityIndicator color={theme.colors.primary} />
-            ) : (
-              <>
-                <Ionicons name="logo-google" size={22} color={theme.colors.primary} />
-                <Text style={styles.googleButtonText}>Continuar con Google</Text>
-              </>
-            )}
-          </Pressable>
+            <Image source={logoSource} resizeMode="contain" style={styles.logoImage} accessibilityLabel="Logo de Tindog" />
+            <View
+              style={[
+                styles.logoWordmarkBand,
+                {
+                  height: logoBandHeight,
+                  borderBottomRightRadius: Math.round(logoBandHeight / 2),
+                },
+              ]}
+            >
+              <Text style={[styles.logoWordmark, { fontSize: isShort ? 14 : 15 }]}>TINDOG</Text>
+            </View>
+          </View>
 
-          <Text style={styles.helper}>
-            {!isConfigured
-              ? 'Falta EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID en apps/mobile/.env.'
-              : 'Usamos Google solo para confirmar tu identidad. Tindog guarda su propia sesión.'}
+          <Text style={[styles.kicker, { fontSize: kickerSize }]}>Conectá, cruzá y encontrá su pareja ideal</Text>
+          <Text style={[styles.title, { fontSize: titleSize, lineHeight: titleSize + 4 }]}>¡Bienvenido a Tindog!</Text>
+          <Text style={[styles.subtitle, { fontSize: subtitleSize, lineHeight: Math.round(subtitleSize * 1.45), maxWidth: subtitleMaxWidth }]}>
+            Conecta patitas, una tarjeta a la vez.
           </Text>
+        </View>
+
+        <View style={[styles.authColumn, isLandscape && styles.authColumnLandscape]}>
+        <View style={[styles.authCard, { padding: cardPadding, gap: sectionGap }]}>
+          <Text style={[styles.sectionLabel, { fontSize: isShort ? 14 : 16 }]}>Acceso rápido</Text>
+
+          {errorMessage ? (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
+          ) : null}
+
+          <AuthButton
+            label="Continuar con Google"
+            iconSource={googleIconSource}
+            minHeight={buttonMinHeight}
+            loading={isLoading}
+            disabled={isLoading || Boolean(googleConfigurationError)}
+            onPress={handleGoogleLogin}
+          />
+
+          <View style={styles.newUserLine}>
+            <Text style={styles.newUserText}>Tu cuenta se crea automáticamente al continuar.</Text>
+          </View>
+
+          <View style={styles.dividerRow}>
+            <View style={styles.divider} />
+            <Text style={styles.dividerText}>O INICIÁ SESIÓN CON</Text>
+            <View style={styles.divider} />
+          </View>
+          <View style={styles.futureOptions} accessibilityLabel="Opciones de acceso disponibles próximamente">
+            <Text style={styles.futureOption}>Email</Text>
+            <Text style={styles.futureOption}>Teléfono</Text>
+          </View>
+        </View>
+        </View>
         </View>
       </ScrollView>
     </View>

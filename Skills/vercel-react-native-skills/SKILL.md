@@ -1,4 +1,3 @@
----
 name: vercel-react-native-skills
 description:
   React Native and Expo best practices for building performant mobile apps. Use
@@ -9,7 +8,6 @@ license: MIT
 metadata:
   author: vercel
   version: '1.0.0'
----
 
 # React Native Skills
 
@@ -38,7 +36,7 @@ Reference these guidelines when:
 | 4        | UI Patterns      | HIGH     | `ui-`                |
 | 5        | State Management | MEDIUM   | `react-state-`       |
 | 6        | Rendering        | MEDIUM   | `rendering-`         |
-| 7        | Monorepo         | MEDIUM   | `monorepo-`          |
+| 7        | Monorepo         | MEDIUM   | `mon-orepo-`         |
 | 8        | Configuration    | LOW      | `fonts-`, `imports-` |
 
 ## Quick Reference

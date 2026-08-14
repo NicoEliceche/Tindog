@@ -1,213 +1,78 @@
-// src/features/auth/screens/LoginScreen.tsx
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { fetchGoogleAuthConfig, login, loginWithGoogleIdToken } from '@core/data/services/authService';
+import { fetchGoogleAuthConfig, GoogleAuthRequestFailure, loginWithGoogleIdToken, restoreAuthSession } from '@core/data/services/authService';
 import { withPublicBasePath } from '@core/routing/publicPath';
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
 import {
-  ScreenWrapper,
-  LoginCard,
-  Title,
-  Form,
-  InputGroup,
-  Label,
-  Input,
-  SubmitButton,
-  LogoContainer,
-  GoogleButtonWrapper,
-  Divider,
-  ErrorMessage,
+  Screen, Layout, Hero, Card, Google, GoogleStatus, ErrorMessage, Auto, Divider, Future,
 } from './LoginScreenStyled';
 
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (config: {
-            client_id: string;
-            callback: (response: { credential?: string }) => void;
-          }) => void;
-          renderButton: (
-            parent: HTMLElement,
-            options: {
-              theme: 'outline' | 'filled_blue' | 'filled_black';
-              size: 'large' | 'medium' | 'small';
-              text: 'continue_with' | 'signin_with';
-              shape: 'pill' | 'rectangular';
-              width: number;
-            },
-          ) => void;
-        };
-      };
-    };
-  }
-}
+declare global { interface Window { google?: { accounts: { id: { initialize: (config: { client_id: string; callback: (response: { credential?: string }) => void }) => void; renderButton: (parent: HTMLElement, options: { theme: 'outline' | 'filled_blue' | 'filled_black'; size: 'large' | 'medium' | 'small'; text: 'continue_with' | 'signin_with'; shape: 'pill' | 'rectangular'; width: number }) => void; } } } } }
 
 const GOOGLE_SCRIPT_ID = 'google-identity-services';
+let googleIdentityScriptPromise: Promise<void> | undefined;
+
+function loadGoogleIdentityScript(): Promise<void> {
+  if (window.google) return Promise.resolve();
+  if (googleIdentityScriptPromise) return googleIdentityScriptPromise;
+
+  googleIdentityScriptPromise = new Promise<void>((resolve, reject) => {
+    let script = document.getElementById(GOOGLE_SCRIPT_ID) as HTMLScriptElement | null;
+
+    const handleLoad = () => {
+      if (script) script.dataset.loaded = 'true';
+      if (window.google) resolve();
+      else reject(new Error('Google Identity Services did not initialize'));
+    };
+    const handleError = () => {
+      script?.remove();
+      googleIdentityScriptPromise = undefined;
+      reject(new Error('Google Identity Services could not be loaded'));
+    };
+
+    if (!script) {
+      script = document.createElement('script');
+      script.id = GOOGLE_SCRIPT_ID;
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+
+    script.addEventListener('load', handleLoad, { once: true });
+    script.addEventListener('error', handleError, { once: true });
+    if (script.dataset.loaded === 'true') handleLoad();
+  });
+
+  return googleIdentityScriptPromise;
+}
+
+function waitForGoogleButton(container: HTMLElement, timeoutMs = 15_000): Promise<void> {
+  if (container.childElementCount > 0) return Promise.resolve();
+
+  return new Promise<void>((resolve, reject) => {
+    const observer = new MutationObserver(() => {
+      if (container.childElementCount > 0) {
+        clearTimeout(timeout);
+        observer.disconnect();
+        resolve();
+      }
+    });
+    const timeout = window.setTimeout(() => {
+      observer.disconnect();
+      reject(new Error('Google button rendering timed out'));
+    }, timeoutMs);
+
+    observer.observe(container, { childList: true });
+  });
+}
 
 export function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-  const googleButtonRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadGoogleScript = () => {
-      if (document.getElementById(GOOGLE_SCRIPT_ID)) {
-        return Promise.resolve();
-      }
-
-      return new Promise<void>((resolve, reject) => {
-        const script = document.createElement('script');
-        script.id = GOOGLE_SCRIPT_ID;
-        script.src = 'https://accounts.google.com/gsi/client';
-        script.async = true;
-        script.defer = true;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error('No se pudo cargar Google Identity Services'));
-        document.head.appendChild(script);
-      });
-    };
-
-    const initializeGoogle = async () => {
-      try {
-        const [{ webClientId }] = await Promise.all([
-          fetchGoogleAuthConfig(),
-          loadGoogleScript(),
-        ]);
-
-        const buttonContainer = googleButtonRef.current;
-
-        if (cancelled || !window.google || !buttonContainer) {
-          return;
-        }
-
-        const buttonWidth = Math.min(
-          320,
-          Math.floor(buttonContainer.getBoundingClientRect().width || 320),
-        );
-
-        window.google.accounts.id.initialize({
-          client_id: webClientId,
-          callback: async (response) => {
-            if (!response.credential) {
-              setErrorMessage('Google no devolvió una credencial válida.');
-              return;
-            }
-
-            setIsLoading(true);
-            setErrorMessage('');
-
-            try {
-              await loginWithGoogleIdToken(response.credential);
-              router.push('/discovery');
-            } catch {
-              setErrorMessage('No pudimos iniciar sesión con Google.');
-            } finally {
-              setIsLoading(false);
-            }
-          },
-        });
-
-        buttonContainer.innerHTML = '';
-        window.google.accounts.id.renderButton(buttonContainer, {
-          theme: 'outline',
-          size: 'large',
-          text: 'continue_with',
-          shape: 'pill',
-          width: buttonWidth,
-        });
-      } catch {
-        if (!cancelled) {
-          setErrorMessage('Configuración de Google pendiente o inválida.');
-        }
-      } finally {
-        if (!cancelled) {
-          setGoogleLoading(false);
-        }
-      }
-    };
-
-    initializeGoogle();
-
-    return () => {
-      cancelled = true;
-    };
+  const router = useRouter(); const buttonRef = useRef<HTMLDivElement>(null); const [loading, setLoading] = useState(true); const [error, setError] = useState('');
+  useEffect(() => { let cancelled = false;
+    const boot = async () => { const session = await restoreAuthSession(); if (cancelled) return; if (session) { router.replace('/discovery'); return; } try { const [{ webClientId }] = await Promise.all([fetchGoogleAuthConfig(), loadGoogleIdentityScript()]); if (cancelled) return; if (!webClientId || !window.google || !buttonRef.current) throw new Error('Google Identity Services is unavailable'); window.google.accounts.id.initialize({ client_id: webClientId, callback: async ({ credential }) => { if (!credential) return setError('Google no devolvió una credencial válida.'); setError(''); try { await loginWithGoogleIdToken(credential); router.push('/discovery'); } catch (loginError) { setError(loginError instanceof GoogleAuthRequestFailure ? loginError.message : 'No pudimos iniciar sesión con Google.'); } } }); const width = Math.min(320, Math.floor(buttonRef.current.getBoundingClientRect().width || 320)); buttonRef.current.innerHTML = ''; window.google.accounts.id.renderButton(buttonRef.current, { theme: 'outline', size: 'large', text: 'continue_with', shape: 'pill', width }); await waitForGoogleButton(buttonRef.current); } catch { if (!cancelled) setError('No pudimos cargar el acceso con Google. Revisá la conexión e intentá nuevamente.'); } finally { if (!cancelled) setLoading(false); } };
+    boot(); return () => { cancelled = true; };
   }, [router]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setErrorMessage('');
-    try {
-      await login(email, password);
-      router.push('/discovery');
-    } catch (error) {
-      setErrorMessage('Error al iniciar sesión');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <ScreenWrapper>
-      <LoginCard
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-      >
-        <LogoContainer>
-          <img src={withPublicBasePath('/assets/tindog_logo.png')} alt="Tindog Logo" width={140} />
-        </LogoContainer>
-        
-        <Title>Bienvenido</Title>
-
-        <GoogleButtonWrapper ref={googleButtonRef}>
-          {googleLoading && <span>Cargando Google...</span>}
-        </GoogleButtonWrapper>
-
-        <Divider>o</Divider>
-
-        {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
-        
-        <Form onSubmit={handleSubmit}>
-          <InputGroup>
-            <Label>Email</Label>
-            <Input 
-              type="email" 
-              placeholder="dueño@tindog.com" 
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </InputGroup>
-          <InputGroup>
-            <Label>Contraseña</Label>
-            <Input 
-              type="password" 
-              placeholder="••••••••" 
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </InputGroup>
-          <SubmitButton 
-            type="submit" 
-            disabled={isLoading}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            {isLoading ? 'Iniciando...' : 'Entrar'}
-          </SubmitButton>
-        </Form>
-      </LoginCard>
-    </ScreenWrapper>
-  );
+  return <Screen><Layout><Hero><div className="logo"><img src={withPublicBasePath('/assets/tindog_patita_logo.png')} alt="Tindog" /><span className="band">TINDOG</span></div><span className="kicker">Conectá, cruzá y encontrá su pareja ideal</span><h1>¡Bienvenido a Tindog!</h1><p>Conecta patitas, una tarjeta a la vez.</p></Hero><Card><h2>Acceso rápido</h2>{error ? <ErrorMessage>{error}</ErrorMessage> : null}<Google ref={buttonRef} />{loading ? <GoogleStatus>Verificando sesión y cargando Google…</GoogleStatus> : null}<Auto>Tu cuenta se crea automáticamente al continuar.</Auto><Divider>O INICIÁ SESIÓN CON</Divider><Future><span>Email</span><span>Teléfono</span></Future></Card></Layout></Screen>;
 }

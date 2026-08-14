@@ -82,7 +82,8 @@ client.interceptors.response.use(
     }
 
     // 401: sesión expirada
-    if (status === 401) {
+    const isGoogleLoginRequest = originalRequest.url?.includes('/api/auth/google') ?? false;
+    if (status === 401 && !isGoogleLoginRequest) {
       window.location.replace(withPublicBasePath('/'));
       return Promise.reject(error);
     }

@@ -1,57 +1,69 @@
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { LoginScreen } from './src/features/auth';
-import { DiscoveryScreen } from './src/features/discovery';
-import { ChatListScreen } from './src/features/chat';
-import { PetsScreen } from './src/features/pets';
-import { ProfileScreen } from './src/features/profile';
-import { BottomTabs, type TabKey } from './src/shared/layout/BottomTabs';
-import { theme } from './src/core/theme/tokens';
+import { logoutCurrentAuthSession, restoreAuthSession } from './src/core/data/services/authService';
+import { AppDataProvider } from './src/core/providers/AppDataProvider';
+import { AppPreferencesProvider, useAppTheme } from './src/core/providers/AppPreferencesProvider';
+import { theme as brandTheme } from './src/core/theme/tokens';
 import type { AuthResponse } from './src/core/types/auth.types';
+import { LoginScreen, signOutFromGoogle } from './src/features/auth';
+import { BootstrapScreen } from './src/features/bootstrap';
+import { AppNavigator } from './src/navigation/AppNavigator';
+
+SplashScreen.preventAutoHideAsync().catch(() => undefined);
+SplashScreen.setOptions({ duration: 300, fade: true });
+
+function AuthenticatedApp({ auth, onLogout }: { auth: AuthResponse; onLogout: () => Promise<void> }) {
+  const theme = useAppTheme();
+  return (
+    <View style={[styles.app, { backgroundColor: theme.colors.background }]}>
+      <StatusBar style={theme.dark ? 'light' : 'dark'} />
+      <AppDataProvider user={auth.user}>
+        <AppNavigator onLogout={onLogout} />
+      </AppDataProvider>
+    </View>
+  );
+}
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabKey>('discovery');
   const [auth, setAuth] = useState<AuthResponse | null>(null);
+  const [isHydrating, setIsHydrating] = useState(true);
 
-  const renderScreen = () => {
-    switch (activeTab) {
-      case 'pets':
-        return <PetsScreen />;
-      case 'chat':
-        return <ChatListScreen />;
-      case 'profile':
-        return <ProfileScreen />;
-      case 'discovery':
-      default:
-        return <DiscoveryScreen />;
-    }
+  useEffect(() => {
+    let cancelled = false;
+    restoreAuthSession()
+      .then((session) => { if (!cancelled) setAuth(session); })
+      .finally(() => { if (!cancelled) setIsHydrating(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrating) SplashScreen.hideAsync().catch(() => undefined);
+  }, [isHydrating]);
+
+  const handleLogout = async () => {
+    await Promise.all([logoutCurrentAuthSession(), signOutFromGoogle()]);
+    setAuth(null);
   };
 
   return (
     <SafeAreaProvider>
-      <View style={styles.app}>
-        <StatusBar style="dark" />
-        {auth ? (
-          <>
-            <View style={styles.content}>{renderScreen()}</View>
-            <BottomTabs activeTab={activeTab} onChange={setActiveTab} />
-          </>
+      <AppPreferencesProvider>
+        {isHydrating ? (
+          <BootstrapScreen />
+        ) : auth ? (
+          <AuthenticatedApp auth={auth} onLogout={handleLogout} />
         ) : (
-          <LoginScreen onAuthenticated={setAuth} />
+          <View style={[styles.app, { backgroundColor: brandTheme.colors.background }]}>
+            <StatusBar style="light" />
+            <LoginScreen onAuthenticated={setAuth} />
+          </View>
         )}
-      </View>
+      </AppPreferencesProvider>
     </SafeAreaProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  app: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    flex: 1,
-  },
-});
+const styles = StyleSheet.create({ app: { flex: 1 } });

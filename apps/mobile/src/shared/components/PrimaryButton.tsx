@@ -13,7 +13,7 @@ interface PrimaryButtonProps extends Omit<PressableProps, 'style'> {
 
 export function PrimaryButton({ label, icon, variant = 'primary', style, ...props }: PrimaryButtonProps) {
   const palette = {
-    primary: { background: theme.colors.primary, color: theme.colors.textInverse },
+    primary: { background: theme.colors.primary, color: theme.colors.onPrimary },
     secondary: { background: theme.colors.infoFaded, color: theme.colors.info },
     danger: { background: theme.colors.dangerFaded, color: theme.colors.danger },
   }[variant];

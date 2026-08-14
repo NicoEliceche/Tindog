@@ -5,23 +5,16 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "scheme": "tindog",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FFF8F4"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.nicoeliceche.tindog"
     },
     "android": {
       "package": "com.nicoeliceche.tindog",
-      "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
-        "backgroundColor": "#FFF8F4",
+        "backgroundColor": "#0B0B0B",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -33,7 +26,38 @@
     },
     "plugins": [
       "expo-font",
-      "expo-dev-client"
+      "expo-dev-client",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#050505",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180,
+          "resizeMode": "contain"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Tindog usa tu ubicación mientras elegís puntos públicos de encuentro cercanos."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Tindog accede a tus fotos para que puedas actualizar tu perfil y el de tus perros.",
+          "cameraPermission": "Tindog accede a la cámara para que puedas tomar una foto de perfil.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#D4AF37",
+          "defaultChannel": "tindog-social"
+        }
+      ]
     ],
     "extra": {
       "eas": {

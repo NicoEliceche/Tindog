@@ -1,88 +1,43 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { theme } from '../../../core/theme/tokens';
-import { styles } from './ProfileScreen.styles';
+import { pickProfilePhoto } from '../../../core/data/services/profilePhotoPicker';
+import { useAppData } from '../../../core/providers/AppDataProvider';
+import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
+import type { AppTheme } from '../../../core/theme/tokens';
+import type { RootStackParamList } from '../../../navigation/types';
 
-const settings = [
-  {
-    id: 'location',
-    title: 'Zona segura',
-    detail: 'Palermo, Belgrano y Colegiales',
-    icon: 'location-outline' as const,
-  },
-  {
-    id: 'verification',
-    title: 'Documentacion',
-    detail: 'Pedigri y salud visibles para matches',
-    icon: 'document-text-outline' as const,
-  },
-  {
-    id: 'notifications',
-    title: 'Notificaciones',
-    detail: 'Chats y solicitudes importantes',
-    icon: 'notifications-outline' as const,
-  },
-];
+export function ProfileScreen({ onLogout }: { onLogout: () => Promise<void> }) {
+  const theme = useAppTheme(); const styles = useMemo(() => createStyles(theme), [theme]); const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { profile, updateProfileAvatar, updateProfile } = useAppData();
+  const [loggingOut, setLoggingOut] = useState(false); const [editing, setEditing] = useState(false); const [draftName, setDraftName] = useState(profile.name);
 
-export function ProfileScreen() {
-  const insets = useSafeAreaInsets();
+  const changePhoto = async () => { const uri = await pickProfilePhoto(); if (!uri) { Alert.alert('Foto sin cambios', 'Elegí una imagen y permití el acceso a tus fotos para actualizarla.'); return; } updateProfileAvatar(uri); };
+  const logout = async () => { setLoggingOut(true); try { await onLogout(); } finally { setLoggingOut(false); } };
+  const saveName = () => { const name = draftName.trim(); if (name.length >= 2) { updateProfile({ name }); setEditing(false); } };
 
-  return (
-    <View style={styles.screen}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: Math.max(insets.top + theme.spacing.md, theme.spacing.xl) },
-        ]}
-      >
-        <Text style={styles.title}>Perfil</Text>
-
-        <View style={styles.ownerCard}>
-          <View style={styles.ownerRow}>
-            <View style={styles.avatar} accessibilityLabel="Iniciales de Nico">
-              <Text style={styles.initials}>NE</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.name}>Nico Eliceche</Text>
-              <Text style={styles.meta}>Tutor responsable · Buenos Aires</Text>
-            </View>
-            <View style={styles.statusPill}>
-              <Text style={styles.statusText}>Activo</Text>
-            </View>
-          </View>
-
-          <View style={styles.statsRow}>
-            <View style={styles.stat}>
-              <Text style={styles.statValue}>2</Text>
-              <Text style={styles.statLabel}>Perros</Text>
-            </View>
-            <View style={styles.stat}>
-              <Text style={styles.statValue}>8</Text>
-              <Text style={styles.statLabel}>Matches</Text>
-            </View>
-            <View style={styles.stat}>
-              <Text style={styles.statValue}>4.9</Text>
-              <Text style={styles.statLabel}>Rating</Text>
-            </View>
-          </View>
-        </View>
-
-        <Text style={styles.sectionTitle}>Preferencias</Text>
-        {settings.map((item) => (
-          <View key={item.id} style={styles.settingRow}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md, flex: 1 }}>
-              <Ionicons name={item.icon} size={24} color={theme.colors.primary} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.settingText}>{item.title}</Text>
-                <Text style={styles.settingMeta}>{item.detail}</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={theme.colors.textMuted} />
-          </View>
-        ))}
-      </ScrollView>
+  return <View style={styles.screen}><ScrollView contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 16, 24) }]} showsVerticalScrollIndicator={false}>
+    <View style={styles.header}><Text style={styles.title}>Perfil</Text><Pressable accessibilityRole="button" accessibilityLabel="Abrir configuración" onPress={() => navigation.navigate('Settings')} style={styles.settings}><Ionicons name="settings-outline" size={23} color={theme.colors.primary} /></Pressable></View>
+    <View style={styles.ownerCard}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Cambiar foto de perfil" onPress={changePhoto} style={styles.avatarWrap}>{profile.avatar ? <Image source={{ uri: profile.avatar }} style={styles.avatar} /> : <View style={styles.avatarFallback}><Text style={styles.initials}>{profile.name.slice(0, 2).toUpperCase()}</Text></View>}<View style={styles.camera}><Ionicons name="camera" size={16} color={theme.colors.onPrimary} /></View></Pressable>
+      <Text style={styles.name}>{profile.name}</Text><Text style={styles.email}>{profile.email}</Text><View style={styles.verified}><Ionicons name="checkmark-circle" size={15} color={theme.colors.success} /><Text style={styles.verifiedText}>Cuenta Google verificada</Text></View>
+      <View style={styles.stats}><Stat value="2" label="Perros" theme={theme} /><Stat value="8" label="Conexiones" theme={theme} /><Stat value="4.9" label="Reputación" theme={theme} /></View>
     </View>
-  );
+    <Text style={styles.section}>Datos personales</Text>
+    <Pressable accessibilityRole="button" onPress={() => { setDraftName(profile.name); setEditing(true); }} style={styles.row}><Ionicons name="person-outline" size={22} color={theme.colors.primary} /><View style={{ flex: 1 }}><Text style={styles.rowTitle}>Nombre visible</Text><Text style={styles.rowDetail}>{profile.name}</Text></View><Ionicons name="create-outline" size={19} color={theme.colors.textMuted} /></Pressable>
+    <View style={styles.row}><Ionicons name="mail-outline" size={22} color={theme.colors.primary} /><View style={{ flex: 1 }}><Text style={styles.rowTitle}>Email</Text><Text style={styles.rowDetail}>{profile.email} · administrado por Google</Text></View><Ionicons name="lock-closed" size={17} color={theme.colors.textMuted} /></View>
+    <View style={styles.row}><Ionicons name="location-outline" size={22} color={theme.colors.primary} /><View style={{ flex: 1 }}><Text style={styles.rowTitle}>Zona general</Text><Text style={styles.rowDetail}>Palermo, Buenos Aires · nunca mostramos tu domicilio</Text></View><Ionicons name="chevron-forward" size={19} color={theme.colors.textMuted} /></View>
+    <Text style={styles.section}>Cuenta</Text>
+    <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Settings')} style={styles.row}><Ionicons name="options-outline" size={22} color={theme.colors.primary} /><View style={{ flex: 1 }}><Text style={styles.rowTitle}>Privacidad y configuración</Text><Text style={styles.rowDetail}>Apariencia, avisos, descubrimiento y seguridad</Text></View><Ionicons name="chevron-forward" size={19} color={theme.colors.textMuted} /></Pressable>
+    <Pressable accessibilityRole="button" disabled={loggingOut} onPress={logout} style={styles.logout}>{loggingOut ? <ActivityIndicator color={theme.colors.danger} /> : <Ionicons name="log-out-outline" size={21} color={theme.colors.danger} />}<Text style={styles.logoutText}>Cerrar sesión</Text></Pressable>
+  </ScrollView>
+  <Modal visible={editing} transparent animationType="fade" onRequestClose={() => setEditing(false)}><View style={styles.backdrop}><View style={styles.modal}><Text style={styles.modalTitle}>Editar nombre visible</Text><TextInput value={draftName} onChangeText={setDraftName} autoFocus maxLength={60} style={styles.nameInput} /><View style={styles.modalActions}><Pressable onPress={() => setEditing(false)} style={styles.modalSecondary}><Text style={styles.modalSecondaryText}>Cancelar</Text></Pressable><Pressable onPress={saveName} style={styles.modalPrimary}><Text style={styles.modalPrimaryText}>Guardar</Text></Pressable></View></View></View></Modal>
+  </View>;
 }
+
+function Stat({ value, label, theme }: { value: string; label: string; theme: AppTheme }) { return <View style={{ flex: 1, alignItems: 'center' }}><Text style={{ color: theme.colors.text, fontSize: 21, fontWeight: '900' }}>{value}</Text><Text style={{ color: theme.colors.textMuted, fontSize: 10, fontWeight: '800' }}>{label}</Text></View>; }
+function createStyles(theme: AppTheme) { return StyleSheet.create({ screen: { flex: 1, backgroundColor: theme.colors.background }, content: { paddingHorizontal: 16, paddingBottom: 30, gap: 11 }, header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, title: { color: theme.colors.text, fontSize: 32, fontWeight: '900' }, settings: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surface }, ownerCard: { alignItems: 'center', padding: 18, borderRadius: 28, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border }, avatarWrap: { width: 92, height: 92, position: 'relative' }, avatar: { width: 92, height: 92, borderRadius: 30 }, avatarFallback: { flex: 1, borderRadius: 30, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.primaryFaded }, initials: { color: theme.colors.primary, fontSize: 28, fontWeight: '900' }, camera: { position: 'absolute', right: -4, bottom: -4, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.primary, borderWidth: 3, borderColor: theme.colors.surface }, name: { color: theme.colors.text, fontSize: 23, fontWeight: '900', marginTop: 10 }, email: { color: theme.colors.textSecondary, fontSize: 12, marginTop: 2 }, verified: { flexDirection: 'row', gap: 4, marginTop: 7 }, verifiedText: { color: theme.colors.success, fontSize: 10, fontWeight: '800' }, stats: { width: '100%', flexDirection: 'row', marginTop: 17, paddingTop: 14, borderTopWidth: 1, borderTopColor: theme.colors.border }, section: { color: theme.colors.text, fontSize: 16, fontWeight: '900', marginTop: 7 }, row: { minHeight: 67, flexDirection: 'row', alignItems: 'center', gap: 11, padding: 13, borderRadius: 20, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border }, rowTitle: { color: theme.colors.text, fontSize: 14, fontWeight: '900' }, rowDetail: { color: theme.colors.textMuted, fontSize: 11, marginTop: 3 }, logout: { minHeight: 50, marginTop: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 25, backgroundColor: theme.colors.dangerFaded, borderWidth: 1, borderColor: theme.colors.dangerBorder }, logoutText: { color: theme.colors.danger, fontWeight: '900' }, backdrop: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: theme.colors.overlay }, modal: { padding: 20, gap: 15, borderRadius: 24, backgroundColor: theme.colors.surface }, modalTitle: { color: theme.colors.text, fontSize: 19, fontWeight: '900' }, nameInput: { minHeight: 48, paddingHorizontal: 13, borderRadius: 14, color: theme.colors.text, backgroundColor: theme.colors.backgroundAlt, borderWidth: 1, borderColor: theme.colors.border }, modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 9 }, modalSecondary: { minHeight: 42, paddingHorizontal: 15, justifyContent: 'center' }, modalSecondaryText: { color: theme.colors.textSecondary, fontWeight: '800' }, modalPrimary: { minHeight: 42, paddingHorizontal: 18, borderRadius: 21, justifyContent: 'center', backgroundColor: theme.colors.primary }, modalPrimaryText: { color: theme.colors.onPrimary, fontWeight: '900' } }); }

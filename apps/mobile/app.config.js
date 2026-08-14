@@ -42,8 +42,34 @@ function getGoogleIosUrlScheme() {
 
 module.exports = ({ config }) => ({
   ...config,
+  ios: {
+    ...config.ios,
+    ...(getEnvValue('GOOGLE_MAPS_IOS_API_KEY')
+      ? {
+          config: {
+            ...(config.ios?.config ?? {}),
+            googleMapsApiKey: getEnvValue('GOOGLE_MAPS_IOS_API_KEY'),
+          },
+        }
+      : {}),
+  },
+  android: {
+    ...config.android,
+    ...(getEnvValue('GOOGLE_MAPS_ANDROID_API_KEY')
+      ? {
+          config: {
+            ...(config.android?.config ?? {}),
+            googleMaps: {
+              apiKey: getEnvValue('GOOGLE_MAPS_ANDROID_API_KEY'),
+            },
+          },
+        }
+      : {}),
+  },
   plugins: [
     ...(config.plugins ?? []),
+    'expo-status-bar',
+    'expo-secure-store',
     [
       '@react-native-google-signin/google-signin',
       {
@@ -51,4 +77,10 @@ module.exports = ({ config }) => ({
       },
     ],
   ],
+  extra: {
+    ...(config.extra ?? {}),
+    googleMapsConfigured: Boolean(
+      getEnvValue('GOOGLE_MAPS_ANDROID_API_KEY') || getEnvValue('GOOGLE_MAPS_IOS_API_KEY'),
+    ),
+  },
 });

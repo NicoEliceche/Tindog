@@ -1,118 +1,72 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchMyPets } from '../../../core/data/services/petService';
+import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
+import type { AppTheme } from '../../../core/theme/tokens';
 import type { Pet } from '../../../core/types/pet.types';
-import { theme } from '../../../core/theme/tokens';
-import { PrimaryButton } from '../../../shared/components/PrimaryButton';
+import type { RootStackParamList } from '../../../navigation/types';
 import { BreederBadge } from '../components/BreederBadge';
-import { styles } from './PetsScreen.styles';
 
 export function PetsScreen() {
+  const theme = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadPets = useCallback(async () => {
-    setLoading(true);
-    const result = await fetchMyPets();
-    setPets(result);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    loadPets();
-  }, [loadPets]);
-
-  const summary = useMemo(() => {
-    const verified = pets.filter((pet) => pet.is_verified_breeder_pet).length;
-    const looking = pets.filter((pet) => pet.breeding_preferences?.looking_for_pair).length;
-    return { verified, looking };
-  }, [pets]);
-
-  const renderPet = ({ item }: { item: Pet }) => (
-    <View style={styles.card}>
-      <Image
-        source={{ uri: item.photos[0] }}
-        style={styles.avatar}
-        resizeMode="cover"
-        accessibilityLabel={`Foto de ${item.name}`}
-      />
-      <View style={styles.cardContent}>
-        <View>
-          <Text style={styles.petName}>{item.name}</Text>
-          <Text style={styles.petMeta}>
-            {item.breed} · {item.gender} · {item.age} años
-          </Text>
-          <View style={styles.chipRow}>
-            {item.personality_traits.slice(0, 3).map((trait) => (
-              <View key={trait} style={styles.chip}>
-                <Text style={styles.chipText}>{trait}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.healthRow}>
-          <Text style={styles.coiText}>COI {item.coi_percentage ?? 0}%</Text>
-          {item.is_verified_breeder_pet ? <BreederBadge /> : null}
-        </View>
-      </View>
-    </View>
-  );
+  useEffect(() => { fetchMyPets().then(setPets).finally(() => setLoading(false)); }, []);
 
   return (
     <View style={styles.screen}>
       <FlatList
         data={pets}
         keyExtractor={(item) => item.id}
-        renderItem={renderPet}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: Math.max(insets.top + theme.spacing.md, theme.spacing.xl) },
-        ]}
-        ItemSeparatorComponent={() => <View style={{ height: theme.spacing.md }} />}
-        ListHeaderComponent={
-          <View style={{ gap: theme.spacing.lg }}>
-            <View>
-              <Text style={styles.title}>Mis perros</Text>
-              <Text style={styles.subtitle}>Controla perfiles, salud, documentacion y estado de cruza.</Text>
+        contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 16, 24) }]}
+        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        ListHeaderComponent={<View style={styles.header}><Text style={styles.title}>Mis perros</Text><Text style={styles.subtitle}>Salud, compatibilidad, documentos y actividad en un solo panel.</Text></View>}
+        renderItem={({ item }) => (
+          <Pressable accessibilityRole="button" accessibilityLabel={`Abrir panel de ${item.name}`} onPress={() => navigation.navigate('PetProfile', { petId: item.id })} style={({ pressed }) => [styles.card, pressed && { opacity: 0.72 }]}>
+            <Image source={{ uri: item.photos[0] }} style={styles.avatar} />
+            <View style={styles.cardBody}>
+              <View style={styles.nameRow}><Text style={styles.name}>{item.name}</Text>{item.is_verified_breeder_pet ? <BreederBadge /> : null}</View>
+              <Text style={styles.meta}>{item.breed} · {item.age} años</Text>
+              <View style={styles.chips}>{item.personality_traits.slice(0, 2).map((trait) => <View key={trait} style={styles.chip}><Text style={styles.chipText}>{trait}</Text></View>)}</View>
+              <Text style={styles.status}>{item.breeding_preferences?.looking_for_pair ? 'Disponible para conectar' : 'Perfil en pausa'}</Text>
             </View>
-
-            <View style={styles.summaryCard}>
-              <View style={styles.summaryRow}>
-                <View style={styles.summaryItem}>
-                  <Text style={styles.summaryValue}>{pets.length}</Text>
-                  <Text style={styles.summaryLabel}>Perfiles</Text>
-                </View>
-                <View style={styles.summaryItem}>
-                  <Text style={styles.summaryValue}>{summary.verified}</Text>
-                  <Text style={styles.summaryLabel}>Verificados</Text>
-                </View>
-                <View style={styles.summaryItem}>
-                  <Text style={styles.summaryValue}>{summary.looking}</Text>
-                  <Text style={styles.summaryLabel}>Buscan cruza</Text>
-                </View>
-              </View>
-            </View>
-
-            <Text style={styles.sectionLabel}>Dashboard de cria</Text>
-          </View>
-        }
-        ListFooterComponent={
-          <View style={{ paddingTop: theme.spacing.lg }}>
-            <PrimaryButton label={loading ? 'Actualizando' : 'Actualizar perfiles'} icon="refresh" onPress={loadPets} />
-          </View>
-        }
-        ListEmptyComponent={
-          loading ? (
-            <View style={{ paddingVertical: theme.spacing.xxl }}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-            </View>
-          ) : null
-        }
+            <Ionicons name="chevron-forward" size={22} color={theme.colors.textMuted} />
+          </Pressable>
+        )}
+        ListEmptyComponent={loading ? <ActivityIndicator size="large" color={theme.colors.primary} /> : <Text style={styles.subtitle}>Todavía no cargaste mascotas.</Text>}
+        ListFooterComponent={<Pressable accessibilityRole="button" style={styles.addButton}><Ionicons name="add" size={22} color={theme.colors.onPrimary} /><Text style={styles.addText}>Agregar mascota</Text></Pressable>}
       />
     </View>
   );
+}
+
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: theme.colors.background },
+    content: { paddingHorizontal: 16, paddingBottom: 28 },
+    header: { marginBottom: 20 },
+    title: { color: theme.colors.text, fontSize: 32, fontWeight: '900' },
+    subtitle: { color: theme.colors.textSecondary, fontSize: 15, lineHeight: 22, marginTop: 6 },
+    card: { minHeight: 126, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: theme.colors.surface, borderRadius: 24, borderWidth: 1, borderColor: theme.colors.border },
+    avatar: { width: 88, height: 102, borderRadius: 18, backgroundColor: theme.colors.surfaceAlt },
+    cardBody: { flex: 1, alignSelf: 'stretch', justifyContent: 'center' },
+    nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    name: { color: theme.colors.text, fontSize: 20, fontWeight: '900' },
+    meta: { color: theme.colors.textSecondary, fontSize: 13, fontWeight: '700', marginTop: 2 },
+    chips: { flexDirection: 'row', gap: 5, marginTop: 8 },
+    chip: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 99, backgroundColor: theme.colors.surfaceAlt },
+    chipText: { color: theme.colors.textSecondary, fontSize: 10, fontWeight: '800' },
+    status: { color: theme.colors.primary, fontSize: 11, fontWeight: '900', marginTop: 8 },
+    addButton: { minHeight: 50, marginTop: 18, borderRadius: 99, backgroundColor: theme.colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+    addText: { color: theme.colors.onPrimary, fontSize: 15, fontWeight: '900' },
+  });
 }

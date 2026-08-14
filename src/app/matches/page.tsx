@@ -1,6 +1,3 @@
-// src/app/matches/page.tsx
-import { MatchesScreen } from '@features/matches';
+import { redirect } from 'next/navigation';
 
-export default function MatchesPage() {
-  return <MatchesScreen />;
-}
+export default function MatchesPage() { redirect('/chat'); }

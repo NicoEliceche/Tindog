@@ -1,0 +1,11 @@
+import { ApiAuthError, assertTrustedWriteOrigin, requireAuthenticatedUser } from '@core/auth/requestAuth';
+import prisma from '@core/data/client/PrismaClient';
+import { NextRequest, NextResponse } from 'next/server';
+import { withAuthCors } from '../../../auth/cors';
+import { writeSecurityAudit } from '@core/security/audit';
+
+export const runtime = 'nodejs';
+export async function OPTIONS(request: NextRequest) { return withAuthCors(new NextResponse(null, { status: 204 }), request, 'POST, OPTIONS'); }
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try { const { id } = await params; assertTrustedWriteOrigin(request); const user = await requireAuthenticatedUser(request); const appointment = await prisma.appointment.findFirst({ where: { id, status: { in: ['scheduled', 'in_progress'] }, OR: [{ participants: { some: { userId: user.id } } }, { ownerIds: { has: user.id } }] }, select: { id: true, datetime: true, endAt: true } }); if (!appointment) throw new ApiAuthError(403, 'Appointment is not available'); const now = new Date(); const earliest = appointment.datetime.getTime() - 30 * 60 * 1000; const latest = (appointment.endAt ?? new Date(appointment.datetime.getTime() + 60 * 60 * 1000)).getTime() + 2 * 60 * 60 * 1000; if (now.getTime() < earliest || now.getTime() > latest) return withAuthCors(NextResponse.json({ error: 'Check-in is outside the appointment window' }, { status: 409 }), request); const checkIn = await prisma.safetyCheckIn.upsert({ where: { appointmentId_userId: { appointmentId: appointment.id, userId: user.id } }, create: { appointmentId: appointment.id, userId: user.id, checkedInAt: now, status: 'checked_in' }, update: { checkedInAt: now, status: 'checked_in' } }); await prisma.appointment.updateMany({ where: { id: appointment.id, status: 'scheduled' }, data: { status: 'in_progress' } }); await writeSecurityAudit({ request, actor: user, action: 'appointment.check_in', outcome: 'success', targetType: 'appointment', targetId: appointment.id }); return withAuthCors(NextResponse.json(checkIn), request); } catch (error) { const status = error instanceof ApiAuthError ? error.status : 500; return withAuthCors(NextResponse.json({ error: status === 500 ? 'Unable to check in' : error instanceof Error ? error.message : 'Unauthorized' }, { status }), request); }
+}

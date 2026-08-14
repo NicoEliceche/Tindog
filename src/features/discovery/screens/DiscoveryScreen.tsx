@@ -1,207 +1,106 @@
-// src/features/discovery/screens/DiscoveryScreen.tsx
 'use client';
 
-import React, { useState } from 'react';
-import { AnimatePresence, useMotionValue, useTransform, motion } from 'framer-motion';
-import { Heart, X, Settings, MessageCircle, Star, Info } from 'lucide-react';
-import { Pet } from '@core/types/pet.types';
+import { useWebApp } from '@core/providers/WebAppProvider';
 import { withPublicBasePath } from '@core/routing/publicPath';
+import { Bookmark, Check, MessageCircle, RotateCcw, X } from 'lucide-react';
+import { useState } from 'react';
 import {
-  ScreenWrapper,
-  Header,
-  CardContainer,
-  SwipeCard,
-  CardImage,
-  CardInfo,
-  PetName,
-  PetBreed,
-  ActionButtons,
-  CircleButton,
-  CardImageContainer,
-  SideInfo,
-  BigTitle,
+  Page, Shell, Header, Brand, Logo, Avatar, DesktopLayout, SidePanel, SidePanelTitle,
+  NextPreviewCard, StatsCard, CenterColumn, PetCard, PetImage, PetBody, Actions, Action,
+  Empty, Backdrop, Modal,
 } from './DiscoveryScreenStyled';
 
-const MOCK_PETS: Pet[] = [
-  {
-    id: '1',
-    name: 'Firulais',
-    breed: 'Golden Retriever',
-    gender: 'Macho',
-    age: 3,
-    bio: 'Me encanta correr tras la pelota y los mimos.',
-    photos: ['https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=600'],
-    owner_ids: ['u1'],
-    personality_traits: ['Juguetón', 'Cariñoso'],
-    has_papers: true,
-    is_competitor: false,
-  },
-  {
-    id: '2',
-    name: 'Luna',
-    breed: 'Border Collie',
-    gender: 'Hembra',
-    age: 2,
-    bio: 'Inteligente y con mucha energía. Busco amigos para agility.',
-    photos: ['https://images.unsplash.com/photo-1507146426996-ef05306b995a?auto=format&fit=crop&q=80&w=600'],
-    owner_ids: ['u2'],
-    personality_traits: ['Activa', 'Inteligente'],
-    has_papers: true,
-    is_competitor: true,
-  },
-  {
-    id: '3',
-    name: 'Roco',
-    breed: 'Bulldog Francés',
-    gender: 'Macho',
-    age: 4,
-    bio: 'Soy un poco vago pero muy sociable.',
-    photos: ['https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&q=80&w=600'],
-    owner_ids: ['u3'],
-    personality_traits: ['Tranquilo', 'Sociable'],
-    has_papers: false,
-    is_competitor: false,
-  },
-];
-
 export function DiscoveryScreen() {
-  const [pets, setPets] = useState<Pet[]>(MOCK_PETS);
-  const [showMatch, setShowMatch] = useState(false);
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 200], [-25, 25]);
-  const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
+  const { profile, discoveryPets, dismissPet, resetDiscovery, sendRequest } = useWebApp();
+  const [notice, setNotice] = useState<{ title: string; body: string } | null>(null);
+  const pet = discoveryPets[0];
+  const nextPet = discoveryPets[1];
 
-  const handleDragEnd = (event: any, info: any) => {
-    if (info.offset.x > 100) {
-      handleSwipe('right');
-    } else if (info.offset.x < -100) {
-      handleSwipe('left');
-    }
-  };
-
-  const handleSwipe = (direction: 'left' | 'right') => {
-    if (direction === 'right') {
-      if (Math.random() > 0.7) {
-        setShowMatch(true);
-      }
-    }
-    setPets((prev) => prev.slice(1));
-    x.set(0);
+  const handleConnect = () => {
+    if (!pet) return;
+    sendRequest(pet);
+    dismissPet(pet.id);
+    setNotice({ title: 'Solicitud enviada', body: `El tutor de ${pet.name} recibió tu solicitud. El chat se habilitará únicamente si la acepta.` });
   };
 
   return (
-    <ScreenWrapper>
-      <SideInfo $align="left">
-        <BigTitle>Encuentra el <span>Match</span> ideal para tu mejor amigo.</BigTitle>
-      </SideInfo>
-
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', maxWidth: '450px', position: 'relative' }}>
+    <Page>
+      <Shell>
         <Header>
-          <CircleButton $type="nope" as={motion.button} style={{ width: 44, height: 44 }}>
-            <Settings size={20} />
-          </CircleButton>
-          <img src={withPublicBasePath('/assets/tindog_logo.png')} alt="Tindog" height={34} />
-          <CircleButton $type="like" as={motion.button} style={{ width: 44, height: 44 }}>
-            <MessageCircle size={20} />
-          </CircleButton>
+          <span />
+          <Brand>
+            <Logo src={withPublicBasePath('/assets/tindog_patita_logo.png')} alt="Tindog" />
+            <span>TINDOG</span>
+            <small>ENCONTRÁ SU PAREJA IDEAL</small>
+          </Brand>
+          <Avatar>{profile.avatar ? <img src={profile.avatar} alt={profile.name} /> : profile.name[0]}</Avatar>
         </Header>
 
-        <CardContainer>
-          <AnimatePresence mode="popLayout">
-            {pets.length > 1 && (
-              <SwipeCard
-                key={pets[1].id}
-                style={{ scale: 0.95, opacity: 0.5, y: 10, zIndex: 0 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.5 }}
-              >
-                <CardImageContainer>
-                  <CardImage src={pets[1].photos[0]} alt={pets[1].name} />
-                </CardImageContainer>
-              </SwipeCard>
-            )}
+        <DesktopLayout>
+          <SidePanel>
+            <SidePanelTitle>Tu actividad</SidePanelTitle>
+            <StatsCard>
+              <b>{discoveryPets.length}</b>
+              <span>Perfiles por descubrir</span>
+            </StatsCard>
+          </SidePanel>
 
-            {pets.length > 0 ? (
-              <SwipeCard
-                key={pets[0].id}
-                style={{ x, rotate, opacity, zIndex: 1 }}
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                onDragEnd={handleDragEnd}
-                initial={{ scale: 0.95, opacity: 0, y: 10 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ 
-                  x: x.get() > 0 ? 1000 : -1000, 
-                  opacity: 0,
-                  rotate: x.get() > 0 ? 45 : -45,
-                  transition: { duration: 0.4 }
-                }}
-              >
-                <CardImageContainer>
-                  <CardImage src={pets[0].photos[0]} alt={pets[0].name} />
-                  <CardInfo>
-                    <PetName>{pets[0].name}, {pets[0].age}</PetName>
-                    <PetBreed>{pets[0].breed}</PetBreed>
-                  </CardInfo>
-                </CardImageContainer>
-              </SwipeCard>
+          <CenterColumn>
+            {pet ? (
+              <>
+                <PetCard>
+                  <PetImage src={pet.photos[0]} alt={pet.name} />
+                  <PetBody>
+                    <div className="title-row">
+                      <h2>{pet.name}</h2>
+                      <strong>{pet.age}</strong>
+                    </div>
+                    <div className="meta">{pet.breed} · {pet.gender} · cerca de ti</div>
+                    <p>{pet.bio}</p>
+                  </PetBody>
+                </PetCard>
+                <Actions>
+                  <Action onClick={() => dismissPet(pet.id)} aria-label="Pasar perfil"><i><X /></i>Pasar</Action>
+                  <Action $primary onClick={handleConnect} aria-label="Enviar solicitud de conexión"><i><MessageCircle /></i>Conectar</Action>
+                  <Action onClick={() => { dismissPet(pet.id); setNotice({ title: 'Perfil guardado', body: `Podrás volver a ver a ${pet.name} desde favoritos.` }); }} aria-label="Guardar perfil"><i><Bookmark /></i>Guardar</Action>
+                </Actions>
+              </>
             ) : (
-              <div style={{ textAlign: 'center', color: '#636E72', zIndex: 1 }}>
-                <p>¡No hay más perritos cerca!</p>
-                <button onClick={() => setPets(MOCK_PETS)} style={{ marginTop: '1rem', color: '#FF6B6B', fontWeight: 'bold' }}>
-                  Recargar
-                </button>
-              </div>
+              <Empty>
+                <div>
+                  <Check size={46} />
+                  <h2>Ya viste todos los perfiles</h2>
+                  <p>Volvé más tarde o ajustá tus filtros.</p>
+                  <button onClick={resetDiscovery}><RotateCcw size={16} /> Recargar perfiles</button>
+                </div>
+              </Empty>
             )}
-          </AnimatePresence>
+          </CenterColumn>
 
-          <ActionButtons>
-            <CircleButton $type="nope" whileTap={{ scale: 0.8 }} onClick={() => handleSwipe('left')}>
-              <X size={32} />
-            </CircleButton>
-            <CircleButton $type="super" whileTap={{ scale: 0.8 }} style={{ borderColor: '#4D96FF', color: '#4D96FF', width: 54, height: 54 }}>
-              <Star size={24} fill="currentColor" />
-            </CircleButton>
-            <CircleButton $type="like" whileTap={{ scale: 0.8 }} onClick={() => handleSwipe('right')}>
-              <Heart size={32} fill="currentColor" />
-            </CircleButton>
+          <SidePanel>
+            <SidePanelTitle>A continuación</SidePanelTitle>
+            {nextPet ? (
+              <NextPreviewCard>
+                <img src={nextPet.photos[0]} alt={nextPet.name} />
+                <div className="copy">
+                  <h4>{nextPet.name} · {nextPet.age}</h4>
+                  <p>{nextPet.breed}</p>
+                </div>
+              </NextPreviewCard>
+            ) : null}
+          </SidePanel>
+        </DesktopLayout>
 
-          </ActionButtons>
-        </CardContainer>
-      </div>
-
-      <SideInfo $align="right">
-        <p style={{ fontSize: '1.4rem', color: '#636E72', fontWeight: 500, lineHeight: 1.4 }}>
-          Desliza para conocer a los perritos más sociables de tu zona y agenda una cita increíble.
-        </p>
-      </SideInfo>
-
-      {/* Match Modal (Same as before but simplified logic) */}
-      <AnimatePresence>
-        {showMatch && (
-           <motion.div
-           initial={{ opacity: 0 }}
-           animate={{ opacity: 1 }}
-           exit={{ opacity: 0 }}
-           style={{
-             position: 'fixed',
-             top: 0, left: 0, right: 0, bottom: 0,
-             backgroundColor: 'rgba(0,0,0,0.95)',
-             zIndex: 2000,
-             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-             color: 'white', textAlign: 'center'
-           }}
-         >
-           <h1 style={{ fontSize: '4rem', fontWeight: 900, color: '#FF6B6B' }}>IT'S A MATCH!</h1>
-           <button 
-             onClick={() => setShowMatch(false)}
-             style={{ background: 'white', color: '#FF6B6B', padding: '1rem 3rem', borderRadius: '999px', fontWeight: 'bold', marginTop: '2rem' }}
-           >
-             Continuar
-           </button>
-         </motion.div>
-        )}
-      </AnimatePresence>
-    </ScreenWrapper>
+        {notice ? (
+          <Backdrop role="dialog" aria-modal="true">
+            <Modal>
+              <h2>{notice.title}</h2>
+              <p>{notice.body}</p>
+              <button onClick={() => setNotice(null)}>Entendido</button>
+            </Modal>
+          </Backdrop>
+        ) : null}
+      </Shell>
+    </Page>
   );
 }

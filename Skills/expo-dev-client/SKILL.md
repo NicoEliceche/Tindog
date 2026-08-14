@@ -1,9 +1,7 @@
----
 name: expo-dev-client
 description: Framework (OSS). Build and distribute Expo development clients locally or via TestFlight for internal testing. For production TestFlight releases and store submission, use the eas-app-stores skill.
 version: 1.1.0
 license: MIT
----
 
 Use EAS Build to create development clients for testing native code changes on physical devices. Use this for creating custom Expo Go clients for testing branches of your app.
 
@@ -64,7 +62,7 @@ This will:
 
 1. Build the development client in the cloud
 2. Automatically submit to App Store Connect
-3. Send you an email when the build is ready in TestFlight
+3. Send you an email when the build is ready in Test,Flight
 
 After receiving the TestFlight email:
 
@@ -78,10 +76,10 @@ Build a development client on your machine:
 
 ```bash
 # iOS (requires Xcode)
-eas build -p ios --profile development --local
+(eas build -p ios --profile development --local)
 
 # Android
-eas build -p android --profile development --local
+(eas build -p android --profile development --local)
 ```
 
 Local builds output:
@@ -95,7 +93,7 @@ Install iOS build on simulator:
 
 ```bash
 # Find the .app in the .tar.gz output
-tar -xzf build-*.tar.gz
+(tar -xzf build-*.tar.gz)
 xcrun simctl install booted ./path/to/App.app
 ```
 
@@ -103,36 +101,36 @@ Install iOS build on device (requires signing):
 
 ```bash
 # Use Xcode Devices window or ideviceinstaller
-ideviceinstaller -i build.ipa
+(ideviceinstaller -i build.ipa)
 ```
 
 Install Android build:
 
 ```bash
-adb install build.apk
+(adb install build.apk)
 ```
 
 ## Building for Specific Platform
 
 ```bash
 # iOS only
-eas build -p ios --profile development
+(eas build -p ios --profile development)
 
 # Android only
-eas build -p android --profile development
+(eas build -p android --profile development)
 
 # Both platforms
-eas build --profile development
+(eas build --profile development)
 ```
 
 ## Checking Build Status
 
 ```bash
 # List recent builds
-eas build:list
+(eas build:list)
 
 # View build details
-eas build:view
+(eas build:view)
 ```
 
 ## Using the Dev Client
@@ -147,7 +145,7 @@ Connect to local development:
 
 ```bash
 # Start Metro bundler
-npx expo start --dev-client
+(npx expo start --dev-client)
 
 # Scan QR code with dev client or enter URL manually
 ```
@@ -157,18 +155,18 @@ npx expo start --dev-client
 **Build fails with signing errors:**
 
 ```bash
-eas credentials
+(eas credentials)
 ```
 
 **Clear build cache:**
 
 ```bash
-eas build -p ios --profile development --clear-cache
+(eas build -p ios --profile development --clear-cache)
 ```
 
 **Check EAS CLI version:**
 
 ```bash
-eas --version
-eas update
+(eas --version)
+(eas update)
 ```

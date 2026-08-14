@@ -1,0 +1,10 @@
+import { ApiAuthError, assertTrustedWriteOrigin, requireAuthenticatedUser } from '@core/auth/requestAuth';
+import prisma from '@core/data/client/PrismaClient';
+import { NextRequest, NextResponse } from 'next/server';
+import { withAuthCors } from '../auth/cors';
+import { writeSecurityAudit } from '@core/security/audit';
+
+export const runtime = 'nodejs';
+export async function OPTIONS(request: NextRequest) { return withAuthCors(new NextResponse(null, { status: 204 }), request, 'GET, PATCH, OPTIONS'); }
+export async function GET(request: NextRequest) { try { const user = await requireAuthenticatedUser(request); return withAuthCors(NextResponse.json({ id: user.id, name: user.name, email: user.email, avatar: user.avatar }), request); } catch (error) { const status = error instanceof ApiAuthError ? error.status : 500; return withAuthCors(NextResponse.json({ error: status === 500 ? 'Unable to load profile' : error instanceof Error ? error.message : 'Unauthorized' }, { status }), request); } }
+export async function PATCH(request: NextRequest) { try { assertTrustedWriteOrigin(request); const user = await requireAuthenticatedUser(request); const body = await request.json() as { name?: unknown }; const name = typeof body.name === 'string' ? body.name.trim() : ''; if (name.length < 2 || name.length > 60) return withAuthCors(NextResponse.json({ error: 'Name must contain 2 to 60 characters' }, { status: 400 }), request); const updated = await prisma.user.update({ where: { id: user.id }, data: { name }, select: { id: true, name: true, email: true, avatarUrl: true } }); await writeSecurityAudit({ request, actor: user, action: 'profile.updated', outcome: 'success', targetType: 'user', targetId: user.id, metadata: { fields: 'name' } }); return withAuthCors(NextResponse.json(updated), request); } catch (error) { const status = error instanceof ApiAuthError ? error.status : 500; return withAuthCors(NextResponse.json({ error: status === 500 ? 'Unable to update profile' : error instanceof Error ? error.message : 'Unauthorized' }, { status }), request); } }

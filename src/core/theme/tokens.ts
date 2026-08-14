@@ -2,63 +2,63 @@
 export const tokens = {
   color: {
     // ── Brand Tindog Premium ──────────────────────────────────────────────────
-    primary:       '#FF6B6B', // Coral vivo
-    primaryLight:  '#FF8E8E',
-    primaryDark:   '#E55A5A',
-    primaryFaded:  'rgba(255, 107, 107, 0.1)',
-    accent:        '#4ECDC4', // Turquesa
-    accentLight:   '#71D7D0',
-    accentDark:    '#3EBAB1',
+    primary:       '#D4AF37',
+    primaryLight:  '#F4D978',
+    primaryDark:   '#A9851F',
+    primaryFaded:  'rgba(212, 175, 55, 0.14)',
+    accent:        '#F4D978',
+    accentLight:   '#FFE9A0',
+    accentDark:    '#C5A63A',
 
     // ── Glassmorphism & Modern ────────────────────────────────────────────────
-    glass:         'rgba(255, 255, 255, 0.7)',
-    glassBorder:   'rgba(255, 255, 255, 0.4)',
-    glassShadow:   'rgba(0, 0, 0, 0.08)',
+    glass:         'rgba(18, 18, 20, 0.82)',
+    glassBorder:   'rgba(212, 175, 55, 0.2)',
+    glassShadow:   'rgba(0, 0, 0, 0.3)',
 
     // ── Semánticos ──────────────────────────────────────────────────────────
-    success:       '#6BCB77',
-    successLight:  '#E1F5E5',
-    error:         '#FF4D4D',
-    errorLight:    '#FFEBEB',
-    warning:       '#FFD93D',
-    warningLight:  '#FFF9E6',
-    info:          '#4D96FF',
-    infoLight:     '#EBF3FF',
+    success:       '#78D69A',
+    successLight:  'rgba(64, 169, 100, 0.16)',
+    error:         '#FF9278',
+    errorLight:    'rgba(168, 76, 48, 0.2)',
+    warning:       '#F2C45A',
+    warningLight:  'rgba(242, 196, 90, 0.16)',
+    info:          '#8BB8FF',
+    infoLight:     'rgba(77, 150, 255, 0.16)',
 
     // ── Neutros ────────────────────────────────────────────────────────────
     neutral: {
       0:   '#FFFFFF',
-      50:  '#F9FAFB',
-      100: '#F3F4F6',
-      200: '#E5E7EB',
-      300: '#D1D5DB',
-      400: '#9CA3AF',
-      500: '#6B7280',
-      600: '#4B5563',
-      700: '#374151',
-      800: '#1F2937',
-      900: '#111827',
+      50:  '#F8F4E7',
+      100: '#EAE1C7',
+      200: '#D0C3A2',
+      300: '#B2A583',
+      400: '#8F856E',
+      500: '#706854',
+      600: '#565043',
+      700: '#38352F',
+      800: '#1F1F20',
+      900: '#0A0A0C',
     },
 
     // ── Superficie y fondo ────────────────────────────────────────────────────
-    background:    '#FDFDFD',
-    surface:       '#FFFFFF',
-    overlay:       'rgba(0, 0, 0, 0.4)',
-    border:        '#E5E7EB',
-    borderFocus:   '#FF6B6B',
+    background:    '#050505',
+    surface:       '#121214',
+    overlay:       'rgba(0, 0, 0, 0.74)',
+    border:        'rgba(212, 175, 55, 0.2)',
+    borderFocus:   '#D4AF37',
 
     // ── Gradientes ────────────────────────────────────────────────────────────
-    gradientStart: '#FF6B6B',
-    gradientMid:   '#FF8E8E',
-    gradientEnd:   '#FFADAD',
+    gradientStart: '#050505',
+    gradientMid:   '#0C0C0E',
+    gradientEnd:   '#15130D',
 
     // ── Texto ─────────────────────────────────────────────────────────────────
-    text:          '#2D3436',
-    textSecondary: '#636E72',
-    textTertiary:  '#B2BEC3',
-    textDisabled:  '#DFE6E9',
-    textInverse:   '#FFFFFF',
-    textLink:      '#FF6B6B',
+    text:          '#FFF8E7',
+    textSecondary: '#D2C39F',
+    textTertiary:  '#978B70',
+    textDisabled:  '#655E4D',
+    textInverse:   '#050505',
+    textLink:      '#D4AF37',
   },
 
   typography: {
@@ -113,7 +113,12 @@ export const tokens = {
     cardRadius:      '2rem',
     inputHeight:     '3.5rem',
     buttonHeight:    '3.5rem',
-    maxContentWidth: '40rem', // Mobile first center
+    maxContentWidth: '40rem',  // Ancho de contenido de lectura (forms, chat bubbles)
+    shellMaxWidth:   '90rem',  // Ancho máximo del app-shell logueado en desktop
+    landingMaxWidth: '75rem',  // Ancho de secciones de la landing pública
+    sidebarWidth:          '17.5rem',
+    sidebarWidthCollapsed: '5rem',
+    contentGutter:   '2.5rem', // Padding horizontal en desktop
   },
 
   breakpoints: {
@@ -121,6 +126,14 @@ export const tokens = {
     md:  '768px',
     lg:  '1024px',
     xl:  '1280px',
+    xxl: '1536px',
+  },
+
+  elevation: {
+    sm:   '0 2px 8px rgba(0, 0, 0, 0.24)',
+    md:   '0 8px 24px rgba(0, 0, 0, 0.32)',
+    lg:   '0 20px 48px rgba(0, 0, 0, 0.4)',
+    glow: '0 0 0 1px rgba(212, 175, 55, 0.16), 0 12px 32px rgba(212, 175, 55, 0.12)',
   },
 } as const;
 
