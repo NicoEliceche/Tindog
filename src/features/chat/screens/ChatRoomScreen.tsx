@@ -21,7 +21,9 @@ export function ChatRoomScreen({ chatId, panelMode = false, onBack }: ChatRoomSc
   const data = messages[conversation?.id] ?? [];
   const active = appointments.find((item) => item.conversationId === conversation?.id && ['scheduled', 'in_progress'].includes(effectiveStatus(item)));
 
-  useEffect(() => listRef.current?.scrollTo({ top: listRef.current.scrollHeight }), [data.length]);
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
+  }, [data.length]);
 
   if (!conversation) return null;
 
