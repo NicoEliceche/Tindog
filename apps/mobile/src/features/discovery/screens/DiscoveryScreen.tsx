@@ -18,8 +18,12 @@ import { PrimaryButton } from '../../../shared/components/PrimaryButton';
 const brandLogo = require('../../../../assets/tindog_patita_logo.png');
 const fallbackPetPhoto = 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=1200';
 
-const SWIPE_THRESHOLD = 120;
+/** Fracción del ancho de la tarjeta que confirma el swipe (como Tinder). */
+const SWIPE_RATIO = 0.32;
+/** Flick corto pero rápido: la velocidad sola alcanza para confirmar. */
 const SWIPE_VELOCITY = 800;
+/** Ángulo máximo de rotación en grados. */
+const MAX_ROTATION = 18;
 
 export function DiscoveryScreen() {
   const theme = useAppTheme();
@@ -30,6 +34,7 @@ export function DiscoveryScreen() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<{ title: string; body: string } | null>(null);
+  const [lastDismissed, setLastDismissed] = useState<Pet | null>(null);
   const compact = height < 740;
 
   useEffect(() => {
@@ -48,18 +53,38 @@ export function DiscoveryScreen() {
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
+  // +1 si se agarró la mitad superior, -1 si fue la inferior: invierte el
+  // sentido del giro para que la tarjeta pivotee alrededor del dedo, como
+  // hace Tinder, en vez de rotar siempre desde su centro.
+  const grabSign = useSharedValue(1);
+
+  // Umbral proporcional al ancho de la tarjeta (no px fijos), para que el
+  // gesto pida el mismo esfuerzo relativo en cualquier tamaño de pantalla.
+  const swipeThreshold = cardWidth * SWIPE_RATIO;
 
   const next = useCallback(() => setPets((current) => current.slice(1)), []);
 
   const connect = useCallback(() => {
     if (!currentPet) return;
     sendConnectionRequest(currentPet);
+    setLastDismissed(currentPet);
     setNotice({
       title: 'Solicitud enviada',
       body: `El tutor de ${currentPet.name} recibió tu solicitud. El chat se habilitará únicamente si la acepta.`,
     });
     next();
   }, [currentPet, next, sendConnectionRequest]);
+
+  const pass = useCallback(() => {
+    if (currentPet) setLastDismissed(currentPet);
+    next();
+  }, [currentPet, next]);
+
+  const undo = useCallback(() => {
+    if (!lastDismissed) return;
+    setPets((current) => (current.some((p) => p.id === lastDismissed.id) ? current : [lastDismissed, ...current]));
+    setLastDismissed(null);
+  }, [lastDismissed]);
 
   const reload = async () => {
     setLoading(true);
@@ -69,20 +94,24 @@ export function DiscoveryScreen() {
 
   const handleSwiped = useCallback((direction: 'left' | 'right') => {
     if (direction === 'right') connect();
-    else next();
+    else pass();
     translateX.value = 0;
     translateY.value = 0;
-  }, [connect, next, translateX, translateY]);
+  }, [connect, pass, translateX, translateY]);
 
   const pan = useMemo(() => Gesture.Pan()
     .enabled(Boolean(currentPet))
+    .onBegin((event) => {
+      // event.y es relativo a la tarjeta: define el pivote de la rotación.
+      grabSign.value = event.y > cardHeight / 2 ? -1 : 1;
+    })
     .onUpdate((event) => {
       translateX.value = event.translationX;
       translateY.value = event.translationY * 0.4;
     })
     .onEnd((event) => {
-      const shouldSwipeRight = event.translationX > SWIPE_THRESHOLD || event.velocityX > SWIPE_VELOCITY;
-      const shouldSwipeLeft = event.translationX < -SWIPE_THRESHOLD || event.velocityX < -SWIPE_VELOCITY;
+      const shouldSwipeRight = event.translationX > swipeThreshold || event.velocityX > SWIPE_VELOCITY;
+      const shouldSwipeLeft = event.translationX < -swipeThreshold || event.velocityX < -SWIPE_VELOCITY;
 
       if (shouldSwipeRight) {
         translateX.value = withTiming(width * 1.4, { duration: 260 }, () => runOnJS(handleSwiped)('right'));
@@ -92,15 +121,24 @@ export function DiscoveryScreen() {
         translateX.value = withSpring(0, { damping: 18, stiffness: 220 });
         translateY.value = withSpring(0, { damping: 18, stiffness: 220 });
       }
-    }), [currentPet, handleSwiped, translateX, translateY, width]);
+    }), [cardHeight, currentPet, grabSign, handleSwiped, swipeThreshold, translateX, translateY, width]);
 
   const cardAnimatedStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: translateX.value },
       { translateY: translateY.value },
-      { rotate: `${interpolate(translateX.value, [-300, 300], [-16, 16])}deg` },
+      { rotate: `${interpolate(translateX.value, [-300, 300], [-MAX_ROTATION, MAX_ROTATION]) * grabSign.value}deg` },
     ],
   }));
+
+  // La tarjeta de atrás se acerca conforme la de adelante se aleja.
+  const backdropStyle = useAnimatedStyle(() => {
+    const progress = Math.min(1, Math.abs(translateX.value) / swipeThreshold);
+    return {
+      transform: [{ scale: 0.94 + progress * 0.06 }, { translateY: 10 - progress * 10 }],
+      opacity: 0.6 + progress * 0.4,
+    };
+  });
 
   const likeLabelStyle = useAnimatedStyle(() => ({
     opacity: interpolate(translateX.value, [20, 120], [0, 1], 'clamp'),
@@ -140,7 +178,15 @@ export function DiscoveryScreen() {
           ) : currentPet ? (
             <>
               <View style={[styles.cardStack, { width: cardWidth, height: cardHeight }]}>
-                {pets[1] ? <View style={[styles.backdropCard, StyleSheet.absoluteFill]} /> : null}
+                {pets[1] ? (
+                  <Animated.View style={[styles.backdropCard, StyleSheet.absoluteFill, backdropStyle]}>
+                    <Image
+                      source={{ uri: pets[1].photos[0] ?? fallbackPetPhoto }}
+                      style={[styles.backdropImage, { height: imageHeight }]}
+                      resizeMode="cover"
+                    />
+                  </Animated.View>
+                ) : null}
                 <GestureDetector gesture={pan}>
                   <Animated.View style={[styles.card, StyleSheet.absoluteFill, cardAnimatedStyle]}>
                     <Animated.View style={[styles.swipeLabel, styles.likeLabel, likeLabelStyle]}>
@@ -167,10 +213,20 @@ export function DiscoveryScreen() {
                 </GestureDetector>
               </View>
               <View style={styles.actions}>
-                <Action icon="close" label="Pasar" theme={theme} onPress={next} />
+                <Action icon="close" label="Pasar" theme={theme} onPress={pass} />
                 <Action icon="chatbubble-ellipses" label="Conectar" theme={theme} primary disabled={pendingPetIds.includes(currentPet.id)} onPress={connect} />
-                <Action icon="bookmark" label="Guardar" theme={theme} onPress={() => { setNotice({ title: 'Perfil guardado', body: `Podrás volver a ver a ${currentPet.name} desde tus favoritos.` }); next(); }} />
+                <Action icon="bookmark" label="Guardar" theme={theme} onPress={() => { setNotice({ title: 'Perfil guardado', body: `Podrás volver a ver a ${currentPet.name} desde tus favoritos.` }); pass(); }} />
               </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Deshacer el último swipe"
+                disabled={!lastDismissed}
+                onPress={undo}
+                style={({ pressed }) => [styles.undoButton, { opacity: !lastDismissed ? 0.35 : pressed ? 0.7 : 1 }]}
+              >
+                <Ionicons name="arrow-undo" size={14} color={theme.colors.textSecondary} />
+                <Text style={styles.undoText}>Deshacer</Text>
+              </Pressable>
             </>
           ) : (
             <View style={styles.center}><Text style={styles.emptyTitle}>Ya viste todos los perfiles</Text><Text style={styles.muted}>Volvé más tarde o ajustá la distancia en Configuración.</Text><PrimaryButton label="Recargar" icon="refresh" onPress={reload} /></View>
@@ -223,8 +279,20 @@ function createStyles(theme: AppTheme) {
     main: { flex: 1, alignItems: 'center', justifyContent: 'space-between', paddingBottom: theme.spacing.md },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: theme.spacing.md, paddingHorizontal: theme.spacing.xl },
     cardStack: { position: 'relative' },
-    backdropCard: { borderRadius: 28, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border, transform: [{ scale: 0.94 }, { translateY: 10 }], opacity: 0.6 },
+    // transform y opacity los controla backdropStyle (animado con el arrastre).
+    backdropCard: { borderRadius: 28, overflow: 'hidden', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border },
     card: { borderRadius: 28, overflow: 'hidden', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.borderStrong, elevation: 7, shadowColor: theme.colors.shadow, shadowOpacity: 0.18, shadowRadius: 24, shadowOffset: { width: 0, height: 14 } },
+    backdropImage: { width: '100%', opacity: 0.55 },
+    undoButton: {
+      flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center',
+      marginTop: theme.spacing.sm, paddingVertical: 7, paddingHorizontal: 14,
+      borderRadius: 999, borderWidth: 1, borderColor: theme.colors.border,
+      backgroundColor: theme.colors.surface,
+    },
+    undoText: {
+      color: theme.colors.textSecondary, fontSize: 11, fontWeight: '800',
+      textTransform: 'uppercase', letterSpacing: 0.5,
+    },
     glare: { position: 'absolute', top: -40, left: 0, width: '55%', height: '160%', zIndex: 5 },
     swipeLabel: { position: 'absolute', top: 24, zIndex: 20 },
     likeLabel: { left: 20 },

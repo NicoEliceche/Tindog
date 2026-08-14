@@ -1,4 +1,5 @@
 // src/features/discovery/screens/DiscoveryScreenStyled.ts
+import { motion } from 'framer-motion';
 import styled from 'styled-components';
 
 export const Page = styled.section`
@@ -232,14 +233,48 @@ export const CardStack = styled.div`
   }
 `;
 
-export const BackdropCard = styled.div`
+export const UndoButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: ${({ theme }) => theme.spacing[2]};
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid ${({ theme }) => theme.color.border};
+  background: ${({ theme }) => theme.color.surface};
+  color: ${({ theme }) => theme.color.textSecondary};
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: box-shadow 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    color: ${({ theme }) => theme.color.primary};
+    border-color: ${({ theme }) => theme.color.borderFocus};
+    box-shadow: ${({ theme }) => theme.glow.subtle};
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+`;
+
+export const BackdropCard = styled(motion.div)`
   position: absolute;
   inset: 0;
   border-radius: 28px;
+  overflow: hidden;
   background: ${({ theme }) => theme.color.surface};
   border: 1px solid ${({ theme }) => theme.color.border};
-  transform: scale(0.94) translateY(10px);
-  opacity: 0.6;
+
+  img {
+    width: 100%;
+    height: 67%;
+    object-fit: cover;
+    opacity: 0.55;
+  }
 `;
 
 export const Actions = styled.div`
