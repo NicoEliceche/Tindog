@@ -1,13 +1,12 @@
 'use client';
 
 import { useWebApp } from '@core/providers/WebAppProvider';
-import { withPublicBasePath } from '@core/routing/publicPath';
-import { Bookmark, Check, MessageCircle, RotateCcw, Undo2, X } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { Bookmark, Loader2, MessageCircle, Undo2, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Pet } from '@core/types/pet.types';
 import { SwipeCard, type SwipeDirection } from '../components/SwipeCard';
 import {
-  Page, Shell, Header, Brand, BrandCopy, Logo, Avatar, DesktopLayout, SidePanel, SidePanelTitle,
+  Page, Shell, Header, Brand, BrandCopy, Avatar, DesktopLayout, SidePanel, SidePanelTitle,
   NextPreviewCard, StatsCard, CenterColumn, CardStack, BackdropCard, UndoButton, Actions, Action,
   Empty, Backdrop, Modal,
 } from './DiscoveryScreenStyled';
@@ -49,6 +48,22 @@ export function DiscoveryScreen() {
     setLastDismissed(null);
   }, [lastDismissed, restorePet]);
 
+  // Cuando se acaban los perfiles cargamos la siguiente tanda sola, como
+  // haría la app contra el backend real. En dev el mock devuelve el mismo
+  // set, así que el scroll es infinito y nunca queda una pantalla muerta.
+  // El ref evita relanzar la carga mientras una ya está en curso.
+  const loadingMore = useRef(false);
+  useEffect(() => {
+    if (discoveryPets.length > 0 || loadingMore.current) return;
+    loadingMore.current = true;
+    const timer = window.setTimeout(() => {
+      resetDiscovery();
+      setLastDismissed(null);
+      loadingMore.current = false;
+    }, 650);
+    return () => window.clearTimeout(timer);
+  }, [discoveryPets.length, resetDiscovery]);
+
   // La carta de atrás se acerca a medida que la de adelante se aleja.
   const stackProgress = Math.min(1, Math.abs(dragProgress));
 
@@ -58,7 +73,6 @@ export function DiscoveryScreen() {
         <Header>
           <span />
           <Brand>
-            <Logo src={withPublicBasePath('/assets/tindog_patita_logo.png')} alt="Tindog" />
             <BrandCopy>
               <span>TINDOG</span>
               <small>ENCONTRÁ SU PAREJA IDEAL</small>
@@ -113,10 +127,9 @@ export function DiscoveryScreen() {
             ) : (
               <Empty>
                 <div>
-                  <Check size={46} />
-                  <h2>Ya viste todos los perfiles</h2>
-                  <p>Volvé más tarde o ajustá tus filtros.</p>
-                  <button onClick={resetDiscovery}><RotateCcw size={16} /> Recargar perfiles</button>
+                  <Loader2 size={40} className="spin" />
+                  <h2>Buscando más perfiles</h2>
+                  <p>Estamos trayendo perros compatibles cerca tuyo…</p>
                 </div>
               </Empty>
             )}

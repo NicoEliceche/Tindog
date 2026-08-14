@@ -153,7 +153,10 @@ export function SwipeCard({ pet, onSwipe, onDragProgress }: SwipeCardProps) {
         // El pivote sigue al dedo en el eje vertical.
         originY,
       }}
-      drag={reduceMotion ? false : true}
+      // El arrastre es la forma principal de usar la pantalla, así que se
+      // mantiene siempre. `prefers-reduced-motion` sólo apaga los adornos
+      // (tilt, chispas, duraciones), nunca la interacción en sí.
+      drag
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
       dragElastic={{ left: 1, right: 1, top: 0.35, bottom: 0.35 }}
       onDragStart={handleDragStart}

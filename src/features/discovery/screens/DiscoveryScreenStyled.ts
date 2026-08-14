@@ -1,6 +1,6 @@
 // src/features/discovery/screens/DiscoveryScreenStyled.ts
 import { motion } from 'framer-motion';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 
 export const Page = styled.section`
   min-height: 100dvh;
@@ -61,10 +61,7 @@ export const Brand = styled.div`
   }
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    flex-direction: row;
-    align-items: center;
     justify-content: center;
-    gap: ${({ theme }) => theme.spacing[5]};
   }
 `;
 
@@ -74,7 +71,7 @@ export const BrandCopy = styled.div`
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 2px;
 
     span {
@@ -87,21 +84,6 @@ export const BrandCopy = styled.div`
       letter-spacing: 1.6px;
       font-weight: 800;
     }
-  }
-`;
-
-export const Logo = styled.img`
-  width: 50px;
-  height: 50px;
-  border-radius: 15px;
-  object-fit: cover;
-  border: 1px solid ${({ theme }) => theme.color.border};
-
-  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    width: 84px;
-    height: 84px;
-    border-radius: 22px;
-    box-shadow: ${({ theme }) => theme.elevation.glow};
   }
 `;
 
@@ -325,6 +307,10 @@ export const Action = styled.button<{ $primary?: boolean }>`
   }
 `;
 
+const spin = keyframes`
+  to { transform: rotate(360deg); }
+`;
+
 export const Empty = styled.div`
   flex: 1;
   width: 100%;
@@ -333,10 +319,25 @@ export const Empty = styled.div`
   text-align: center;
   color: ${({ theme }) => theme.color.textSecondary};
 
-  button {
-    margin-top: 14px;
+  h2 {
+    margin-top: 12px;
+    color: ${({ theme }) => theme.color.text};
+    font-size: 1.15rem;
+    font-weight: 800;
+  }
+
+  p {
+    margin-top: 4px;
+    font-size: 0.85rem;
+  }
+
+  .spin {
     color: ${({ theme }) => theme.color.primary};
-    font-weight: 900;
+    animation: ${spin} 1s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spin { animation-duration: 2.4s; }
   }
 `;
 
