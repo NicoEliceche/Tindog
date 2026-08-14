@@ -11,18 +11,39 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  email         String         @unique
-  name          String?
-  avatarUrl     String?
-  googleSub     String?        @unique
-  authAccounts  AuthAccount[]
-  sessions      AuthSession[]
-  pets          Pet[]
-  conversations Conversation[]
-  messages      Message[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id                         String                   @id @default(cuid())
+  email                      String                   @unique
+  name                       String?
+  avatarUrl                  String?
+  googleSub                  String?                  @unique
+  authAccounts               AuthAccount[]
+  sessions                   AuthSession[]
+  pets                       Pet[]
+  conversations              Conversation[]
+  messages                   Message[]
+  sentConnectionRequests     ConnectionRequest[]      @relation("ConnectionRequestSender")
+  receivedConnectionRequests ConnectionRequest[]      @relation("ConnectionRequestReceiver")
+  appointmentParticipants    AppointmentParticipant[]
+  safeLocationReviews        SafeLocationReview[]
+  safetyCheckIns             SafetyCheckIn[]
+  pushDevices                PushDevice[]
+  settings                   UserSettings?
+  blocksCreated              UserBlock[]              @relation("BlockCreator")
+  blocksReceived             UserBlock[]              @relation("BlockedUser")
+  reportsCreated             Report[]                 @relation("ReportCreator")
+  reportsReceived            Report[]                 @relation("ReportedUser")
+  mediaAssets                MediaAsset[]
+  moderationCases            ModerationCase[]         @relation("ModerationSubject")
+  moderationAppeals          ModerationAppeal[]
+  pushJobs                   PushJob[]
+  dataExportJobs             DataExportJob[]
+  deletionRequest            AccountDeletionRequest?
+  role                       String                   @default("user")
+  status                     String                   @default("active")
+  deletionScheduledAt        DateTime?
+  deletedAt                  DateTime?
+  createdAt                  DateTime                 @default(now())
+  updatedAt                  DateTime                 @updatedAt
 }
 
 model AuthAccount {
@@ -38,14 +59,15 @@ model AuthAccount {
 }
 
 model AuthSession {
-  id         String   @id @default(cuid())
-  tokenHash  String   @unique
-  platform   String   @default("web")
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
-  expiresAt  DateTime
-  lastUsedAt DateTime @default(now())
-  createdAt  DateTime @default(now())
+  id               String    @id @default(cuid())
+  tokenHash        String    @unique
+  platform         String    @default("web")
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String
+  expiresAt        DateTime
+  lastUsedAt       DateTime  @default(now())
+  stepUpVerifiedAt DateTime?
+  createdAt        DateTime  @default(now())
 
   @@index([userId, platform])
 }
@@ -65,11 +87,14 @@ model Pet {
   paper_types        String[]
   is_competitor      Boolean  @default(false)
 
-  owner         User                @relation(fields: [ownerId], references: [id])
-  ownerId       String
-  competitions  Competition[]
-  healthRecords HealthRecord[]
-  breedingPrefs BreedingPreference?
+  owner                   User                     @relation(fields: [ownerId], references: [id])
+  ownerId                 String
+  competitions            Competition[]
+  healthRecords           HealthRecord[]
+  breedingPrefs           BreedingPreference?
+  connectionRequests      ConnectionRequest[]
+  appointmentParticipants AppointmentParticipant[]
+  mediaAssets             MediaAsset[]
 
   fatherId              String?
   motherId              String?
@@ -86,12 +111,15 @@ model Pet {
 }
 
 model Conversation {
-  id         String              @id @default(cuid())
-  users      User[]
-  messages   Message[]
-  agreements BreedingAgreement[]
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
+  id                String              @id @default(cuid())
+  users             User[]
+  messages          Message[]
+  agreements        BreedingAgreement[]
+  connectionRequest ConnectionRequest?
+  appointments      Appointment[]
+  reports           Report[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
 }
 
 model BreedingAgreement {
@@ -109,22 +137,31 @@ model BreedingAgreement {
 }
 
 model Appointment {
-  id          String            @id @default(cuid())
-  agreement   BreedingAgreement @relation(fields: [agreementId], references: [id])
-  agreementId String            @unique
-  petIds      String[]
-  ownerIds    String[]
-  location    Location          @relation(fields: [locationId], references: [id])
-  locationId  String
-  datetime    DateTime
-  status      String // 'scheduled', 'completed', 'cancelled'
-  notes       String?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id             String                   @id @default(cuid())
+  agreement      BreedingAgreement?       @relation(fields: [agreementId], references: [id], onDelete: Restrict)
+  agreementId    String?                  @unique
+  conversation   Conversation?            @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  conversationId String?
+  petIds         String[]
+  ownerIds       String[]
+  location       Location                 @relation(fields: [locationId], references: [id])
+  locationId     String
+  datetime       DateTime
+  endAt          DateTime?
+  status         String // 'scheduled', 'completed', 'cancelled'
+  notes          String?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  participants   AppointmentParticipant[]
+  reviews        SafeLocationReview[]
+  safetyCheckIns SafetyCheckIn[]
+
+  @@index([conversationId, status])
+  @@index([datetime, status])
 }
 
 model Location {
-  id           String        @id @default(cuid())
+  id           String               @id @default(cuid())
   name         String
   address      String
   placeId      String
@@ -132,16 +169,300 @@ model Location {
   lat          Float
   lng          Float
   appointments Appointment[]
+  reviews      SafeLocationReview[]
+  isActive     Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  @@index([placeId])
 }
 
 model Message {
-  id             String       @id @default(cuid())
-  text           String
-  sender         User         @relation(fields: [senderId], references: [id])
+  id               String       @id @default(cuid())
+  text             String
+  sender           User         @relation(fields: [senderId], references: [id])
+  senderId         String
+  conversation     Conversation @relation(fields: [conversationId], references: [id])
+  conversationId   String
+  kind             String       @default("text")
+  readAt           DateTime?
+  deletedAt        DateTime?
+  moderationStatus String       @default("approved")
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([conversationId, createdAt])
+}
+
+model ConnectionRequest {
+  id             String        @id @default(cuid())
+  sender         User          @relation("ConnectionRequestSender", fields: [senderId], references: [id], onDelete: Cascade)
   senderId       String
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
-  conversationId String
-  createdAt      DateTime     @default(now())
+  receiver       User          @relation("ConnectionRequestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiverId     String
+  pet            Pet           @relation(fields: [petId], references: [id], onDelete: Cascade)
+  petId          String
+  conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  conversationId String?       @unique
+  status         String        @default("pending")
+  createdAt      DateTime      @default(now())
+  respondedAt    DateTime?
+
+  @@index([receiverId, status, createdAt])
+  @@index([senderId, status, createdAt])
+}
+
+model AppointmentParticipant {
+  id            String      @id @default(cuid())
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  appointmentId String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  pet           Pet?        @relation(fields: [petId], references: [id], onDelete: SetNull)
+  petId         String?
+
+  @@unique([appointmentId, userId])
+  @@index([userId])
+}
+
+model SafeLocationReview {
+  id                 String      @id @default(cuid())
+  location           Location    @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId         String
+  appointment        Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  appointmentId      String
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId             String
+  rating             Int
+  comment            String
+  verifiedAttendance Boolean     @default(false)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  @@unique([appointmentId, userId])
+  @@index([locationId, createdAt])
+}
+
+model SafetyCheckIn {
+  id            String      @id @default(cuid())
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  appointmentId String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  checkedInAt   DateTime?
+  checkedOutAt  DateTime?
+  status        String      @default("pending")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([appointmentId, userId])
+}
+
+model UserSettings {
+  id                  String   @id @default(cuid())
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              String   @unique
+  themeMode           String   @default("dark")
+  discoveryEnabled    Boolean  @default(true)
+  showDistance        Boolean  @default(true)
+  maxDistanceKm       Int      @default(25)
+  showOnlineStatus    Boolean  @default(false)
+  readReceipts        Boolean  @default(true)
+  healthVisibility    String   @default("connections")
+  safetyCheckIns      Boolean  @default(true)
+  lostPetAlerts       Boolean  @default(true)
+  pushMessages        Boolean  @default(true)
+  pushRequests        Boolean  @default(true)
+  pushAppointments    Boolean  @default(true)
+  notificationPreview String   @default("generic")
+  updatedAt           DateTime @updatedAt
+}
+
+model PushDevice {
+  id         String    @id @default(cuid())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  platform   String
+  token      String    @unique
+  createdAt  DateTime  @default(now())
+  lastSeenAt DateTime  @default(now())
+  revokedAt  DateTime?
+
+  @@index([userId, platform, revokedAt])
+}
+
+model UserBlock {
+  id        String   @id @default(cuid())
+  blocker   User     @relation("BlockCreator", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockerId String
+  blocked   User     @relation("BlockedUser", fields: [blockedId], references: [id], onDelete: Cascade)
+  blockedId String
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+}
+
+model Report {
+  id             String          @id @default(cuid())
+  reporter       User            @relation("ReportCreator", fields: [reporterId], references: [id], onDelete: Cascade)
+  reporterId     String
+  reportedUser   User?           @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: SetNull)
+  reportedUserId String?
+  conversation   Conversation?   @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  conversationId String?
+  category       String
+  detail         String
+  status         String          @default("open")
+  priority       String          @default("normal")
+  legalHoldUntil DateTime?
+  moderationCase ModerationCase?
+  createdAt      DateTime        @default(now())
+  resolvedAt     DateTime?
+
+  @@index([status, createdAt])
+  @@index([reportedUserId, createdAt])
+}
+
+model MediaAsset {
+  id               String    @id @default(cuid())
+  owner            User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId          String
+  pet              Pet?      @relation(fields: [petId], references: [id], onDelete: Cascade)
+  petId            String?
+  purpose          String
+  status           String    @default("awaiting_upload")
+  quarantineKey    String    @unique
+  processedKey     String?   @unique
+  publicUrl        String?
+  declaredMime     String
+  detectedMime     String?
+  declaredSize     Int
+  observedSize     Int?
+  checksumSha256   String
+  width            Int?
+  height           Int?
+  moderationLabels String[]
+  rejectionReason  String?
+  retentionUntil   DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([ownerId, status, createdAt])
+  @@index([retentionUntil, status])
+}
+
+model ModerationCase {
+  id                String             @id @default(cuid())
+  subjectUser       User?              @relation("ModerationSubject", fields: [subjectUserId], references: [id], onDelete: SetNull)
+  subjectUserId     String?
+  report            Report?            @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  reportId          String?            @unique
+  targetType        String
+  targetId          String?
+  source            String
+  status            String             @default("open")
+  severity          String             @default("medium")
+  categories        String[]
+  evidence          Json?
+  provider          String?
+  providerVersion   String?
+  automatedDecision String?
+  legalHoldUntil    DateTime?
+  resolvedAt        DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  appeals           ModerationAppeal[]
+
+  @@index([status, severity, createdAt])
+  @@index([subjectUserId, createdAt])
+  @@index([targetType, targetId])
+}
+
+model ModerationAppeal {
+  id               String         @id @default(cuid())
+  moderationCase   ModerationCase @relation(fields: [moderationCaseId], references: [id], onDelete: Cascade)
+  moderationCaseId String
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String
+  reason           String
+  status           String         @default("pending")
+  reviewedAt       DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@unique([moderationCaseId, userId])
+  @@index([status, createdAt])
+}
+
+model PushJob {
+  id        String    @id @default(cuid())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  category  String
+  payload   Json
+  status    String    @default("pending")
+  attempts  Int       @default(0)
+  notBefore DateTime  @default(now())
+  lockedAt  DateTime?
+  sentAt    DateTime?
+  lastError String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([status, notBefore, createdAt])
+  @@index([userId, status])
+}
+
+model DataExportJob {
+  id          String    @id @default(cuid())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  status      String    @default("pending")
+  objectKey   String?   @unique
+  expiresAt   DateTime?
+  completedAt DateTime?
+  lastError   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId, status, createdAt])
+  @@index([expiresAt, status])
+}
+
+model AccountDeletionRequest {
+  id          String    @id @default(cuid())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String    @unique
+  status      String    @default("scheduled")
+  scheduledAt DateTime
+  requestedAt DateTime  @default(now())
+  cancelledAt DateTime?
+  completedAt DateTime?
+  reason      String?
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status, scheduledAt])
+}
+
+model SecurityAuditEvent {
+  id            String   @id @default(cuid())
+  occurredAt    DateTime @default(now())
+  actorUserId   String?
+  sessionId     String?
+  action        String
+  outcome       String
+  targetType    String?
+  targetId      String?
+  requestId     String?
+  ipHash        String?
+  userAgentHash String?
+  metadata      Json?
+  eventHash     String   @unique
+
+  @@index([occurredAt])
+  @@index([actorUserId, occurredAt])
+  @@index([action, outcome, occurredAt])
 }
 
 model Competition {

@@ -1,0 +1,1 @@
+- [expo-dev-client](C:\Nico\Workspaces\Tindog\Skills\expo-dev-client)

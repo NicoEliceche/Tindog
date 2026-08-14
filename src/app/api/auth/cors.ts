@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-function allowedOrigins(): string[] {
+export function getAllowedAuthOrigins(): string[] {
   return [
     process.env.CORS_ORIGIN,
     process.env.NEXT_PUBLIC_WEB_ORIGIN,
@@ -13,19 +13,22 @@ function allowedOrigins(): string[] {
     .filter(Boolean);
 }
 
-export function isAllowedAuthOrigin(request: NextRequest): boolean {
+export function withAuthCors(
+  response: NextResponse,
+  request: NextRequest,
+  methods = 'GET, POST, OPTIONS',
+): NextResponse {
   const origin = request.headers.get('origin');
-  return !origin || allowedOrigins().includes(origin);
-}
+  const allowedOrigins = getAllowedAuthOrigins();
 
-export function withAuthCors(response: NextResponse, request: NextRequest): NextResponse {
-  const origin = request.headers.get('origin');
-  if (origin && allowedOrigins().includes(origin)) {
+  if (origin && allowedOrigins.includes(origin)) {
     response.headers.set('Access-Control-Allow-Origin', origin);
     response.headers.set('Vary', 'Origin');
   }
+
   response.headers.set('Access-Control-Allow-Credentials', 'true');
   response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  response.headers.set('Access-Control-Allow-Methods', methods);
+
   return response;
 }

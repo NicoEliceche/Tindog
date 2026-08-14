@@ -1,4 +1,6 @@
 // src/features/auth/types/auth.types.ts
+import type { AuthPlatform } from '@core/types/auth.types';
+
 export interface AuthState {
   user: {
     id: string;
@@ -13,4 +15,5 @@ export interface AuthState {
 export interface LoginResponse {
   token: string;
   user: AuthState['user'];
+  platform: AuthPlatform;
 }

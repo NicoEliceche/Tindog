@@ -1,14 +1,14 @@
 # Tindog Mobile
 
-Expo/React Native app for testing Tindog on Android and iOS through Expo Go.
+Expo/React Native app for Tindog on Android and iOS using a custom development build.
 
-This project targets Expo SDK 54 because Expo recommends SDK 54 for testing with Expo Go on physical devices during the SDK 57 transition period.
+This project currently targets Expo SDK 57. Google Sign-In and SecureStore require native modules, so Expo Go is not a compatible runtime for the authenticated app.
 
 ## Run
 
 ```bash
 cd apps/mobile
-npm run start:lan
+npm run start:dev-client
 ```
 
 If the phone cannot connect over the same Wi-Fi network:
@@ -17,16 +17,34 @@ If the phone cannot connect over the same Wi-Fi network:
 npm run start:tunnel
 ```
 
-## Android With Expo Go
+## First Android development build
 
-1. Connect the phone and this PC to the same Wi-Fi network.
-2. Open Expo Go on Android.
-3. Scan the QR code printed by Expo CLI, or enter the LAN URL manually.
+Create an installable APK with EAS:
 
-Current LAN server used during setup:
-
-```text
-exp://192.168.1.25:8083
+```bash
+npm run build:android:dev
 ```
 
-If the PC IP changes, restart `npm run start:lan` and use the new QR/URL from Expo CLI.
+Install the APK returned by EAS on the phone. Rebuild it whenever a native dependency or `app.json` changes.
+
+## Run on Android
+
+1. Connect the phone and this PC to the same Wi-Fi network.
+2. Run `npm run start:dev-client` or the root `restart.bat`.
+3. Open the installed **Tindog** development app, not Expo Go.
+4. Scan the development-client QR or enter the URL shown by Metro.
+
+An `exp://...` URL opens Expo Go and cannot load `RNGoogleSignin`. The development-client QR uses the `tindog` application scheme.
+
+## Google OAuth
+
+Local variables live in `apps/mobile/.env`:
+
+```text
+EXPO_PUBLIC_API_URL
+EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID
+EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID
+```
+
+The same public variables must exist in the EAS `development`, `preview`, and `production` environments before creating cloud builds.

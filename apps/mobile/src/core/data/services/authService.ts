@@ -1,12 +1,96 @@
 import type { AuthResponse } from '../../types/auth.types';
+import {
+  clearStoredAuthToken,
+  getStoredAuthToken,
+  storeAuthToken,
+} from './authTokenStorage';
+import { Platform } from 'react-native';
 
 const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '');
+
+function getAuthPlatform(): AuthResponse['platform'] {
+  if (Platform.OS === 'android' || Platform.OS === 'ios' || Platform.OS === 'web') {
+    return Platform.OS;
+  }
+
+  return 'web';
+}
+
+type MeResponse = {
+  user: AuthResponse['user'] | null;
+  platform: AuthResponse['platform'];
+};
+
+export class GoogleAuthApiFailure extends Error {
+  constructor(
+    message: string,
+    readonly status?: number,
+    readonly serverMessage?: string,
+  ) {
+    super(message);
+    this.name = 'GoogleAuthApiFailure';
+  }
+}
+
+function googleAuthFailureMessage(status: number, serverMessage?: string): string {
+  if (status === 401) {
+    return 'Google entregó la cuenta, pero el servidor rechazó la credencial (API 401).';
+  }
+
+  if (status === 409) {
+    return 'Ese email ya está vinculado a otra identidad de Google (API 409).';
+  }
+
+  if (status === 429) {
+    return 'Hubo demasiados intentos. Esperá un minuto y volvé a probar (API 429).';
+  }
+
+  if (status === 503) {
+    return 'El servicio de seguridad del login no está disponible (API 503).';
+  }
+
+  if (serverMessage?.includes('client IDs are not configured')) {
+    return 'El servidor no tiene configurados los clientes OAuth de Google (API 500).';
+  }
+
+  return `El servidor no pudo completar el acceso con Google (API ${status}).`;
+}
+
+async function validateStoredAuthToken(
+  token: string,
+): Promise<{ user: AuthResponse['user'] | null; platform: AuthResponse['platform']; unauthorized: boolean }> {
+  if (!apiUrl) {
+    return { user: null, platform: 'web', unauthorized: false };
+  }
+
+  const response = await fetch(`${apiUrl}/api/auth/me`, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    credentials: 'include',
+    cache: 'no-store',
+  });
+
+  if (response.status === 401) {
+    return { user: null, platform: 'web', unauthorized: true };
+  }
+
+  if (!response.ok) {
+    throw new Error(`Session validation failed with status ${response.status}`);
+  }
+
+  const data = (await response.json()) as MeResponse;
+  return { user: data.user, platform: data.platform, unauthorized: false };
+}
 
 export async function loginWithGoogleIdToken(idToken: string): Promise<AuthResponse> {
   if (!apiUrl) {
     throw new Error('EXPO_PUBLIC_API_URL is not configured');
   }
 
+  const platform = getAuthPlatform();
   const response = await fetch(`${apiUrl}/api/auth/google`, {
     method: 'POST',
     headers: {
@@ -14,13 +98,93 @@ export async function loginWithGoogleIdToken(idToken: string): Promise<AuthRespo
     },
     body: JSON.stringify({
       idToken,
-      platform: 'mobile',
+      platform,
     }),
   });
 
   if (!response.ok) {
-    throw new Error(`Google login failed with ${response.status}`);
+    const body = (await response.json().catch(() => null)) as { error?: string } | null;
+    console.warn('[auth/google/api] Login request rejected', {
+      status: response.status,
+      serverMessage: body?.error ?? 'No response body',
+      platform,
+    });
+    throw new GoogleAuthApiFailure(
+      googleAuthFailureMessage(response.status, body?.error),
+      response.status,
+      body?.error,
+    );
   }
 
-  return response.json() as Promise<AuthResponse>;
+  const auth = (await response.json()) as AuthResponse;
+
+  if (auth.platform !== platform) {
+    console.warn('[auth/google/api] Invalid session platform', {
+      expectedPlatform: platform,
+      receivedPlatform: auth.platform ?? 'missing',
+    });
+    throw new GoogleAuthApiFailure(
+      'El servidor todavía usa una versión anterior y no identificó la sesión como Android/iOS.',
+      response.status,
+      'Invalid or missing session platform',
+    );
+  }
+
+  await storeAuthToken(auth.token);
+  return auth;
+}
+
+export async function restoreAuthSession(): Promise<AuthResponse | null> {
+  const token = await getStoredAuthToken();
+
+  if (!token && Platform.OS !== 'web') {
+    return null;
+  }
+
+  try {
+    const { user, platform, unauthorized } = await validateStoredAuthToken(token ?? '');
+
+    if (!user || platform !== getAuthPlatform()) {
+      if (unauthorized) {
+        await clearStoredAuthToken();
+      }
+
+      if (platform !== getAuthPlatform()) {
+        await clearStoredAuthToken();
+      }
+
+      return null;
+    }
+
+    return {
+      token: token ?? '',
+      user,
+      platform,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function logoutCurrentAuthSession(): Promise<void> {
+  const token = await getStoredAuthToken();
+
+  if (!token && Platform.OS !== 'web') {
+    await clearStoredAuthToken();
+    return;
+  }
+
+  if (apiUrl) {
+    await fetch(`${apiUrl}/api/auth/logout`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+      cache: 'no-store',
+    }).catch(() => undefined);
+  }
+
+  await clearStoredAuthToken();
 }

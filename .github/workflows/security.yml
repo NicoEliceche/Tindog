@@ -1,0 +1,93 @@
+name: Security gates
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  schedule:
+    - cron: '23 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  security-quality:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: tindog
+          POSTGRES_PASSWORD: tindog_ci_password
+          POSTGRES_DB: tindog
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tindog"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://tindog:tindog_ci_password@localhost:5432/tindog
+      DIRECT_URL: postgresql://tindog:tindog_ci_password@localhost:5432/tindog
+      JWT_SECRET: ci-only-jwt-secret-with-at-least-32-bytes
+      AUDIT_HASH_SECRET: ci-only-audit-secret-with-at-least-32-bytes
+      MODERATION_EVIDENCE_KEY: Y2ktb25seS0zMi1ieXRlLWV2aWRlbmNlLWtleSEhISE=
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install web and API dependencies
+        run: npm ci --include=dev
+      - name: Install mobile dependencies
+        working-directory: apps/mobile
+        run: npm ci
+      - name: Validate and apply migrations in an isolated database
+        run: |
+          npx prisma validate
+          npx prisma generate
+          npx prisma migrate deploy
+          npx prisma migrate status
+      - name: Static checks and unit tests
+        run: |
+          npm run security:check
+          npm run lint
+          npx tsc --noEmit
+          npm test
+      - name: Mobile checks
+        working-directory: apps/mobile
+        run: |
+          npx expo-doctor
+          npx tsc --noEmit
+      - name: Production dependency audit
+        run: |
+          npm audit --omit=dev --audit-level=high
+          npm --prefix apps/mobile audit --omit=dev --audit-level=high
+      - name: Production build
+        run: npm run build
+
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+
+  codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v4

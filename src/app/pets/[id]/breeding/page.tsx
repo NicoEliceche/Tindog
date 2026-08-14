@@ -1,7 +1,7 @@
 import { BreedingDashboardScreen } from '@/features/pets/screens/BreedingDashboardScreen';
 
 export function generateStaticParams() {
-  return [{ id: 'mine-1' }, { id: 'mine-2' }, { id: '1' }, { id: '2' }, { id: '3' }];
+  return [{ id: 'firulais' }, { id: 'mora' }, { id: 'mine-1' }, { id: 'mine-2' }];
 }
 
 export default async function BreedingPage({ params }: { params: Promise<{ id: string }> }) {

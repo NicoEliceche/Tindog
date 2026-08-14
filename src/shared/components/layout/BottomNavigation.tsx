@@ -1,97 +1,32 @@
-// src/shared/components/layout/BottomNavigation.tsx
 'use client';
 
-import React from 'react';
-import styled from 'styled-components';
 import { usePathname, useRouter } from 'next/navigation';
-import { Search, Heart, Calendar, Dog, User } from 'lucide-react';
+import styled from 'styled-components';
+import { NAV_ITEMS, isNavHidden } from './navigation.config';
 
-const NavWrapper = styled.nav`
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 72px;
-  background: white;
-  border-top: 1px solid ${({ theme }) => theme.color.border};
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  padding-bottom: env(safe-area-inset-bottom);
-  z-index: 1000;
-  width: 100%;
-
+const Nav = styled.nav`
+  position: fixed; z-index: 1000; left: 0; right: 0; bottom: 0;
+  min-height: calc(64px + env(safe-area-inset-bottom)); padding: 6px 6px env(safe-area-inset-bottom);
+  display: flex; align-items: flex-start; justify-content: space-around;
+  background: ${({ theme }) => theme.color.glass}; border-top: 1px solid ${({ theme }) => theme.color.border}; backdrop-filter: blur(18px);
   @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
-    top: 0;
-    bottom: auto;
-    border-top: none;
-    border-bottom: 1px solid ${({ theme }) => theme.color.border};
-    justify-content: center;
-    gap: 3rem;
-    
-    /* Centrado alineado con el MainContent */
-    max-width: 1200px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    top: 0; bottom: auto; left: 50%; right: auto; transform: translateX(-50%); width: min(100%, 1200px); min-height: 70px; padding: 8px 24px;
+    align-items: center; justify-content: center; gap: 18px; border-top: 0; border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  }
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    display: none;
   }
 `;
-
-const NavItem = styled.button<{ $active?: boolean }>`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  color: ${({ theme, $active }) => $active ? theme.color.primary : theme.color.textSecondary};
-  transition: all 0.3s ease;
-  padding: 0 1rem;
-
-  span {
-    font-size: 11px;
-    font-weight: ${({ $active }) => $active ? 'bold' : '500'};
-  }
-
-  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
-    flex-direction: row;
-    gap: 8px;
-    padding: 0.5rem 1.5rem;
-    border-radius: ${({ theme }) => theme.radius.full};
-    background: ${({ theme, $active }) => $active ? theme.color.primaryFaded : 'transparent'};
-  }
+const Item = styled.button<{ $active: boolean }>`
+  min-width: 60px; min-height: 52px; padding: 5px 8px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  color: ${({ theme, $active }) => $active ? theme.color.primary : theme.color.textTertiary};
+  background: ${({ theme, $active }) => $active ? theme.color.primaryFaded : 'transparent'};
+  span { font-size: 10px; font-weight: 800; }
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) { min-width: 132px; flex-direction: row; gap: 8px; span { font-size: 13px; } }
 `;
-
-const NAV_ITEMS = [
-  { icon: Search, label: 'Descubrir', path: '/discovery' },
-  { icon: Heart, label: 'Matches', path: '/matches' },
-  { icon: Calendar, label: 'Agenda', path: '/appointments' },
-  { icon: Dog, label: 'Mascotas', path: '/pets' },
-  { icon: User, label: 'Perfil', path: '/profile' },
-];
 
 export function BottomNavigation() {
-  const pathname = usePathname();
-  const router = useRouter();
-
-  if (pathname === '/' || pathname === '/login') return null;
-
-  return (
-    <NavWrapper>
-      {NAV_ITEMS.map((item) => {
-        const isActive = pathname.startsWith(item.path);
-        const Icon = item.icon;
-        return (
-          <NavItem 
-            key={item.path} 
-            $active={isActive} 
-            onClick={() => router.push(item.path)}
-          >
-            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-            <span>{item.label}</span>
-          </NavItem>
-        );
-      })}
-    </NavWrapper>
-  );
+  const pathname = usePathname(); const router = useRouter();
+  if (isNavHidden(pathname)) return null;
+  return <Nav aria-label="Navegación principal">{NAV_ITEMS.map(({ path, label, Icon }) => { const active = pathname.startsWith(path); return <Item key={path} $active={active} onClick={() => router.push(path)} aria-current={active ? 'page' : undefined}><Icon size={22} strokeWidth={active ? 2.6 : 2} /><span>{label}</span></Item>; })}</Nav>;
 }

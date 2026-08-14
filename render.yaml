@@ -5,7 +5,7 @@ services:
     runtime: node
     plan: free
     region: oregon
-    buildCommand: npm ci --include=dev && npm run db:migrate:deploy && npm run render:build
+    buildCommand: npm ci --include=dev && npm run render:build
     startCommand: npm run start
     healthCheckPath: /api/health
     autoDeploy: true
@@ -16,6 +16,8 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
+      - key: AUDIT_HASH_SECRET
+        generateValue: true
       - key: GOOGLE_WEB_CLIENT_ID
         sync: false
       - key: GOOGLE_ANDROID_CLIENT_ID
@@ -25,4 +27,60 @@ services:
       - key: CORS_ORIGIN
         sync: false
       - key: NEXT_PUBLIC_WEB_ORIGIN
+        sync: false
+      - key: GOOGLE_PLACES_API_KEY
+        sync: false
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: OBJECT_STORAGE_REGION
+        sync: false
+      - key: OBJECT_STORAGE_ENDPOINT
+        sync: false
+      - key: OBJECT_STORAGE_ACCESS_KEY_ID
+        sync: false
+      - key: OBJECT_STORAGE_SECRET_ACCESS_KEY
+        sync: false
+      - key: OBJECT_STORAGE_QUARANTINE_BUCKET
+        sync: false
+      - key: OBJECT_STORAGE_PROCESSED_BUCKET
+        sync: false
+      - key: OBJECT_STORAGE_EXPORT_BUCKET
+        sync: false
+      - key: MEDIA_PUBLIC_BASE_URL
+        sync: false
+      - key: MALWARE_SCANNER_URL
+        sync: false
+      - key: MALWARE_SCANNER_TOKEN
+        sync: false
+      - key: MODERATION_API_URL
+        sync: false
+      - key: MODERATION_API_TOKEN
+        sync: false
+      - key: MODERATION_EVIDENCE_KEY
+        sync: false
+      - key: SECURITY_LOG_SINK_URL
+        sync: false
+      - key: SECURITY_LOG_SINK_TOKEN
+        sync: false
+      - key: SECURITY_ALERT_WEBHOOK_URL
+        sync: false
+      - key: SECURITY_ALERT_WEBHOOK_TOKEN
+        sync: false
+      - key: WORKER_SECRET
+        sync: false
+      - key: ADMIN_API_ACCESS_KEY
+        sync: false
+
+  - type: cron
+    name: tindog-security-workers
+    runtime: node
+    schedule: "*/5 * * * *"
+    buildCommand: npm ci --omit=dev
+    startCommand: node scripts/run-security-workers.mjs
+    envVars:
+      - key: TINDOG_INTERNAL_API_URL
+        sync: false
+      - key: WORKER_SECRET
         sync: false

@@ -1,88 +1,69 @@
-// src/features/appointments/screens/AppointmentListScreen.tsx
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Calendar, MapPin, Plus } from 'lucide-react';
-import { Appointment } from '@core/types/appointment.types';
-import { fetchAppointments } from '@core/data/services/appointmentService';
-import {
-  ScreenWrapper,
-  CalendarCard,
-  AppointmentItem,
-  DateTimeInfo,
-  AppointmentDetails,
-  LocationText,
-  PetTags,
-  PetTag,
-} from './AppointmentListScreenStyled';
+import { effectiveStatus, type WebAppointmentStatus, useWebApp } from '@core/providers/WebAppProvider';
+import { CalendarDays, Check, Clock, MapPin, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Header, Title, AddButton } from '@features/pets/screens/PetListScreenStyled';
+import { useState } from 'react';
+import { WebContent, WebHeading, WebScreen, WebSubtitle } from '@shared/components/layout/WebScreen';
+import { Actions, Card, CardTop, Details, Empty, Grid, Pill, Segment } from './AppointmentListScreenStyled';
+
+const labels: Record<WebAppointmentStatus, string> = { scheduled: 'Agendada', in_progress: 'En progreso', completed: 'Finalizada', cancelled: 'Cancelada' };
 
 export function AppointmentListScreen() {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
-
-  useEffect(() => {
-    fetchAppointments().then(data => {
-      setAppointments(data);
-      setLoading(false);
-    });
-  }, []);
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return {
-      month: date.toLocaleString('default', { month: 'short' }),
-      day: date.getDate(),
-      time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-  };
+  const { appointments, setAppointmentStatus } = useWebApp();
+  const [tab, setTab] = useState<'upcoming' | 'history'>('upcoming');
+  const visible = appointments.filter((item) => (tab === 'upcoming' ? ['scheduled', 'in_progress'].includes(effectiveStatus(item)) : ['completed', 'cancelled'].includes(item.status)));
 
   return (
-    <ScreenWrapper>
-      <Header>
-        <Title>Agenda</Title>
-        <AddButton onClick={() => router.push('/appointments/location')}>
-          <Plus size={20} /> Agendar
-        </AddButton>
-      </Header>
-
-      <CalendarCard>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#636E72' }}>
-          <Calendar size={18} />
-          <span>Próximas citas</span>
+    <WebScreen>
+      <WebContent>
+        <div>
+          <WebHeading>Citas</WebHeading>
+          <WebSubtitle>Encuentros agendados, en curso y anteriores.</WebSubtitle>
         </div>
 
-        {loading ? (
-          <p>Cargando agenda...</p>
-        ) : appointments.length > 0 ? (
-          appointments.map(app => {
-            const { month, day, time } = formatDate(app.datetime);
+        <Segment>
+          <button className={tab === 'upcoming' ? 'active' : ''} onClick={() => setTab('upcoming')}>Próximas</button>
+          <button className={tab === 'history' ? 'active' : ''} onClick={() => setTab('history')}>Historial</button>
+        </Segment>
+
+        <Grid>
+          {visible.map((item) => {
+            const status = effectiveStatus(item);
             return (
-              <AppointmentItem key={app.id}>
-                <DateTimeInfo>
-                  <span>{month}</span>
-                  <span>{day}</span>
-                </DateTimeInfo>
-                <AppointmentDetails>
-                  <LocationText>{app.location.name}</LocationText>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', color: '#636E72' }}>
-                    <MapPin size={12} />
-                    <span>{app.location.address} - {time}</span>
+              <Card key={item.id}>
+                <CardTop>
+                  <div className="icon">{status === 'cancelled' ? <X /> : status === 'completed' ? <Check /> : <CalendarDays />}</div>
+                  <div className="copy">
+                    <h2>{item.petNames.join(' + ')}</h2>
+                    <p>{item.ownerName}</p>
                   </div>
-                  <PetTags>
-                    {/* En un entorno real buscaríamos los nombres de los perros */}
-                    <PetTag>Firulais</PetTag>
-                  </PetTags>
-                </AppointmentDetails>
-              </AppointmentItem>
+                  <Pill $status={status}>{labels[status]}</Pill>
+                </CardTop>
+                <Details>
+                  <div><Clock size={16} />{new Date(item.startAt).toLocaleString('es-AR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+                  <div><MapPin size={16} />{item.location.name}</div>
+                </Details>
+                <Actions>
+                  <button onClick={() => router.push(`/appointments/location?appointment=${item.id}`)}>Ver punto</button>
+                  {status === 'scheduled' ? <button className="danger" onClick={() => setAppointmentStatus(item.id, 'cancelled')}>Cancelar</button> : null}
+                  {status === 'in_progress' ? <button className="primary" onClick={() => setAppointmentStatus(item.id, 'completed')}>Finalizar</button> : null}
+                  {status === 'completed' && !item.reviewSubmitted ? <button className="primary" onClick={() => router.push(`/appointments/location?appointment=${item.id}&review=1`)}>Dejar reseña</button> : null}
+                </Actions>
+              </Card>
             );
-          })
-        ) : (
-          <p style={{ textAlign: 'center', color: '#636E72', padding: '1rem' }}>No hay citas agendadas.</p>
-        )}
-      </CalendarCard>
-    </ScreenWrapper>
+          })}
+
+          {!visible.length ? (
+            <Empty>
+              <CalendarDays size={42} />
+              <h2>No hay citas en esta sección</h2>
+              <p>Las nuevas citas se coordinan desde una conversación aceptada.</p>
+            </Empty>
+          ) : null}
+        </Grid>
+      </WebContent>
+    </WebScreen>
   );
 }

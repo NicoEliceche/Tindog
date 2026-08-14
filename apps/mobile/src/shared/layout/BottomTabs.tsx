@@ -14,9 +14,9 @@ interface TabItem {
 }
 
 const tabs: TabItem[] = [
-  { key: 'discovery', label: 'Descubrir', icon: 'heart-outline', activeIcon: 'heart' },
-  { key: 'pets', label: 'Perros', icon: 'paw-outline', activeIcon: 'paw' },
-  { key: 'chat', label: 'Chats', icon: 'chatbubbles-outline', activeIcon: 'chatbubbles' },
+  { key: 'discovery', label: 'Inicio', icon: 'home-outline', activeIcon: 'home' },
+  { key: 'chat', label: 'Mensajes', icon: 'chatbubble-ellipses-outline', activeIcon: 'chatbubble-ellipses' },
+  { key: 'pets', label: 'Búsqueda', icon: 'search-outline', activeIcon: 'search' },
   { key: 'profile', label: 'Perfil', icon: 'person-circle-outline', activeIcon: 'person-circle' },
 ];
 
@@ -83,6 +83,8 @@ const styles = StyleSheet.create({
   label: {
     fontSize: theme.typography.size.xs,
     fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   activeLabel: {
     fontWeight: '900',
