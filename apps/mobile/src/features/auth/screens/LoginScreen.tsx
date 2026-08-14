@@ -15,7 +15,7 @@ import {
 } from '../../../core/data/services/authService';
 import { theme } from '../../../core/theme/tokens';
 import type { AuthResponse } from '../../../core/types/auth.types';
-import { CyberDogBackground } from '../../../shared/components/CyberDogBackground';
+import { AuroraBackground } from '../../../shared/components/AuroraBackground';
 import { styles } from './LoginScreen.styles';
 import {
   getGoogleSignInConfigurationError,
@@ -130,7 +130,7 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
 
   return (
     <View style={styles.screen}>
-      <CyberDogBackground theme={theme} />
+      <AuroraBackground theme={theme} />
 
       <View style={styles.glowTop} />
       <View style={styles.glowBottom} />

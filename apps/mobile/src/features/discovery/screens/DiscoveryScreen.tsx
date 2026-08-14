@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -11,7 +12,7 @@ import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { Pet } from '../../../core/types/pet.types';
-import { CyberDogBackground } from '../../../shared/components/CyberDogBackground';
+import { AuroraBackground } from '../../../shared/components/AuroraBackground';
 import { PrimaryButton } from '../../../shared/components/PrimaryButton';
 
 const brandLogo = require('../../../../assets/tindog_patita_logo.png');
@@ -109,9 +110,16 @@ export function DiscoveryScreen() {
     opacity: interpolate(translateX.value, [-120, -20], [1, 0], 'clamp'),
   }));
 
+  // Glare metálico: un reflejo que barre la tarjeta según se arrastra,
+  // igual que la luz sobre una superficie pulida.
+  const glareStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(Math.abs(translateX.value), [0, 160], [0.12, 0.5], 'clamp'),
+    transform: [{ translateX: interpolate(translateX.value, [-300, 300], [cardWidth * 0.7, -cardWidth * 0.35]) }],
+  }));
+
   return (
     <View style={styles.screen}>
-      <CyberDogBackground theme={theme} />
+      <AuroraBackground theme={theme} />
       <View style={[styles.safeArea, { paddingTop: Math.max(insets.top + 6, 10) }]}>
         <View style={styles.header}>
           <View style={styles.headerSpacer} />
@@ -141,6 +149,14 @@ export function DiscoveryScreen() {
                     <Animated.View style={[styles.swipeLabel, styles.nopeLabel, nopeLabelStyle]}>
                       <Text style={[styles.swipeLabelText, { color: theme.colors.danger, borderColor: theme.colors.danger }]}>Pasar</Text>
                     </Animated.View>
+                    <Animated.View style={[styles.glare, glareStyle]} pointerEvents="none">
+                      <LinearGradient
+                        colors={['transparent', 'rgba(255,244,194,0.45)', 'rgba(255,255,255,0.6)', 'rgba(255,244,194,0.45)', 'transparent']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={StyleSheet.absoluteFill}
+                      />
+                    </Animated.View>
                     <Image source={{ uri: currentPet.photos[0] ?? fallbackPetPhoto }} style={[styles.petImage, { height: imageHeight }]} resizeMode="cover" />
                     <View style={styles.cardBody}>
                       <View style={styles.titleRow}><Text style={styles.petName}>{currentPet.name}</Text><Text style={styles.age}>{currentPet.age}</Text></View>
@@ -169,8 +185,22 @@ export function DiscoveryScreen() {
 }
 
 function Action({ icon, label, primary, disabled, theme, onPress }: { icon: keyof typeof Ionicons.glyphMap; label: string; primary?: boolean; disabled?: boolean; theme: AppTheme; onPress: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityLabel={label} disabled={disabled} onPress={onPress} style={({ pressed }) => ({ alignItems: 'center', gap: 4, opacity: disabled ? 0.4 : pressed ? 0.7 : 1 })}>
-    <View style={{ width: primary ? 64 : 56, height: primary ? 64 : 56, borderRadius: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: primary ? theme.colors.primary : theme.colors.surface, borderWidth: 1, borderColor: theme.colors.borderStrong }}><Ionicons name={icon} size={primary ? 29 : 25} color={primary ? theme.colors.onPrimary : theme.colors.primary} /></View>
+  const size = primary ? 64 : 56;
+  // El botón primario usa gradiente metálico + halo dorado; los secundarios
+  // un glow suave. Es lo que da la sensación de relieve y brillo real.
+  return <Pressable accessibilityRole="button" accessibilityLabel={label} disabled={disabled} onPress={onPress} style={({ pressed }) => ({ alignItems: 'center', gap: 4, opacity: disabled ? 0.4 : pressed ? 0.7 : 1, transform: [{ scale: pressed ? 0.94 : 1 }] })}>
+    <View style={{
+      width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+      backgroundColor: primary ? 'transparent' : theme.colors.surface,
+      borderWidth: 1, borderColor: theme.colors.borderStrong,
+      shadowColor: theme.colors.primary, shadowOpacity: primary ? 0.55 : 0.25,
+      shadowRadius: primary ? 16 : 9, shadowOffset: { width: 0, height: 0 }, elevation: primary ? 10 : 5,
+    }}>
+      {primary ? (
+        <LinearGradient colors={theme.gradients.metalGoldSoft} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+      ) : null}
+      <Ionicons name={icon} size={primary ? 29 : 25} color={primary ? theme.colors.onPrimary : theme.colors.primary} />
+    </View>
     <Text style={{ color: theme.colors.text, fontSize: 11, fontWeight: '900', textTransform: 'uppercase' }}>{label}</Text>
   </Pressable>;
 }
@@ -195,6 +225,7 @@ function createStyles(theme: AppTheme) {
     cardStack: { position: 'relative' },
     backdropCard: { borderRadius: 28, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border, transform: [{ scale: 0.94 }, { translateY: 10 }], opacity: 0.6 },
     card: { borderRadius: 28, overflow: 'hidden', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.borderStrong, elevation: 7, shadowColor: theme.colors.shadow, shadowOpacity: 0.18, shadowRadius: 24, shadowOffset: { width: 0, height: 14 } },
+    glare: { position: 'absolute', top: -40, left: 0, width: '55%', height: '160%', zIndex: 5 },
     swipeLabel: { position: 'absolute', top: 24, zIndex: 20 },
     likeLabel: { left: 20 },
     nopeLabel: { right: 20 },

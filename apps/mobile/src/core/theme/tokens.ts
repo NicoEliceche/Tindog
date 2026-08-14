@@ -27,14 +27,16 @@ const layout = {
   touchTarget: 48,
 } as const;
 
+// Modo oscuro: gris cálido (no negro puro) para que el dorado lea como
+// metal y la app no se sienta un vacío negro. Espeja la paleta web.
 const darkColors = {
-  primary: '#D4AF37',
-  primaryDark: '#A9851F',
-  primaryFaded: 'rgba(212, 175, 55, 0.14)',
-  primaryBorder: 'rgba(212, 175, 55, 0.24)',
-  primaryBorderStrong: 'rgba(212, 175, 55, 0.42)',
-  accent: '#F4D978',
-  accentDark: '#C5A63A',
+  primary: '#E8C252',
+  primaryDark: '#B8860B',
+  primaryFaded: 'rgba(232, 194, 82, 0.14)',
+  primaryBorder: 'rgba(232, 194, 82, 0.26)',
+  primaryBorderStrong: 'rgba(232, 194, 82, 0.45)',
+  accent: '#FFD97A',
+  accentDark: '#C9A227',
   info: '#8BB8FF',
   infoFaded: 'rgba(77, 150, 255, 0.16)',
   success: '#78D69A',
@@ -44,38 +46,37 @@ const darkColors = {
   danger: '#FF9278',
   dangerFaded: 'rgba(168, 76, 48, 0.2)',
   dangerBorder: 'rgba(255, 146, 120, 0.38)',
-  background: '#050505',
-  backgroundAlt: '#0A0A0C',
-  surface: '#121214',
-  surfaceAlt: '#1A1A1E',
-  surfaceOverlay: 'rgba(5, 5, 5, 0.82)',
-  surfaceSubtle: 'rgba(255, 255, 255, 0.03)',
-  border: 'rgba(212, 175, 55, 0.2)',
-  borderStrong: 'rgba(212, 175, 55, 0.38)',
-  borderSubtle: 'rgba(255, 255, 255, 0.07)',
-  text: '#FFF8E7',
-  textStrong: '#FFF3C4',
-  textSecondary: '#D2C39F',
-  textMuted: '#978B70',
+  background: '#262624',
+  backgroundAlt: '#2E2E2B',
+  surface: '#30302E',
+  surfaceAlt: '#3A3A37',
+  surfaceOverlay: 'rgba(38, 38, 36, 0.86)',
+  surfaceSubtle: 'rgba(255, 255, 255, 0.04)',
+  border: 'rgba(232, 194, 82, 0.18)',
+  borderStrong: 'rgba(232, 194, 82, 0.4)',
+  borderSubtle: '#3F3F3C',
+  text: '#F5F2EA',
+  textStrong: '#FFF4C2',
+  textSecondary: '#C6C0B2',
+  textMuted: '#918C81',
   textInverse: '#FFFFFF',
-  onPrimary: '#050505',
-  overlay: 'rgba(0, 0, 0, 0.74)',
+  onPrimary: '#221F18',
+  overlay: 'rgba(20, 20, 19, 0.76)',
   shadow: '#000000',
-  glow: 'rgba(212, 175, 55, 0.1)',
-  glowSoft: 'rgba(212, 175, 55, 0.07)',
+  glow: 'rgba(232, 194, 82, 0.16)',
+  glowSoft: 'rgba(232, 194, 82, 0.09)',
 } as const;
 
-// Modo claro: "blanco y dorado oscuro" — el dorado se oscurece y satura
-// (no el #D4AF37 claro del modo oscuro) para tener contraste real sobre
-// blanco, en vez de leer como un amarillo pálido y lavado.
+// Modo claro: marfil cálido + dorado luminoso. El blanco puro apaga los
+// dorados (los vuelve mostaza); el marfil los hace leer como metal noble.
 const lightColors: Record<keyof typeof darkColors, string> = {
-  primary: '#8A6512',
-  primaryDark: '#5E4308',
-  primaryFaded: 'rgba(138, 101, 18, 0.12)',
-  primaryBorder: 'rgba(94, 67, 8, 0.22)',
-  primaryBorderStrong: 'rgba(94, 67, 8, 0.4)',
-  accent: '#8A6512',
-  accentDark: '#5E4308',
+  primary: '#C9A227',
+  primaryDark: '#9A7B14',
+  primaryFaded: 'rgba(201, 162, 39, 0.14)',
+  primaryBorder: 'rgba(154, 123, 20, 0.24)',
+  primaryBorderStrong: 'rgba(154, 123, 20, 0.42)',
+  accent: '#D4AF37',
+  accentDark: '#9A7B14',
   info: '#2A5FA0',
   infoFaded: 'rgba(42, 95, 160, 0.12)',
   success: '#1F7A42',
@@ -85,25 +86,25 @@ const lightColors: Record<keyof typeof darkColors, string> = {
   danger: '#B23B27',
   dangerFaded: 'rgba(178, 59, 39, 0.1)',
   dangerBorder: 'rgba(178, 59, 39, 0.32)',
-  background: '#FFFFFF',
-  backgroundAlt: '#F3EDDD',
-  surface: '#FBF9F4',
-  surfaceAlt: '#F0E9D6',
-  surfaceOverlay: 'rgba(255, 255, 255, 0.92)',
+  background: '#FDFBF7',
+  backgroundAlt: '#F7F0DF',
+  surface: '#FFFFFF',
+  surfaceAlt: '#F2EEE3',
+  surfaceOverlay: 'rgba(253, 251, 247, 0.94)',
   surfaceSubtle: 'rgba(5, 5, 5, 0.03)',
-  border: 'rgba(94, 67, 8, 0.18)',
-  borderStrong: 'rgba(94, 67, 8, 0.32)',
-  borderSubtle: 'rgba(17, 17, 17, 0.08)',
-  text: '#181205',
-  textStrong: '#120E04',
-  textSecondary: '#4A3E1F',
-  textMuted: '#71633B',
+  border: 'rgba(154, 123, 20, 0.2)',
+  borderStrong: 'rgba(154, 123, 20, 0.34)',
+  borderSubtle: '#EDE7D8',
+  text: '#221B0A',
+  textStrong: '#1A1508',
+  textSecondary: '#544829',
+  textMuted: '#7C7157',
   textInverse: '#FFFFFF',
   onPrimary: '#FFFFFF',
-  overlay: 'rgba(20, 15, 4, 0.55)',
-  shadow: '#281E06',
-  glow: 'rgba(138, 101, 18, 0.1)',
-  glowSoft: 'rgba(138, 101, 18, 0.06)',
+  overlay: 'rgba(38, 30, 12, 0.5)',
+  shadow: '#4A3A10',
+  glow: 'rgba(201, 162, 39, 0.18)',
+  glowSoft: 'rgba(201, 162, 39, 0.1)',
 };
 
 export type ResolvedThemeMode = 'dark' | 'light';
@@ -116,6 +117,10 @@ export interface AppTheme {
   gradients: {
     app: readonly [string, string, string, string];
     home: readonly [string, string, string];
+    /** Dorado metálico para botones y acentos: da highlights, no color plano. */
+    metalGold: readonly [string, string, string, string];
+    /** Variante suave para superficies grandes. */
+    metalGoldSoft: readonly [string, string, string];
   };
   spacing: typeof spacing;
   radius: typeof radius;
@@ -130,8 +135,18 @@ function createTheme(mode: ResolvedThemeMode): AppTheme {
     dark,
     colors: dark ? darkColors : lightColors,
     gradients: dark
-      ? { app: ['#050505', '#0A0A0C', '#141414', '#050505'], home: ['#050505', '#0C0C0E', '#15130D'] }
-      : { app: ['#FFFFFF', '#FBF9F4', '#F3EDDD', '#FFFFFF'], home: ['#FFFFFF', '#FBF9F4', '#F3EDDD'] },
+      ? {
+          app: ['#262624', '#2E2E2B', '#332F26', '#262624'],
+          home: ['#262624', '#2E2E2B', '#332F26'],
+          metalGold: ['#B8860B', '#E8C252', '#FFF4C2', '#C9A227'],
+          metalGoldSoft: ['#C9A227', '#E8C252', '#FFE9A0'],
+        }
+      : {
+          app: ['#FDFBF7', '#FFFFFF', '#F7F0DF', '#FDFBF7'],
+          home: ['#FDFBF7', '#FFFFFF', '#F7F0DF'],
+          metalGold: ['#9A7B14', '#C9A227', '#F0D98A', '#A8850F'],
+          metalGoldSoft: ['#A8850F', '#C9A227', '#E8C252'],
+        },
     spacing,
     radius,
     typography,
