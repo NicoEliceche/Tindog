@@ -32,7 +32,11 @@ const PAW_PAIR_COUNT = 16;
 
 const randomBetween = (min: number, max: number, index: number, salt: number) => {
   const seeded = Math.sin((index + 1) * 9283.17 + salt * 197.31) * 43758.5453;
-  return min + (seeded - Math.floor(seeded)) * (max - min);
+  const value = min + (seeded - Math.floor(seeded)) * (max - min);
+  // Redondeado para evitar que el último bit de precisión de Math.sin()
+  // difiera entre el motor JS del servidor (SSR) y el del navegador,
+  // lo cual produciría un hydration mismatch en los estilos inline.
+  return Math.round(value * 10000) / 10000;
 };
 
 const createPawConfig = (index: number): PawConfig => ({
@@ -85,50 +89,15 @@ const Container = styled.div`
   overflow: hidden;
 `;
 
-const PawPair = styled.div<{
-  $shade: PawShade;
-  $x0: number;
-  $y0: number;
-  $x1: number;
-  $y1: number;
-  $x2: number;
-  $y2: number;
-  $x3: number;
-  $y3: number;
-  $x4: number;
-  $y4: number;
-  $x5: number;
-  $y5: number;
-  $rotate0: number;
-  $rotate1: number;
-  $rotate2: number;
-  $duration: number;
-  $delay: number;
-}>`
+const PawPair = styled.div<{ $shade: PawShade }>`
   position: absolute;
   top: 0;
   left: 0;
   width: 2.25rem;
   height: 1.35rem;
-  --paw-x-0: ${({ $x0 }) => `${$x0}vw`};
-  --paw-y-0: ${({ $y0 }) => `${$y0}vh`};
-  --paw-x-1: ${({ $x1 }) => `${$x1}vw`};
-  --paw-y-1: ${({ $y1 }) => `${$y1}vh`};
-  --paw-x-2: ${({ $x2 }) => `${$x2}vw`};
-  --paw-y-2: ${({ $y2 }) => `${$y2}vh`};
-  --paw-x-3: ${({ $x3 }) => `${$x3}vw`};
-  --paw-y-3: ${({ $y3 }) => `${$y3}vh`};
-  --paw-x-4: ${({ $x4 }) => `${$x4}vw`};
-  --paw-y-4: ${({ $y4 }) => `${$y4}vh`};
-  --paw-x-5: ${({ $x5 }) => `${$x5}vw`};
-  --paw-y-5: ${({ $y5 }) => `${$y5}vh`};
-  --paw-rotate-0: ${({ $rotate0 }) => `${$rotate0}deg`};
-  --paw-rotate-1: ${({ $rotate1 }) => `${$rotate1}deg`};
-  --paw-rotate-2: ${({ $rotate2 }) => `${$rotate2}deg`};
   color: ${({ theme, $shade }) => theme.color.neutral[$shade]};
   opacity: 1;
-  animation: ${pawBounce} ${({ $duration }) => `${$duration}s`} linear
-    ${({ $delay }) => `${$delay}s`} infinite alternate;
+  animation: ${pawBounce} var(--paw-duration) linear var(--paw-delay) infinite alternate;
   will-change: transform;
 
   @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
@@ -156,6 +125,28 @@ const PawPrint = styled.div<{ $side: 'left' | 'right' }>`
   transform: rotate(${({ $side }) => ($side === 'left' ? '-12deg' : '12deg')});
 `;
 
+function pawCssVars(paw: PawConfig): React.CSSProperties {
+  return {
+    '--paw-x-0': `${paw.x0}vw`,
+    '--paw-y-0': `${paw.y0}vh`,
+    '--paw-x-1': `${paw.x1}vw`,
+    '--paw-y-1': `${paw.y1}vh`,
+    '--paw-x-2': `${paw.x2}vw`,
+    '--paw-y-2': `${paw.y2}vh`,
+    '--paw-x-3': `${paw.x3}vw`,
+    '--paw-y-3': `${paw.y3}vh`,
+    '--paw-x-4': `${paw.x4}vw`,
+    '--paw-y-4': `${paw.y4}vh`,
+    '--paw-x-5': `${paw.x5}vw`,
+    '--paw-y-5': `${paw.y5}vh`,
+    '--paw-rotate-0': `${paw.rotate0}deg`,
+    '--paw-rotate-1': `${paw.rotate1}deg`,
+    '--paw-rotate-2': `${paw.rotate2}deg`,
+    '--paw-duration': `${paw.duration}s`,
+    '--paw-delay': `${paw.delay}s`,
+  } as React.CSSProperties;
+}
+
 export function FloatingPawsBackground() {
   const paws = useMemo(() => {
     return Array.from({ length: PAW_PAIR_COUNT }, (_, index) => createPawConfig(index));
@@ -164,27 +155,7 @@ export function FloatingPawsBackground() {
   return (
     <Container aria-hidden="true">
       {paws.map((paw) => (
-        <PawPair
-          key={paw.id}
-          $shade={paw.shade}
-          $x0={paw.x0}
-          $y0={paw.y0}
-          $x1={paw.x1}
-          $y1={paw.y1}
-          $x2={paw.x2}
-          $y2={paw.y2}
-          $x3={paw.x3}
-          $y3={paw.y3}
-          $x4={paw.x4}
-          $y4={paw.y4}
-          $x5={paw.x5}
-          $y5={paw.y5}
-          $rotate0={paw.rotate0}
-          $rotate1={paw.rotate1}
-          $rotate2={paw.rotate2}
-          $duration={paw.duration}
-          $delay={paw.delay}
-        >
+        <PawPair key={paw.id} $shade={paw.shade} style={pawCssVars(paw)}>
           <PawPrint $side="left" />
           <PawPrint $side="right" />
         </PawPair>
