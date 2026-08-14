@@ -15,7 +15,6 @@ import type { Pet } from '../../../core/types/pet.types';
 import { AuroraBackground } from '../../../shared/components/AuroraBackground';
 import { PrimaryButton } from '../../../shared/components/PrimaryButton';
 
-const brandLogo = require('../../../../assets/tindog_patita_logo.png');
 const fallbackPetPhoto = 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=1200';
 
 /** Fracción del ancho de la tarjeta que confirma el swipe (como Tinder). */
@@ -86,11 +85,21 @@ export function DiscoveryScreen() {
     setLastDismissed(null);
   }, [lastDismissed]);
 
-  const reload = async () => {
+  const reload = useCallback(async () => {
     setLoading(true);
     setPets(await fetchDiscoveryPets());
+    setLastDismissed(null);
     setLoading(false);
-  };
+  }, []);
+
+  // Al quedarnos sin perfiles pedimos la siguiente tanda sola, como haría
+  // contra el backend real. Con el mock local vuelve el mismo set, así que
+  // el recorrido no se corta nunca ni queda una pantalla muerta.
+  useEffect(() => {
+    if (loading || pets.length > 0) return;
+    const timer = setTimeout(() => { void reload(); }, 650);
+    return () => clearTimeout(timer);
+  }, [loading, pets.length, reload]);
 
   const handleSwiped = useCallback((direction: 'left' | 'right') => {
     if (direction === 'right') connect();
@@ -162,9 +171,8 @@ export function DiscoveryScreen() {
         <View style={styles.header}>
           <View style={styles.headerSpacer} />
           <View style={styles.brand}>
-            <Image source={brandLogo} style={[styles.logo, { width: compact ? 50 : 64, height: compact ? 50 : 64 }]} />
             <Text style={[styles.brandName, !compact && styles.brandNameLarge]}>TINDOG</Text>
-            {!compact ? <Text style={styles.tagline}>ENCONTRÁ SU PAREJA IDEAL</Text> : null}
+            <Text style={styles.tagline}>ENCONTRÁ SU PAREJA IDEAL</Text>
           </View>
           <View style={styles.profileChip}>
             {profile.avatar ? <Image source={{ uri: profile.avatar }} style={styles.avatar} /> : <Text style={styles.initial}>{firstName[0]?.toUpperCase()}</Text>}
@@ -229,7 +237,11 @@ export function DiscoveryScreen() {
               </Pressable>
             </>
           ) : (
-            <View style={styles.center}><Text style={styles.emptyTitle}>Ya viste todos los perfiles</Text><Text style={styles.muted}>Volvé más tarde o ajustá la distancia en Configuración.</Text><PrimaryButton label="Recargar" icon="refresh" onPress={reload} /></View>
+            <View style={styles.center}>
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+              <Text style={styles.emptyTitle}>Buscando más perfiles</Text>
+              <Text style={styles.muted}>Estamos trayendo perros compatibles cerca tuyo…</Text>
+            </View>
           )}
         </View>
       </View>
@@ -268,7 +280,6 @@ function createStyles(theme: AppTheme) {
     header: { minHeight: 78, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.sm },
     headerSpacer: { width: 58 },
     brand: { flex: 1, alignItems: 'center' },
-    logo: { borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.border },
     brandName: { color: theme.colors.primary, fontWeight: '900', fontSize: 17, letterSpacing: 2 },
     brandNameLarge: { fontSize: 21, letterSpacing: 2.6 },
     tagline: { color: theme.colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 0.8 },
