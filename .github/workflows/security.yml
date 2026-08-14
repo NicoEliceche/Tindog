@@ -35,7 +35,7 @@ jobs:
       AUDIT_HASH_SECRET: ci-only-audit-secret-with-at-least-32-bytes
       MODERATION_EVIDENCE_KEY: Y2ktb25seS0zMi1ieXRlLWV2aWRlbmNlLWtleSEhISE=
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -75,7 +75,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: moderate
@@ -86,7 +86,7 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
