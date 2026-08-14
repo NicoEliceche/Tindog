@@ -1,5 +1,6 @@
 // src/app/layout.tsx
 import { AppLayout } from '@/shared/components/layout/AppLayout';
+import { StyledComponentsRegistry } from '@core/theme/StyledComponentsRegistry';
 import type { Metadata, Viewport } from 'next';
 
 export const metadata: Metadata = {
@@ -20,7 +21,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body>
-        <AppLayout>{children}</AppLayout>
+        <StyledComponentsRegistry>
+          <AppLayout>{children}</AppLayout>
+        </StyledComponentsRegistry>
       </body>
     </html>
   );
