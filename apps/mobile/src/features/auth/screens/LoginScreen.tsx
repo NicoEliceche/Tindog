@@ -1,11 +1,9 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
   ActivityIndicator,
   Image,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
   useWindowDimensions,
@@ -17,6 +15,7 @@ import {
 } from '../../../core/data/services/authService';
 import { theme } from '../../../core/theme/tokens';
 import type { AuthResponse } from '../../../core/types/auth.types';
+import { CyberDogBackground } from '../../../shared/components/CyberDogBackground';
 import { styles } from './LoginScreen.styles';
 import {
   getGoogleSignInConfigurationError,
@@ -131,12 +130,7 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
 
   return (
     <View style={styles.screen}>
-      <LinearGradient
-        colors={theme.gradients.app}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
+      <CyberDogBackground theme={theme} />
 
       <View style={styles.glowTop} />
       <View style={styles.glowBottom} />

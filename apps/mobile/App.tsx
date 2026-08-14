@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { logoutCurrentAuthSession, restoreAuthSession } from './src/core/data/services/authService';
 import { AppDataProvider } from './src/core/providers/AppDataProvider';
@@ -49,20 +50,22 @@ export default function App() {
   };
 
   return (
-    <SafeAreaProvider>
-      <AppPreferencesProvider>
-        {isHydrating ? (
-          <BootstrapScreen />
-        ) : auth ? (
-          <AuthenticatedApp auth={auth} onLogout={handleLogout} />
-        ) : (
-          <View style={[styles.app, { backgroundColor: brandTheme.colors.background }]}>
-            <StatusBar style="light" />
-            <LoginScreen onAuthenticated={setAuth} />
-          </View>
-        )}
-      </AppPreferencesProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={styles.app}>
+      <SafeAreaProvider>
+        <AppPreferencesProvider>
+          {isHydrating ? (
+            <BootstrapScreen />
+          ) : auth ? (
+            <AuthenticatedApp auth={auth} onLogout={handleLogout} />
+          ) : (
+            <View style={[styles.app, { backgroundColor: brandTheme.colors.background }]}>
+              <StatusBar style="light" />
+              <LoginScreen onAuthenticated={setAuth} />
+            </View>
+          )}
+        </AppPreferencesProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 

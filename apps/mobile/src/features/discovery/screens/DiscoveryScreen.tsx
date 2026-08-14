@@ -1,17 +1,24 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, {
+  interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchDiscoveryPets } from '../../../core/data/services/petService';
 import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { Pet } from '../../../core/types/pet.types';
+import { CyberDogBackground } from '../../../shared/components/CyberDogBackground';
 import { PrimaryButton } from '../../../shared/components/PrimaryButton';
 
 const brandLogo = require('../../../../assets/tindog_patita_logo.png');
 const fallbackPetPhoto = 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=1200';
+
+const SWIPE_THRESHOLD = 120;
+const SWIPE_VELOCITY = 800;
 
 export function DiscoveryScreen() {
   const theme = useAppTheme();
@@ -33,13 +40,17 @@ export function DiscoveryScreen() {
   const currentPet = pets[0];
   const pendingPetIds = requests.filter((item) => item.direction === 'outgoing' && item.status === 'pending').map((item) => item.pet.id);
   const cardWidth = Math.min(width - theme.spacing.lg * 2, 430);
-  const available = height - insets.top - insets.bottom - 132;
+  const available = height - insets.top - insets.bottom - (compact ? 132 : 148);
   const cardHeight = Math.min(Math.max(Math.round(available * 0.72), compact ? 330 : 400), compact ? 440 : 540);
   const imageHeight = Math.round(cardHeight * 0.67);
   const firstName = profile.name.trim().split(/\s+/)[0] || 'Perfil';
 
-  const next = () => setPets((current) => current.slice(1));
-  const connect = () => {
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+
+  const next = useCallback(() => setPets((current) => current.slice(1)), []);
+
+  const connect = useCallback(() => {
     if (!currentPet) return;
     sendConnectionRequest(currentPet);
     setNotice({
@@ -47,22 +58,66 @@ export function DiscoveryScreen() {
       body: `El tutor de ${currentPet.name} recibió tu solicitud. El chat se habilitará únicamente si la acepta.`,
     });
     next();
-  };
+  }, [currentPet, next, sendConnectionRequest]);
+
   const reload = async () => {
     setLoading(true);
     setPets(await fetchDiscoveryPets());
     setLoading(false);
   };
 
+  const handleSwiped = useCallback((direction: 'left' | 'right') => {
+    if (direction === 'right') connect();
+    else next();
+    translateX.value = 0;
+    translateY.value = 0;
+  }, [connect, next, translateX, translateY]);
+
+  const pan = useMemo(() => Gesture.Pan()
+    .enabled(Boolean(currentPet))
+    .onUpdate((event) => {
+      translateX.value = event.translationX;
+      translateY.value = event.translationY * 0.4;
+    })
+    .onEnd((event) => {
+      const shouldSwipeRight = event.translationX > SWIPE_THRESHOLD || event.velocityX > SWIPE_VELOCITY;
+      const shouldSwipeLeft = event.translationX < -SWIPE_THRESHOLD || event.velocityX < -SWIPE_VELOCITY;
+
+      if (shouldSwipeRight) {
+        translateX.value = withTiming(width * 1.4, { duration: 260 }, () => runOnJS(handleSwiped)('right'));
+      } else if (shouldSwipeLeft) {
+        translateX.value = withTiming(-width * 1.4, { duration: 260 }, () => runOnJS(handleSwiped)('left'));
+      } else {
+        translateX.value = withSpring(0, { damping: 18, stiffness: 220 });
+        translateY.value = withSpring(0, { damping: 18, stiffness: 220 });
+      }
+    }), [currentPet, handleSwiped, translateX, translateY, width]);
+
+  const cardAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { rotate: `${interpolate(translateX.value, [-300, 300], [-16, 16])}deg` },
+    ],
+  }));
+
+  const likeLabelStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(translateX.value, [20, 120], [0, 1], 'clamp'),
+  }));
+
+  const nopeLabelStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(translateX.value, [-120, -20], [1, 0], 'clamp'),
+  }));
+
   return (
     <View style={styles.screen}>
-      <LinearGradient colors={theme.gradients.home} style={StyleSheet.absoluteFill} />
+      <CyberDogBackground theme={theme} />
       <View style={[styles.safeArea, { paddingTop: Math.max(insets.top + 6, 10) }]}>
         <View style={styles.header}>
           <View style={styles.headerSpacer} />
           <View style={styles.brand}>
-            <Image source={brandLogo} style={[styles.logo, { width: compact ? 46 : 54, height: compact ? 46 : 54 }]} />
-            <Text style={styles.brandName}>TINDOG</Text>
+            <Image source={brandLogo} style={[styles.logo, { width: compact ? 50 : 64, height: compact ? 50 : 64 }]} />
+            <Text style={[styles.brandName, !compact && styles.brandNameLarge]}>TINDOG</Text>
             {!compact ? <Text style={styles.tagline}>ENCONTRÁ SU PAREJA IDEAL</Text> : null}
           </View>
           <View style={styles.profileChip}>
@@ -76,13 +131,24 @@ export function DiscoveryScreen() {
             <View style={styles.center}><ActivityIndicator size="large" color={theme.colors.primary} /><Text style={styles.muted}>Buscando perfiles compatibles…</Text></View>
           ) : currentPet ? (
             <>
-              <View style={[styles.card, { width: cardWidth, height: cardHeight }]}>
-                <Image source={{ uri: currentPet.photos[0] ?? fallbackPetPhoto }} style={[styles.petImage, { height: imageHeight }]} resizeMode="cover" />
-                <View style={styles.cardBody}>
-                  <View style={styles.titleRow}><Text style={styles.petName}>{currentPet.name}</Text><Text style={styles.age}>{currentPet.age}</Text></View>
-                  <Text style={styles.meta}>{currentPet.breed} · {currentPet.gender} · cerca de ti</Text>
-                  <Text style={styles.bio} numberOfLines={compact ? 2 : 3}>{currentPet.bio}</Text>
-                </View>
+              <View style={[styles.cardStack, { width: cardWidth, height: cardHeight }]}>
+                {pets[1] ? <View style={[styles.backdropCard, StyleSheet.absoluteFill]} /> : null}
+                <GestureDetector gesture={pan}>
+                  <Animated.View style={[styles.card, StyleSheet.absoluteFill, cardAnimatedStyle]}>
+                    <Animated.View style={[styles.swipeLabel, styles.likeLabel, likeLabelStyle]}>
+                      <Text style={[styles.swipeLabelText, { color: theme.colors.success, borderColor: theme.colors.success }]}>Conectar</Text>
+                    </Animated.View>
+                    <Animated.View style={[styles.swipeLabel, styles.nopeLabel, nopeLabelStyle]}>
+                      <Text style={[styles.swipeLabelText, { color: theme.colors.danger, borderColor: theme.colors.danger }]}>Pasar</Text>
+                    </Animated.View>
+                    <Image source={{ uri: currentPet.photos[0] ?? fallbackPetPhoto }} style={[styles.petImage, { height: imageHeight }]} resizeMode="cover" />
+                    <View style={styles.cardBody}>
+                      <View style={styles.titleRow}><Text style={styles.petName}>{currentPet.name}</Text><Text style={styles.age}>{currentPet.age}</Text></View>
+                      <Text style={styles.meta}>{currentPet.breed} · {currentPet.gender} · cerca de ti</Text>
+                      <Text style={styles.bio} numberOfLines={compact ? 2 : 3}>{currentPet.bio}</Text>
+                    </View>
+                  </Animated.View>
+                </GestureDetector>
               </View>
               <View style={styles.actions}>
                 <Action icon="close" label="Pasar" theme={theme} onPress={next} />
@@ -118,6 +184,7 @@ function createStyles(theme: AppTheme) {
     brand: { flex: 1, alignItems: 'center' },
     logo: { borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: theme.colors.border },
     brandName: { color: theme.colors.primary, fontWeight: '900', fontSize: 17, letterSpacing: 2 },
+    brandNameLarge: { fontSize: 21, letterSpacing: 2.6 },
     tagline: { color: theme.colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 0.8 },
     profileChip: { width: 58, alignItems: 'center', gap: 2 },
     avatar: { width: 38, height: 38, borderRadius: 19 },
@@ -125,7 +192,13 @@ function createStyles(theme: AppTheme) {
     profileName: { maxWidth: 58, color: theme.colors.text, fontSize: 10, fontWeight: '800' },
     main: { flex: 1, alignItems: 'center', justifyContent: 'space-between', paddingBottom: theme.spacing.md },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: theme.spacing.md, paddingHorizontal: theme.spacing.xl },
+    cardStack: { position: 'relative' },
+    backdropCard: { borderRadius: 28, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border, transform: [{ scale: 0.94 }, { translateY: 10 }], opacity: 0.6 },
     card: { borderRadius: 28, overflow: 'hidden', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.borderStrong, elevation: 7, shadowColor: theme.colors.shadow, shadowOpacity: 0.18, shadowRadius: 24, shadowOffset: { width: 0, height: 14 } },
+    swipeLabel: { position: 'absolute', top: 24, zIndex: 20 },
+    likeLabel: { left: 20 },
+    nopeLabel: { right: 20 },
+    swipeLabelText: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 10, borderWidth: 3, fontSize: 20, fontWeight: '900', letterSpacing: 1.5, textTransform: 'uppercase' },
     petImage: { width: '100%', backgroundColor: theme.colors.surfaceAlt },
     cardBody: { flex: 1, padding: theme.spacing.lg, gap: 4 },
     titleRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
