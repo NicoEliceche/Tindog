@@ -8,7 +8,7 @@ import { PageTransition } from '@shared/components/ui';
 import React from 'react';
 import styled, { ThemeProvider } from 'styled-components';
 import { BottomNavigation } from './BottomNavigation';
-import { FloatingPawsBackground } from './FloatingPawsBackground';
+import { CyberDogBackground } from './CyberDogBackground';
 import { GlobalStyles } from './GlobalStyles';
 import { SidebarNavigation } from './SidebarNavigation';
 import { isNavHidden } from './navigation.config';
@@ -40,7 +40,7 @@ function ThemedShell({ children }: { children: React.ReactNode }) {
   const showChrome = !isNavHidden(pathname);
 
   return <ThemeProvider theme={resolvedTheme === 'light' ? lightTheme : darkTheme}>
-    <GlobalStyles /><FloatingPawsBackground />
+    <GlobalStyles /><CyberDogBackground />
     <Viewport $showChrome={showChrome}>
       <SkipLink href="#tindog-main">Saltar al contenido</SkipLink>
       {showChrome && <SidebarNavigation />}

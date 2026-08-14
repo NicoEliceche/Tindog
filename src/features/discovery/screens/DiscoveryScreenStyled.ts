@@ -1,4 +1,5 @@
 // src/features/discovery/screens/DiscoveryScreenStyled.ts
+import { motion } from 'framer-motion';
 import styled from 'styled-components';
 
 export const Page = styled.section`
@@ -36,6 +37,12 @@ export const Header = styled.header`
   display: grid;
   grid-template-columns: 64px 1fr 64px;
   align-items: center;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    grid-template-columns: 1fr auto 1fr;
+    min-height: 0;
+    margin-bottom: ${({ theme }) => theme.spacing[4]};
+  }
 `;
 
 export const Brand = styled.div`
@@ -52,6 +59,35 @@ export const Brand = styled.div`
     font-size: 0.48rem;
     letter-spacing: 0.8px;
   }
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: ${({ theme }) => theme.spacing[5]};
+  }
+`;
+
+export const BrandCopy = styled.div`
+  display: contents;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+
+    span {
+      font-size: 2.1rem;
+      letter-spacing: 4px;
+    }
+
+    small {
+      font-size: 0.9rem;
+      letter-spacing: 1.6px;
+      font-weight: 800;
+    }
+  }
 `;
 
 export const Logo = styled.img`
@@ -60,6 +96,13 @@ export const Logo = styled.img`
   border-radius: 15px;
   object-fit: cover;
   border: 1px solid ${({ theme }) => theme.color.border};
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    width: 84px;
+    height: 84px;
+    border-radius: 22px;
+    box-shadow: ${({ theme }) => theme.elevation.glow};
+  }
 `;
 
 export const Avatar = styled.div`
@@ -174,17 +217,11 @@ export const CenterColumn = styled.div`
   align-items: center;
 `;
 
-export const PetCard = styled.article`
+export const CardStack = styled.div`
+  position: relative;
   width: 100%;
   height: min(63dvh, 535px);
   min-height: 365px;
-  border-radius: 28px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  background: ${({ theme }) => theme.color.surface};
-  border: 1px solid ${({ theme }) => theme.color.borderFocus};
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
 
   @media (max-height: 720px) {
     height: 58dvh;
@@ -194,6 +231,53 @@ export const PetCard = styled.article`
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     height: min(64dvh, 600px);
   }
+`;
+
+export const BackdropCard = styled.div`
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  transform: scale(0.94) translateY(10px);
+  opacity: 0.6;
+`;
+
+export const PetCard = styled(motion.article)`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 28px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.borderFocus};
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
+  cursor: grab;
+  touch-action: pan-y;
+  will-change: transform;
+
+  &:active { cursor: grabbing; }
+`;
+
+export const SwipeLabel = styled(motion.div)<{ $tone: 'like' | 'nope' }>`
+  position: absolute;
+  top: 28px;
+  ${({ $tone }) => ($tone === 'like' ? 'left: 24px;' : 'right: 24px;')}
+  padding: 8px 18px;
+  border-radius: 12px;
+  border: 3px solid ${({ theme, $tone }) => ($tone === 'like' ? theme.color.success : theme.color.error)};
+  color: ${({ theme, $tone }) => ($tone === 'like' ? theme.color.success : theme.color.error)};
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transform: rotate(${({ $tone }) => ($tone === 'like' ? '-14deg' : '14deg')});
+  pointer-events: none;
+  z-index: 20;
 `;
 
 export const PetImage = styled.img`

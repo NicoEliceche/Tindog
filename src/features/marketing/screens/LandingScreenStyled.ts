@@ -1,6 +1,6 @@
 // src/features/marketing/screens/LandingScreenStyled.ts
 import { motion } from 'framer-motion';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 
 // ── Loading (sin sesión aún resolviendo) ──────────────────────────────────
 export const LoadingScreen = styled.div`
@@ -150,6 +150,11 @@ export const CtaRow = styled.div`
   }
 `;
 
+const buttonPulse = keyframes`
+  0%, 100% { box-shadow: 0 15px 30px rgba(212, 175, 55, 0.22), 0 0 0 0 rgba(212, 175, 55, 0.3); }
+  50%      { box-shadow: 0 15px 30px rgba(212, 175, 55, 0.22), 0 0 0 8px rgba(212, 175, 55, 0); }
+`;
+
 export const Button = styled(motion.button)`
   background: linear-gradient(135deg, ${({ theme }) => theme.color.primary} 0%, ${({ theme }) => theme.color.primaryDark} 100%);
   color: ${({ theme }) => theme.color.textInverse};
@@ -157,10 +162,15 @@ export const Button = styled(motion.button)`
   border-radius: ${({ theme }) => theme.radius.full};
   font-size: 1.2rem;
   font-weight: 800;
-  box-shadow: 0 15px 30px rgba(212, 175, 55, 0.22);
   cursor: pointer;
   z-index: 10;
   white-space: nowrap;
+  animation: ${buttonPulse} 2.8s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    box-shadow: 0 15px 30px rgba(212, 175, 55, 0.22);
+  }
 `;
 
 export const TrustNote = styled.span`
