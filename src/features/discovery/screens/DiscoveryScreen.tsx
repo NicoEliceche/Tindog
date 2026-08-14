@@ -1,12 +1,13 @@
 'use client';
 
 import { useWebApp } from '@core/providers/WebAppProvider';
+import { NotificationBell } from '@shared/components/notifications/NotificationBell';
 import { Bookmark, Loader2, MessageCircle, Undo2, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Pet } from '@core/types/pet.types';
 import { SwipeCard, type SwipeDirection } from '../components/SwipeCard';
 import {
-  Page, Shell, Header, Brand, BrandCopy, Avatar, DesktopLayout, SidePanel, SidePanelTitle,
+  Page, Shell, Header, Brand, BrandCopy, HeaderActions, Avatar, DesktopLayout, SidePanel, SidePanelTitle,
   NextPreviewCard, StatsCard, CenterColumn, CardStack, BackdropCard, UndoButton, Actions, Action,
   Empty, Backdrop, Modal,
 } from './DiscoveryScreenStyled';
@@ -78,7 +79,10 @@ export function DiscoveryScreen() {
               <small>ENCONTRÁ SU PAREJA IDEAL</small>
             </BrandCopy>
           </Brand>
-          <Avatar>{profile.avatar ? <img src={profile.avatar} alt={profile.name} /> : profile.name[0]}</Avatar>
+          <HeaderActions>
+            <NotificationBell />
+            <Avatar>{profile.avatar ? <img src={profile.avatar} alt={profile.name} /> : profile.name[0]}</Avatar>
+          </HeaderActions>
         </Header>
 
         <DesktopLayout>

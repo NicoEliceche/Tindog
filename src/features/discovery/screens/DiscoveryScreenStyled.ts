@@ -35,7 +35,9 @@ export const Header = styled.header`
   width: 100%;
   min-height: 82px;
   display: grid;
-  grid-template-columns: 64px 1fr 64px;
+  /* La columna derecha lleva campana + avatar, por eso es más ancha que la
+     izquierda; el 1fr central mantiene la marca centrada en la pantalla. */
+  grid-template-columns: 96px 1fr 96px;
   align-items: center;
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
@@ -87,8 +89,15 @@ export const BrandCopy = styled.div`
   }
 `;
 
-export const Avatar = styled.div`
+/** Campana + avatar, agrupados en la punta derecha del header. */
+export const HeaderActions = styled.div`
   justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing[2]};
+`;
+
+export const Avatar = styled.div`
   width: 42px;
   height: 42px;
   border-radius: 50%;
