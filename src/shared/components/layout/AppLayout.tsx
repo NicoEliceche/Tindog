@@ -13,14 +13,16 @@ import { GlobalStyles } from './GlobalStyles';
 import { SidebarNavigation } from './SidebarNavigation';
 import { isNavHidden } from './navigation.config';
 
-const Viewport = styled.div`
+const Viewport = styled.div<{ $showChrome: boolean }>`
   width: 100%; min-height: 100dvh; display: flex; flex-direction: column;
   background: transparent; color: ${({ theme }) => theme.color.text}; position: relative; overflow-x: hidden;
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    display: grid;
-    grid-template-columns: ${({ theme }) => theme.layout.sidebarWidth} 1fr;
-    align-items: start;
+    ${({ $showChrome, theme }) => $showChrome && `
+      display: grid;
+      grid-template-columns: ${theme.layout.sidebarWidth} 1fr;
+      align-items: start;
+    `}
   }
 `;
 const Main = styled.main`
@@ -39,7 +41,7 @@ function ThemedShell({ children }: { children: React.ReactNode }) {
 
   return <ThemeProvider theme={resolvedTheme === 'light' ? lightTheme : darkTheme}>
     <GlobalStyles /><FloatingPawsBackground />
-    <Viewport>
+    <Viewport $showChrome={showChrome}>
       <SkipLink href="#tindog-main">Saltar al contenido</SkipLink>
       {showChrome && <SidebarNavigation />}
       <Main id="tindog-main" tabIndex={-1}>
