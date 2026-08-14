@@ -2,13 +2,12 @@
 import styled from 'styled-components';
 
 export const BackButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: ${({ theme }) => theme.color.primary};
   font-weight: 900;
   margin-bottom: 8px;
-
-  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    display: none;
-  }
 `;
 
 export const Layout = styled.div`

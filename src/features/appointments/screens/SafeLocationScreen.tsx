@@ -5,7 +5,7 @@ import { ArrowLeft, CheckCircle, LocateFixed, Map, MapPin, ShieldCheck, Star } f
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import {
-  Screen, Header, DesktopLayout, MapColumn, ContentColumn, MapBox, Content, DateSlots,
+  Screen, Header, DesktopLayout, MapColumn, ContentColumn, MapBox, MapSelectionBadge, Content, DateSlots,
   LocationCard, ReviewArea, ReviewItem, Footer, DesktopFooter,
 } from './SafeLocationScreenStyled';
 
@@ -63,6 +63,7 @@ export function SafeLocationScreen() {
           <MapBox>
             {embedKey && selected ? (
               <iframe
+                key={selected.id}
                 title={`Mapa de ${selected.name}`}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
@@ -70,11 +71,23 @@ export function SafeLocationScreen() {
               />
             ) : (
               <div className="fallback">
-                <Map size={42} />
-                <h2>Mapa interactivo listo para configurar</h2>
-                <p>Agregá una clave de Maps Embed restringida por dominio. Los datos de Places se consultarán desde el servidor.</p>
+                <div key={selected?.id} className="fallback-pin">
+                  <div className="fallback-pin-icon"><Map size={22} /></div>
+                  {selected ? <span className="fallback-pin-label">{selected.name}</span> : null}
+                </div>
               </div>
             )}
+
+            {selected ? (
+              <MapSelectionBadge>
+                <div className="icon"><MapPin size={16} /></div>
+                <div className="copy">
+                  <strong>{selected.name}</strong>
+                  <span>{selected.address} · {selected.distanceKm} km</span>
+                </div>
+              </MapSelectionBadge>
+            ) : null}
+
             <button className="locate" onClick={locate} aria-label="Usar mi ubicación">
               <LocateFixed color={located ? '#78D69A' : undefined} />
             </button>

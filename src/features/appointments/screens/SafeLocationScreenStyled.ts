@@ -78,25 +78,64 @@ export const MapBox = styled.div`
     width: 100%;
     height: 100%;
     border: 0;
+    opacity: 0;
+    animation: mapFadeIn 0.4s ease forwards;
+  }
+
+  @keyframes mapFadeIn {
+    to { opacity: 1; }
   }
 
   .fallback {
-    padding: 20px;
-    text-align: center;
-    color: ${({ theme }) => theme.color.textSecondary};
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background-image:
+      linear-gradient(${({ theme }) => theme.color.border} 1px, transparent 1px),
+      linear-gradient(90deg, ${({ theme }) => theme.color.border} 1px, transparent 1px);
+    background-size: 32px 32px;
+    background-position: center;
+    opacity: 0.9;
+  }
 
-    h2 {
-      margin-top: 6px;
-      color: ${({ theme }) => theme.color.text};
-      font-size: 1rem;
-    }
+  .fallback-pin {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    animation: pinDrop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
 
-    p {
-      max-width: 400px;
-      margin-top: 5px;
-      font-size: 0.72rem;
-      line-height: 1.45;
-    }
+  @keyframes pinDrop {
+    from { opacity: 0; transform: translateY(-16px) scale(0.8); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .fallback-pin-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: ${({ theme }) => theme.radius.full};
+    display: grid;
+    place-items: center;
+    color: ${({ theme }) => theme.color.textInverse};
+    background: ${({ theme }) => theme.color.primary};
+    box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+  }
+
+  .fallback-pin-label {
+    padding: 4px 12px;
+    border-radius: ${({ theme }) => theme.radius.full};
+    background: ${({ theme }) => theme.color.surface};
+    border: 1px solid ${({ theme }) => theme.color.border};
+    color: ${({ theme }) => theme.color.text};
+    font-size: 0.72rem;
+    font-weight: 800;
+    white-space: nowrap;
+    max-width: 16rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .locate {
@@ -118,6 +157,56 @@ export const MapBox = styled.div`
     height: min(60dvh, 520px);
     border-radius: ${({ theme }) => theme.radius.xl};
     border: 1px solid ${({ theme }) => theme.color.border};
+  }
+`;
+
+export const MapSelectionBadge = styled.div`
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: ${({ theme }) => theme.radius.lg};
+  background: ${({ theme }) => theme.color.glass};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  backdrop-filter: blur(12px);
+  animation: badgeSlideIn 0.3s ease;
+
+  .icon {
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    border-radius: ${({ theme }) => theme.radius.full};
+    display: grid;
+    place-items: center;
+    color: ${({ theme }) => theme.color.textInverse};
+    background: ${({ theme }) => theme.color.primary};
+  }
+
+  .copy {
+    min-width: 0;
+  }
+
+  strong {
+    display: block;
+    color: ${({ theme }) => theme.color.text};
+    font-size: 0.82rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  span {
+    color: ${({ theme }) => theme.color.textSecondary};
+    font-size: 0.68rem;
+  }
+
+  @keyframes badgeSlideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 `;
 
