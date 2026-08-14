@@ -29,7 +29,12 @@ export const lightTheme = {
     glass: 'rgba(253, 251, 247, 0.82)', glassBorder: 'rgba(154, 123, 20, 0.2)', glassShadow: 'rgba(74, 58, 16, 0.1)',
     success: '#1F7A42', successLight: 'rgba(31, 122, 66, 0.12)', error: '#B23B27', errorLight: 'rgba(178, 59, 39, 0.1)',
     warning: '#8A5A00', warningLight: 'rgba(138, 90, 0, 0.12)', info: '#2A5FA0', infoLight: 'rgba(42, 95, 160, 0.12)',
-    background: '#FDFBF7', surface: '#FFFFFF', surfaceRaised: '#FFFFFF',
+    // `surface` se mantiene blanco (tarjetas sobre el marfil del fondo).
+    // `surfaceRaised` baja hasta un arena cálido: su contraste contra el
+    // fondo (1.32) iguala el que ya funciona bien en modo oscuro entre
+    // surfaceAlt y background, para que las burbujas de chat se lean como
+    // burbujas y no como texto suelto.
+    background: '#FDFBF7', surface: '#FFFFFF', surfaceRaised: '#E7DCBF',
     overlay: 'rgba(38, 30, 12, 0.5)', border: 'rgba(154, 123, 20, 0.2)', borderSubtle: '#EDE7D8', borderFocus: '#C9A227',
     gradientStart: '#FDFBF7', gradientMid: '#FFFFFF', gradientEnd: '#F7F0DF',
     metalGold:     'linear-gradient(135deg, #9A7B14 0%, #C9A227 30%, #F0D98A 50%, #C9A227 70%, #A8850F 100%)',

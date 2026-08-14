@@ -103,10 +103,24 @@ export const Bubble = styled.div<{ $mine?: boolean; $system?: boolean }>`
   padding: ${({ $system }) => ($system ? '9px 12px' : '10px 14px')};
   border-radius: 19px;
   color: ${({ theme, $mine }) => ($mine ? theme.color.textInverse : theme.color.text)};
-  background: ${({ theme, $mine, $system }) => ($system ? theme.color.primaryFaded : $mine ? theme.color.primary : theme.color.surface)};
+  /* Los mensajes recibidos usan una superficie elevada propia: en modo claro
+     surface es casi idéntico al fondo y hacía que el texto pareciera suelto.
+     Suman borde y sombra para que la burbuja se lea como tal. */
+  background: ${({ theme, $mine, $system }) => ($system ? theme.color.primaryFaded : $mine ? theme.color.primary : theme.color.surfaceRaised)};
   font-size: ${({ $system }) => ($system ? '.68rem' : '.86rem')};
   line-height: 1.4;
   text-align: ${({ $system }) => ($system ? 'center' : 'left')};
+
+  ${({ $mine, $system, theme }) => !$mine && !$system && css`
+    border: 1px solid ${theme.color.border};
+    box-shadow: ${theme.elevation.sm};
+    border-bottom-left-radius: 6px;
+  `}
+
+  ${({ $mine, theme }) => $mine && css`
+    box-shadow: ${theme.glow.subtle};
+    border-bottom-right-radius: 6px;
+  `}
 `;
 
 export const Composer = styled.form`
