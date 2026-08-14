@@ -2,17 +2,19 @@
 export const tokens = {
   color: {
     // ── Brand Tindog Premium ──────────────────────────────────────────────────
-    primary:       '#D4AF37',
-    primaryLight:  '#F4D978',
-    primaryDark:   '#A9851F',
-    primaryFaded:  'rgba(212, 175, 55, 0.14)',
-    accent:        '#F4D978',
-    accentLight:   '#FFE9A0',
-    accentDark:    '#C5A63A',
+    // Dorado luminoso: más saturado y claro que el dorado plano anterior, para
+    // que lea como metal precioso y no como mostaza.
+    primary:       '#E8C252',
+    primaryLight:  '#FFF4C2',
+    primaryDark:   '#B8860B',
+    primaryFaded:  'rgba(232, 194, 82, 0.14)',
+    accent:        '#FFD97A',
+    accentLight:   '#FFF4C2',
+    accentDark:    '#C9A227',
 
     // ── Glassmorphism & Modern ────────────────────────────────────────────────
-    glass:         'rgba(18, 18, 20, 0.82)',
-    glassBorder:   'rgba(212, 175, 55, 0.2)',
+    glass:         'rgba(48, 48, 46, 0.78)',
+    glassBorder:   'rgba(232, 194, 82, 0.22)',
     glassShadow:   'rgba(0, 0, 0, 0.3)',
 
     // ── Semánticos ──────────────────────────────────────────────────────────
@@ -25,40 +27,49 @@ export const tokens = {
     info:          '#8BB8FF',
     infoLight:     'rgba(77, 150, 255, 0.16)',
 
-    // ── Neutros ────────────────────────────────────────────────────────────
+    // ── Neutros (grises cálidos) ──────────────────────────────────────────────
     neutral: {
       0:   '#FFFFFF',
-      50:  '#F8F4E7',
-      100: '#EAE1C7',
-      200: '#D0C3A2',
-      300: '#B2A583',
-      400: '#8F856E',
-      500: '#706854',
-      600: '#565043',
-      700: '#38352F',
-      800: '#1F1F20',
-      900: '#0A0A0C',
+      50:  '#F5F4F1',
+      100: '#E6E4DF',
+      200: '#C9C6BE',
+      300: '#A5A199',
+      400: '#807C74',
+      500: '#5F5C55',
+      600: '#4A4844',
+      700: '#3F3F3C',
+      800: '#30302E',
+      900: '#262624',
     },
 
     // ── Superficie y fondo ────────────────────────────────────────────────────
-    background:    '#050505',
-    surface:       '#121214',
-    overlay:       'rgba(0, 0, 0, 0.74)',
-    border:        'rgba(212, 175, 55, 0.2)',
-    borderFocus:   '#D4AF37',
+    // Gris cálido oscuro (estilo Claude) en vez de negro puro: el dorado
+    // brilla mucho más sobre este fondo y la app se siente menos plana.
+    background:    '#262624',
+    surface:       '#30302E',
+    surfaceRaised: '#3A3A37',
+    overlay:       'rgba(20, 20, 19, 0.76)',
+    border:        'rgba(232, 194, 82, 0.18)',
+    borderSubtle:  '#3F3F3C',
+    borderFocus:   '#E8C252',
 
     // ── Gradientes ────────────────────────────────────────────────────────────
-    gradientStart: '#050505',
-    gradientMid:   '#0C0C0E',
-    gradientEnd:   '#15130D',
+    gradientStart: '#262624',
+    gradientMid:   '#2E2E2B',
+    gradientEnd:   '#332F26',
+
+    // ── Dorado metálico (para texto/bordes/botones con brillo real) ───────────
+    metalGold:      'linear-gradient(135deg, #B8860B 0%, #E8C252 35%, #FFF4C2 50%, #E8C252 65%, #C9A227 100%)',
+    metalGoldSoft:  'linear-gradient(135deg, #C9A227 0%, #E8C252 50%, #FFE9A0 100%)',
+    metalSheen:     'linear-gradient(115deg, transparent 30%, rgba(255,244,194,0.5) 50%, transparent 70%)',
 
     // ── Texto ─────────────────────────────────────────────────────────────────
-    text:          '#FFF8E7',
-    textSecondary: '#D2C39F',
-    textTertiary:  '#978B70',
-    textDisabled:  '#655E4D',
-    textInverse:   '#050505',
-    textLink:      '#D4AF37',
+    text:          '#F5F2EA',
+    textSecondary: '#C6C0B2',
+    textTertiary:  '#918C81',
+    textDisabled:  '#615D56',
+    textInverse:   '#221F18',
+    textLink:      '#E8C252',
   },
 
   typography: {
@@ -130,10 +141,19 @@ export const tokens = {
   },
 
   elevation: {
-    sm:   '0 2px 8px rgba(0, 0, 0, 0.24)',
-    md:   '0 8px 24px rgba(0, 0, 0, 0.32)',
-    lg:   '0 20px 48px rgba(0, 0, 0, 0.4)',
-    glow: '0 0 0 1px rgba(212, 175, 55, 0.16), 0 12px 32px rgba(212, 175, 55, 0.12)',
+    sm:   '0 2px 8px rgba(0, 0, 0, 0.28)',
+    md:   '0 8px 24px rgba(0, 0, 0, 0.36)',
+    lg:   '0 20px 48px rgba(0, 0, 0, 0.45)',
+    glow: '0 0 0 1px rgba(232, 194, 82, 0.18), 0 12px 32px rgba(232, 194, 82, 0.14)',
+  },
+
+  // ── Glow dorado: halos reactivos para botones, cards y focus ───────────────
+  glow: {
+    subtle: '0 0 12px rgba(232, 194, 82, 0.18)',
+    soft:   '0 0 20px rgba(232, 194, 82, 0.28), 0 0 40px rgba(232, 194, 82, 0.12)',
+    strong: '0 0 24px rgba(232, 194, 82, 0.45), 0 0 56px rgba(232, 194, 82, 0.22)',
+    inset:  'inset 0 1px 0 rgba(255, 244, 194, 0.22)',
+    text:   '0 0 18px rgba(232, 194, 82, 0.5)',
   },
 } as const;
 

@@ -116,13 +116,30 @@ export const Title = styled.h1`
   color: ${({ theme }) => theme.color.text};
   line-height: 1.1;
   letter-spacing: -1px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.28em;
+  justify-content: center;
+  perspective: 800px;
 
-  span {
-    color: ${({ theme }) => theme.color.primary};
+  .word {
+    display: inline-block;
+    transform-origin: 50% 100%;
+  }
+
+  /* La palabra destacada usa dorado metálico real, no color plano. */
+  .word.accent {
+    background: ${({ theme }) => theme.color.metalGold};
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(${({ theme }) => theme.glow.text});
   }
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     font-size: clamp(3rem, 4.5vw, 4.5rem);
+    justify-content: flex-start;
   }
 `;
 

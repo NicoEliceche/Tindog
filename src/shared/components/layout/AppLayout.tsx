@@ -7,8 +7,8 @@ import { lightTheme, theme as darkTheme } from '@core/theme/theme';
 import { PageTransition } from '@shared/components/ui';
 import React from 'react';
 import styled, { ThemeProvider } from 'styled-components';
+import { AuroraBackground } from './AuroraBackground';
 import { BottomNavigation } from './BottomNavigation';
-import { CyberDogBackground } from './CyberDogBackground';
 import { GlobalStyles } from './GlobalStyles';
 import { SidebarNavigation } from './SidebarNavigation';
 import { isNavHidden } from './navigation.config';
@@ -26,7 +26,7 @@ const Viewport = styled.div<{ $showChrome: boolean }>`
   }
 `;
 const Main = styled.main`
-  flex: 1; width: 100%; max-width: ${({ theme }) => theme.layout.shellMaxWidth}; margin: 0 auto; position: relative; display: flex; flex-direction: column; z-index: 10;
+  flex: 1; width: 100%; min-width: 0; max-width: ${({ theme }) => theme.layout.shellMaxWidth}; margin: 0 auto; position: relative; display: flex; flex-direction: column; z-index: 10;
 `;
 const SkipLink = styled.a`
   position: fixed; left: 12px; top: 10px; z-index: 5000; padding: 10px 14px; border-radius: 12px; transform: translateY(-160%);
@@ -40,7 +40,7 @@ function ThemedShell({ children }: { children: React.ReactNode }) {
   const showChrome = !isNavHidden(pathname);
 
   return <ThemeProvider theme={resolvedTheme === 'light' ? lightTheme : darkTheme}>
-    <GlobalStyles /><CyberDogBackground />
+    <GlobalStyles /><AuroraBackground />
     <Viewport $showChrome={showChrome}>
       <SkipLink href="#tindog-main">Saltar al contenido</SkipLink>
       {showChrome && <SidebarNavigation />}

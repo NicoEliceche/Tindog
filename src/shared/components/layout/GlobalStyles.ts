@@ -2,7 +2,7 @@ import { createGlobalStyle } from 'styled-components';
 
 export const GlobalStyles = createGlobalStyle`
   * { box-sizing: border-box; padding: 0; margin: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { min-height: 100%; max-width: 100vw; overflow-x: hidden; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: ${({ theme }) => theme.color.background}; color: ${({ theme }) => theme.color.text}; }
+  html, body { width: 100%; min-height: 100%; max-width: 100vw; overflow-x: hidden; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: ${({ theme }) => theme.color.background}; color: ${({ theme }) => theme.color.text}; }
   body { transition: background-color .2s ease, color .2s ease; }
   a { color: inherit; text-decoration: none; }
   button, input, textarea { font: inherit; }

@@ -1,5 +1,4 @@
 // src/features/discovery/screens/DiscoveryScreenStyled.ts
-import { motion } from 'framer-motion';
 import styled from 'styled-components';
 
 export const Page = styled.section`
@@ -243,98 +242,6 @@ export const BackdropCard = styled.div`
   opacity: 0.6;
 `;
 
-export const PetCard = styled(motion.article)`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 28px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  background: ${({ theme }) => theme.color.surface};
-  border: 1px solid ${({ theme }) => theme.color.borderFocus};
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
-  cursor: grab;
-  touch-action: pan-y;
-  will-change: transform;
-
-  &:active { cursor: grabbing; }
-`;
-
-export const SwipeLabel = styled(motion.div)<{ $tone: 'like' | 'nope' }>`
-  position: absolute;
-  top: 28px;
-  ${({ $tone }) => ($tone === 'like' ? 'left: 24px;' : 'right: 24px;')}
-  padding: 8px 18px;
-  border-radius: 12px;
-  border: 3px solid ${({ theme, $tone }) => ($tone === 'like' ? theme.color.success : theme.color.error)};
-  color: ${({ theme, $tone }) => ($tone === 'like' ? theme.color.success : theme.color.error)};
-  font-size: 1.4rem;
-  font-weight: 900;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  transform: rotate(${({ $tone }) => ($tone === 'like' ? '-14deg' : '14deg')});
-  pointer-events: none;
-  z-index: 20;
-`;
-
-export const PetImage = styled.img`
-  width: 100%;
-  height: 67%;
-  object-fit: cover;
-  background: ${({ theme }) => theme.color.neutral[800]};
-`;
-
-export const PetBody = styled.div`
-  flex: 1;
-  min-height: 0;
-  padding: 14px 17px;
-
-  .title-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-  }
-
-  h2 {
-    color: ${({ theme }) => theme.color.primary};
-    font-size: 1.75rem;
-    font-weight: 900;
-  }
-
-  strong {
-    color: ${({ theme }) => theme.color.text};
-    font-size: 1.2rem;
-  }
-
-  .meta {
-    margin-top: 2px;
-    color: ${({ theme }) => theme.color.textSecondary};
-    font-size: 0.7rem;
-    font-weight: 800;
-    text-transform: uppercase;
-  }
-
-  p {
-    margin-top: 7px;
-    color: ${({ theme }) => theme.color.text};
-    font-size: 0.88rem;
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    p {
-      -webkit-line-clamp: 4;
-    }
-  }
-`;
-
 export const Actions = styled.div`
   width: 100%;
   flex: 1;
@@ -361,9 +268,25 @@ export const Action = styled.button<{ $primary?: boolean }>`
     display: grid;
     place-items: center;
     color: ${({ theme, $primary }) => ($primary ? theme.color.textInverse : theme.color.primary)};
-    background: ${({ theme, $primary }) => ($primary ? theme.color.primary : theme.color.surface)};
+    background: ${({ theme, $primary }) => ($primary ? theme.color.metalGoldSoft : theme.color.surface)};
     border: 1px solid ${({ theme }) => theme.color.borderFocus};
     font-style: normal;
+    box-shadow: ${({ theme, $primary }) => ($primary ? theme.glow.soft : theme.glow.subtle)},
+      ${({ theme }) => theme.glow.inset};
+    transition: box-shadow 0.24s ease, transform 0.18s ease;
+  }
+
+  &:hover i {
+    box-shadow: ${({ theme }) => theme.glow.strong}, ${({ theme }) => theme.glow.inset};
+    transform: translateY(-3px) scale(1.05);
+  }
+
+  &:active i {
+    transform: translateY(0) scale(0.96);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &:hover i, &:active i { transform: none; }
   }
 `;
 

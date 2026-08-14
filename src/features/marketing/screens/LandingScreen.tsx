@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { type Variants, motion, useReducedMotion } from 'framer-motion';
 import { Heart, MessagesSquare, PawPrint, ShieldCheck, Sparkles, Users } from 'lucide-react';
 import { withPublicBasePath } from '@core/routing/publicPath';
 import { restoreAuthSession } from '@core/data/services/authService';
@@ -28,8 +29,26 @@ const values = [
   { Icon: Sparkles, title: 'Matches con criterio', description: 'Filtros por raza, tamaño, energía y compatibilidad real entre mascotas.' },
 ];
 
+// Secuencia de entrada: cada bloque aparece escalonado, y el título se
+// revela palabra por palabra para que la carga se sienta orquestada.
+const containerVariants: Variants = {
+  hidden: {},
+  visible: { transition: { delayChildren: 0.25, staggerChildren: 0.09 } },
+};
+
+const lineVariants: Variants = {
+  hidden: { opacity: 0, y: 18, filter: 'blur(6px)' },
+  visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] } },
+};
+
+const wordVariants: Variants = {
+  hidden: { opacity: 0, y: 28, rotateX: -60 },
+  visible: { opacity: 1, y: 0, rotateX: 0, transition: { duration: 0.75, ease: [0.16, 1, 0.3, 1] } },
+};
+
 export function LandingScreen() {
   const router = useRouter();
+  const reduceMotion = useReducedMotion();
   const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   useEffect(() => {
@@ -70,9 +89,9 @@ export function LandingScreen() {
       <HeroSection>
         <HeroCopy>
           <LogoWrapper
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
+            initial={{ opacity: 0, scale: 0.6, rotate: -12, filter: 'blur(12px)' }}
+            animate={{ opacity: 1, scale: 1, rotate: 0, filter: 'blur(0px)' }}
+            transition={{ duration: reduceMotion ? 0 : 1, ease: [0.16, 1, 0.3, 1] }}
           >
             <LogoImage
               src={withPublicBasePath('/assets/tindog_patita_logo.png')}
@@ -83,23 +102,33 @@ export function LandingScreen() {
           </LogoWrapper>
 
           <ContentBox
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
           >
-            <Eyebrow><Sparkles size={14} /> La red social para perros</Eyebrow>
-            <Title>Donde las <span>Patas</span> conectan.</Title>
-            <Subtitle>La red social más guau para encontrar la cita perfecta de tu mejor amigo.</Subtitle>
+            <motion.div variants={lineVariants}>
+              <Eyebrow><Sparkles size={14} /> La red social para perros</Eyebrow>
+            </motion.div>
+            <Title>
+              {['Donde', 'las'].map((word) => (
+                <motion.span key={word} variants={wordVariants} className="word">{word}</motion.span>
+              ))}
+              <motion.span variants={wordVariants} className="word accent">Patas</motion.span>
+              <motion.span variants={wordVariants} className="word">conectan.</motion.span>
+            </Title>
+            <motion.div variants={lineVariants}>
+              <Subtitle>La red social más guau para encontrar la cita perfecta de tu mejor amigo.</Subtitle>
+            </motion.div>
           </ContentBox>
 
           <CtaRow>
             <Button
               onClick={() => router.push('/login')}
-              whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(212, 175, 55, 0.3)' }}
-              whileTap={{ scale: 0.95 }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
+              whileHover={reduceMotion ? undefined : { scale: 1.05 }}
+              whileTap={reduceMotion ? undefined : { scale: 0.95 }}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: reduceMotion ? 0 : 0.95, duration: reduceMotion ? 0 : 0.6, ease: [0.16, 1, 0.3, 1] }}
             >
               Empezar Aventura
             </Button>
@@ -108,9 +137,9 @@ export function LandingScreen() {
         </HeroCopy>
 
         <HeroMockup
-          initial={{ opacity: 0, x: 24 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4, duration: 0.8 }}
+          initial={{ opacity: 0, x: 60, rotateY: -22, scale: 0.9 }}
+          animate={{ opacity: 1, x: 0, rotateY: 0, scale: 1 }}
+          transition={{ delay: reduceMotion ? 0 : 0.5, duration: reduceMotion ? 0 : 1.1, ease: [0.16, 1, 0.3, 1] }}
         >
           <MockupGlow />
           <MockupFrame>
