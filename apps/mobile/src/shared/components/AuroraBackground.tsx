@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, {
-  Easing, cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withTiming,
+  Easing, cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withSequence, withTiming,
 } from 'react-native-reanimated';
 import type { AppTheme } from '../../core/theme/tokens';
 
@@ -30,10 +30,13 @@ interface PawSpec {
   size: number;
   startX: number;
   startY: number;
-  dx: number;
-  dy: number;
+  /** Puntos de rebote sucesivos, relativos a la posición inicial. */
+  pathX: number[];
+  pathY: number[];
   duration: number;
   rotation: number;
+  /** Vueltas completas por ciclo largo; el giro nunca cambia de sentido. */
+  spinTurns: number;
   opacity: number;
 }
 
@@ -122,25 +125,42 @@ function PawPrint({ size, color }: { size: number; color: string }) {
  * y desfasadas, como el paso de un perro, no como una huella suelta.
  */
 function FloatingPaw({ spec, color, disabled }: { spec: PawSpec; color: string; disabled: boolean }) {
-  const progress = useSharedValue(0);
+  // Cada tramo va hasta un punto distinto y ahí "rebota" hacia el
+  // siguiente. Un withRepeat(..., true) sería un vaivén entre dos puntos
+  // fijos, que se lee como un péndulo y no como movimiento libre.
+  const tx = useSharedValue(0);
+  const ty = useSharedValue(0);
+  const spin = useSharedValue(0);
 
   useEffect(() => {
     if (disabled) return;
-    progress.value = withRepeat(
-      withTiming(1, { duration: spec.duration, easing: Easing.inOut(Easing.sin) }),
+    const leg = (v: number) => withTiming(v, { duration: spec.duration, easing: Easing.inOut(Easing.sin) });
+    tx.value = withRepeat(
+      withSequence(...spec.pathX.map((v) => leg(v))),
       -1,
-      true,
+      false,
     );
-    return () => cancelAnimation(progress);
-  }, [disabled, spec.duration, progress]);
+    ty.value = withRepeat(
+      withSequence(...spec.pathY.map((v) => leg(v))),
+      -1,
+      false,
+    );
+    // La rotación no rebota: gira siempre en el mismo sentido.
+    spin.value = withRepeat(
+      withTiming(spec.spinTurns * 360, { duration: spec.duration * 6, easing: Easing.linear }),
+      -1,
+      false,
+    );
+    return () => { cancelAnimation(tx); cancelAnimation(ty); cancelAnimation(spin); };
+  }, [disabled, spec, tx, ty, spin]);
 
   const style = useAnimatedStyle(() => ({
     transform: [
-      { translateX: progress.value * spec.dx },
-      { translateY: progress.value * spec.dy },
-      { rotate: `${spec.rotation + progress.value * 40}deg` },
+      { translateX: tx.value },
+      { translateY: ty.value },
+      { rotate: `${spec.rotation + spin.value}deg` },
     ],
-    opacity: spec.opacity + progress.value * 0.12,
+    opacity: spec.opacity,
   }));
 
   // Las dos huellas comparten el tamaño base y se separan en diagonal, cada
@@ -194,15 +214,29 @@ export function AuroraBackground({ theme }: { theme: AppTheme }) {
 
   const paws = useMemo<PawSpec[]>(() => Array.from({ length: PAW_COUNT }, (_, i) => {
     const size = rand(30, 54);
+    const startX = rand(0, Math.max(1, width - size));
+    const startY = rand(0, Math.max(1, height - size));
+    // Cinco destinos al azar dentro de la pantalla; el último vuelve al
+    // origen para que el ciclo cierre sin un salto brusco.
+    const legs = 5;
+    const pathX: number[] = [];
+    const pathY: number[] = [];
+    for (let leg = 0; leg < legs - 1; leg += 1) {
+      pathX.push(rand(0, Math.max(1, width - size)) - startX);
+      pathY.push(rand(0, Math.max(1, height - size)) - startY);
+    }
+    pathX.push(0);
+    pathY.push(0);
     return {
       id: i,
       size,
-      startX: rand(0, Math.max(1, width - size)),
-      startY: rand(0, Math.max(1, height - size)),
-      dx: signed(width * 0.16, width * 0.46),
-      dy: signed(height * 0.14, height * 0.38),
-      duration: rand(7000, 14000),
+      startX,
+      startY,
+      pathX,
+      pathY,
+      duration: rand(4200, 9000),
       rotation: rand(0, 360),
+      spinTurns: signed(0.6, 1.8),
       opacity: rand(0.14, 0.28),
     };
   }), [width, height]);
