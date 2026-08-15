@@ -24,9 +24,19 @@ const Viewport = styled.div<{ $showChrome: boolean }>`
     `}
   }
 `;
-const Main = styled.main`
-  flex: 1; width: 100%; min-width: 0; max-width: ${({ theme }) => theme.layout.shellMaxWidth}; margin: 0 auto; position: relative; display: flex; flex-direction: column; z-index: 10;
+/**
+ * `$fluid` libera el techo de ancho para las pantallas que son superficies
+ * de trabajo —el chat de dos paneles y las grillas de tarjetas—, donde más
+ * monitor significa más contenido útil. El resto lo conserva: en formularios
+ * y textos largos, una línea de 1900px se vuelve incómoda de leer.
+ */
+const Main = styled.main<{ $fluid: boolean }>`
+  flex: 1; width: 100%; min-width: 0; margin: 0 auto; position: relative; display: flex; flex-direction: column; z-index: 10;
+  ${({ $fluid, theme }) => !$fluid && `max-width: ${theme.layout.shellMaxWidth};`}
 `;
+
+/** Rutas que aprovechan todo el ancho disponible. */
+const FLUID_ROUTES = ['/chat', '/requests', '/saved', '/safety'];
 const SkipLink = styled.a`
   position: fixed; left: 12px; top: 10px; z-index: 5000; padding: 10px 14px; border-radius: 12px; transform: translateY(-160%);
   color: ${({ theme }) => theme.color.textInverse}; background: ${({ theme }) => theme.color.primary}; font-weight: 900;
@@ -43,7 +53,7 @@ function ThemedShell({ children }: { children: React.ReactNode }) {
     <Viewport $showChrome={showChrome}>
       <SkipLink href="#tindog-main">Saltar al contenido</SkipLink>
       {showChrome && <SidebarNavigation />}
-      <Main id="tindog-main" tabIndex={-1}>
+      <Main id="tindog-main" tabIndex={-1} $fluid={FLUID_ROUTES.some((route) => pathname.startsWith(route))}>
         {/* Sin AnimatePresence: con `mode="wait"` el montaje de la pantalla
             nueva quedaba condicionado a que la animación de salida de la
             anterior avisara que terminó. Cuando ese aviso no llegaba —con

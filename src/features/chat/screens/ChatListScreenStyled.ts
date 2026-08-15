@@ -77,13 +77,23 @@ export const Request = styled.article`
 export const Chat = styled.button<{ $active?: boolean }>`
   width: 100%;
   min-height: 86px;
-  padding: 12px 2px;
+  /* El resalte del activo se dibuja como una pastilla redondeada con su
+     propio margen: antes el fondo llegaba a los bordes del botón y el
+     brillo quedaba cortado a ras de la columna, como un corte seco. */
+  padding: 12px;
   display: flex;
   align-items: center;
   gap: 12px;
   text-align: left;
-  border-bottom: 1px solid ${({ theme }) => theme.color.border};
+  border-radius: ${({ theme }) => theme.radius.lg};
+  border-bottom: 1px solid ${({ theme, $active }) => ($active ? 'transparent' : theme.color.border)};
   background: ${({ theme, $active }) => ($active ? theme.color.primaryFaded : 'transparent')};
+  box-shadow: ${({ theme, $active }) => ($active ? theme.glow.subtle : 'none')};
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    background: ${({ theme, $active }) => ($active ? theme.color.primaryFaded : theme.color.surfaceRaised)};
+  }
 
   img {
     width: 58px;
