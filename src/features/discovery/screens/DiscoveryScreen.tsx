@@ -13,14 +13,16 @@ import {
 } from './DiscoveryScreenStyled';
 
 export function DiscoveryScreen() {
-  const { profile, discoveryPets, dismissPet, resetDiscovery, restorePet, sendRequest } = useWebApp();
+  const { profile, discoveryPets, dismissPet, resetDiscovery, restorePet, sendRequest, savePet, blockedOwners } = useWebApp();
   const [notice, setNotice] = useState<{ title: string; body: string } | null>(null);
   const [lastDismissed, setLastDismissed] = useState<Pet | null>(null);
   // Progreso del arrastre (-1..1): alimenta la animación de la carta de atrás.
   const [dragProgress, setDragProgress] = useState(0);
 
-  const pet = discoveryPets[0];
-  const nextPet = discoveryPets[1];
+  // Los tutores bloqueados no vuelven a aparecer en el mazo.
+  const visiblePets = discoveryPets.filter((item) => !blockedOwners.includes(`Tutor de ${item.name}`));
+  const pet = visiblePets[0];
+  const nextPet = visiblePets[1];
 
   const connect = useCallback((target: Pet) => {
     sendRequest(target);
@@ -122,7 +124,7 @@ export function DiscoveryScreen() {
                 <Actions>
                   <Action onClick={() => pass(pet)} aria-label="Pasar perfil"><i><X /></i>Pasar</Action>
                   <Action $primary onClick={() => connect(pet)} aria-label="Enviar solicitud de conexión"><i><MessageCircle /></i>Conectar</Action>
-                  <Action onClick={() => { pass(pet); setNotice({ title: 'Perfil guardado', body: `Podrás volver a ver a ${pet.name} desde favoritos.` }); }} aria-label="Guardar perfil"><i><Bookmark /></i>Guardar</Action>
+                  <Action onClick={() => { savePet(pet); pass(pet); setNotice({ title: 'Perfil guardado', body: `${pet.name} quedó en tus favoritos.` }); }} aria-label="Guardar perfil"><i><Bookmark /></i>Guardar</Action>
                 </Actions>
                 <UndoButton onClick={undo} disabled={!lastDismissed} aria-label="Deshacer el último swipe">
                   <Undo2 size={14} /> Deshacer
