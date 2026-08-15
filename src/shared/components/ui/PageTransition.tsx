@@ -14,15 +14,20 @@ export function PageTransition({ children }: PageTransitionProps) {
   const duration = reduceMotion ? 0 : motionTokens.duration.page;
 
   return (
-    // `initial={false}` hace que framer-motion no escriba estilos de entrada
-    // durante el SSR ni en el primer render del cliente: así el HTML servido
-    // y el árbol hidratado coinciden exactamente. Las transiciones entre
-    // rutas (que ocurren después de hidratar) siguen animando vía `exit`
-    // y el remonte con nueva `key`.
+    // `initial={false}`: framer-motion no escribe estilos de entrada durante
+    // el SSR ni en el primer render del cliente, así el HTML servido y el
+    // árbol hidratado coinciden exactamente.
+    //
+    // Sin `exit`: el layout ya no usa AnimatePresence, porque su `mode="wait"`
+    // podía dejar la pantalla vacía si la animación de salida nunca avisaba
+    // que había terminado. Un `exit` sin nadie que lo orqueste no se ejecuta
+    // y sólo confundiría a quien lea esto.
+    //
+    // El contenido se monta con opacidad plena y la clave por ruta fuerza el
+    // remonte: nada puede dejarlo invisible.
     <motion.div
       initial={false}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 0 }}
       transition={{ duration, ease: motionTokens.easing.decelerate }}
       style={{ width: '100%', display: 'flex', flexDirection: 'column', flex: 1 }}
     >
