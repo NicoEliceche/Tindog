@@ -23,8 +23,9 @@ export const Shell = styled.div`
   gap: ${({ theme }) => theme.spacing[5]};
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    /* Sin techo: son grillas de tarjetas y con más pantalla entran más
+       columnas, en vez de dejar franjas vacías a los costados. */
     width: 100%;
-    max-width: 60rem;
   }
 `;
 

@@ -8,9 +8,10 @@ export const DesktopShell = styled.div`
     display: grid;
     grid-template-columns: 23rem 1fr;
     height: 100dvh;
+    /* Sin techo de ancho: el chat es una superficie de trabajo y aprovecha
+       todo el monitor. Con max-width quedaba centrado y el panel activo se
+       cortaba contra un borde que no coincidía con nada. */
     width: 100%;
-    max-width: ${({ theme }) => theme.layout.shellMaxWidth};
-    margin: 0 auto;
   }
 `;
 
