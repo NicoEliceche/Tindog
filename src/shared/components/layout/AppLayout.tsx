@@ -10,11 +10,15 @@ import { AuroraBackground } from './AuroraBackground';
 import { BottomNavigation } from './BottomNavigation';
 import { GlobalStyles } from './GlobalStyles';
 import { SidebarNavigation } from './SidebarNavigation';
-import { isNavHidden } from './navigation.config';
+import { isBottomNavHidden, isSidebarHidden } from './navigation.config';
 
 const Viewport = styled.div<{ $showChrome: boolean }>`
   width: 100%; min-height: 100dvh; display: flex; flex-direction: column;
-  background: transparent; color: ${({ theme }) => theme.color.text}; position: relative; overflow-x: hidden;
+  background: transparent; color: ${({ theme }) => theme.color.text}; position: relative;
+  /* Nada de overflow-x aquí: un overflow en un eje convierte al elemento en
+     contenedor de scroll y eso anula el position:sticky de la barra lateral,
+     que entonces sube con la página. El desborde horizontal se contiene en
+     el body, que es el que scrollea de verdad. */
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     ${({ $showChrome, theme }) => $showChrome && `
@@ -46,13 +50,17 @@ const SkipLink = styled.a`
 function ThemedShell({ children }: { children: React.ReactNode }) {
   const { resolvedTheme } = useWebApp();
   const pathname = usePathname();
-  const showChrome = !isNavHidden(pathname);
+  // El grid de dos columnas depende de la barra lateral; la barra inferior
+  // se decide aparte porque no coinciden (ajustes conserva ambas, la
+  // conversación abierta conserva sólo la lateral).
+  const showSidebar = !isSidebarHidden(pathname);
+  const showBottomNav = !isBottomNavHidden(pathname);
 
   return <ThemeProvider theme={resolvedTheme === 'light' ? lightTheme : darkTheme}>
     <GlobalStyles /><AuroraBackground />
-    <Viewport $showChrome={showChrome}>
+    <Viewport $showChrome={showSidebar}>
       <SkipLink href="#tindog-main">Saltar al contenido</SkipLink>
-      {showChrome && <SidebarNavigation />}
+      {showSidebar && <SidebarNavigation />}
       <Main id="tindog-main" tabIndex={-1} $fluid={FLUID_ROUTES.some((route) => pathname.startsWith(route))}>
         {/* Sin AnimatePresence: con `mode="wait"` el montaje de la pantalla
             nueva quedaba condicionado a que la animación de salida de la
@@ -65,7 +73,7 @@ function ThemedShell({ children }: { children: React.ReactNode }) {
             y `PageTransition` sólo anima su propia aparición. */}
         <PageTransition key={pathname}>{children}</PageTransition>
       </Main>
-      {showChrome && <BottomNavigation />}
+      {showBottomNav && <BottomNavigation />}
     </Viewport>
   </ThemeProvider>;
 }

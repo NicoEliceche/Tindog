@@ -224,3 +224,27 @@ export const Notice = styled.div`
 
   li::before { content: '·'; color: ${({ theme }) => theme.color.primary}; font-weight: 900; }
 `;
+
+/** Botón circular de una sola acción, como cancelar una solicitud. */
+export const IconAction = styled.button`
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: ${({ theme }) => theme.color.textTertiary};
+  background: transparent;
+  border: 1px solid ${({ theme }) => theme.color.border};
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+
+  &:hover {
+    color: ${({ theme }) => theme.color.error};
+    border-color: ${({ theme }) => theme.color.error};
+    background: ${({ theme }) => theme.color.surfaceRaised};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.primary};
+    outline-offset: 2px;
+  }
+`;

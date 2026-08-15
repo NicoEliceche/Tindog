@@ -2,7 +2,12 @@ import { createGlobalStyle } from 'styled-components';
 
 export const GlobalStyles = createGlobalStyle`
   * { box-sizing: border-box; padding: 0; margin: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { width: 100%; min-height: 100%; max-width: 100vw; overflow-x: hidden; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: ${({ theme }) => theme.color.background}; color: ${({ theme }) => theme.color.text}; }
+  /* Ocultar el desborde horizontal en html convierte al elemento raíz en
+     contenedor de scroll, y eso anula el position:sticky de la barra
+     lateral: sube con la página. Se aplica sólo en body, con clip, que
+     recorta sin volverlo contenedor de scroll. */
+  html { width: 100%; min-height: 100%; }
+  body { width: 100%; min-height: 100%; max-width: 100vw; overflow-x: clip; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: ${({ theme }) => theme.color.background}; color: ${({ theme }) => theme.color.text}; }
   body { transition: background-color .2s ease, color .2s ease; }
   a { color: inherit; text-decoration: none; }
   button, input, textarea { font: inherit; }
