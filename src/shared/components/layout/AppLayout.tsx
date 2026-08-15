@@ -1,6 +1,5 @@
 'use client';
 
-import { AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { WebAppProvider, useWebApp } from '@core/providers/WebAppProvider';
 import { lightTheme, theme as darkTheme } from '@core/theme/theme';
@@ -45,9 +44,16 @@ function ThemedShell({ children }: { children: React.ReactNode }) {
       <SkipLink href="#tindog-main">Saltar al contenido</SkipLink>
       {showChrome && <SidebarNavigation />}
       <Main id="tindog-main" tabIndex={-1}>
-        <AnimatePresence mode="wait">
-          <PageTransition key={pathname}>{children}</PageTransition>
-        </AnimatePresence>
+        {/* Sin AnimatePresence: con `mode="wait"` el montaje de la pantalla
+            nueva quedaba condicionado a que la animación de salida de la
+            anterior avisara que terminó. Cuando ese aviso no llegaba —con
+            `duration: 0` por movimiento reducido, o con la pestaña en
+            segundo plano, donde requestAnimationFrame no dispara— la salida
+            nunca completaba y el contenido no se montaba: pantalla vacía
+            hasta recargar a mano. La entrada de página no justifica que se
+            pueda perder la UI entera, así que el contenido se monta directo
+            y `PageTransition` sólo anima su propia aparición. */}
+        <PageTransition key={pathname}>{children}</PageTransition>
       </Main>
       {showChrome && <BottomNavigation />}
     </Viewport>
