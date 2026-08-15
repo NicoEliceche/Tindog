@@ -63,7 +63,11 @@ export function LandingScreen() {
 
       if (session) {
         router.replace('/discovery');
-        return;
+        // Aunque redirijamos, hay que salir del estado de carga: la
+        // navegación no es inmediata y este componente sigue montado
+        // mientras tanto. Si no, queda renderizando LoadingScreen —un
+        // contenedor vacío— encima de la pantalla nueva hasta que se
+        // recargue a mano.
       }
 
       setIsCheckingSession(false);
