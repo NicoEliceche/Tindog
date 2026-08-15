@@ -88,7 +88,10 @@ export function NotificationBell() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: reduceMotion ? 1 : 0.92, y: reduceMotion ? 0 : -6 }}
               transition={reduceMotion ? { duration: 0.12 } : { type: 'spring', stiffness: 380, damping: 30 }}
-              // Nace en la campana, no en el centro del panel.
+              // Nace en la esquina superior derecha, que es donde está la
+              // campana. En pantallas angostas el panel ocupa el ancho del
+              // viewport, así que ese punto queda igualmente arriba a la
+              // derecha, cerca del ícono.
               style={{ transformOrigin: 'top right' }}
             >
               <PanelHeader>

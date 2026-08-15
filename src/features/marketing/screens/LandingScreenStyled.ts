@@ -37,9 +37,33 @@ export const HeroSection = styled.section`
   gap: ${({ theme }) => theme.spacing[8]};
   position: relative;
 
+  /* En escritorio el resplandor dorado grande sale del MockupGlow, que vive
+     dentro del mockup del hero. Ese mockup no existe por debajo de lg, así
+     que el teléfono se quedaba sin ese halo y el fondo se veía apagado en
+     comparación. Este pseudo-elemento lo repone donde falta. */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 12%;
+    left: 50%;
+    width: min(120vw, 34rem);
+    aspect-ratio: 1;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.26) 0%, transparent 62%);
+    filter: blur(34px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
   @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
     min-height: 100dvh;
     padding: 0;
+  }
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    /* Acá manda el MockupGlow. */
+    &::before { content: none; }
   }
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {

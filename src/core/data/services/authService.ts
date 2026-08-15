@@ -6,6 +6,9 @@ import type { AuthPlatform, AuthUser, GoogleAuthConfigResponse } from '@core/typ
 
 const AUTH_TOKEN_STORAGE_KEY = 'tindog_auth_token';
 
+/** Corta la espera si la red no responde: sin sesión no vale bloquear la UI. */
+const SESSION_CHECK_TIMEOUT_MS = 3000;
+
 function getApiBaseUrl(): string | null {
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '');
   return apiUrl || null;
@@ -57,15 +60,26 @@ async function validateStoredAuthToken(
 ): Promise<{ user: AuthUser | null; platform: AuthPlatform; unauthorized: boolean }> {
   const apiUrl = getApiBaseUrl();
 
-  const response = await fetch(`${apiUrl ?? ''}/api/auth/me`, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    credentials: 'include',
-    cache: 'no-store',
-  });
+  // Sin AbortController, una API caída o bloqueada por CORS deja la
+  // pantalla en "Verificando sesión" hasta que el navegador se rinda.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SESSION_CHECK_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(`${apiUrl ?? ''}/api/auth/me`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
 
   if (response.status === 401) {
     return { user: null, platform: 'web', unauthorized: true };
@@ -105,12 +119,42 @@ export async function loginWithGoogleIdToken(idToken: string): Promise<LoginResp
   }
 
   clearStoredAuthToken();
+  // La sesión web viaja en cookie httpOnly: este marcador es lo único que
+  // le dice al cliente que vale la pena preguntar por ella al arrancar.
+  markSessionStarted();
 
   return data;
 }
 
+/**
+ * Marcador de "acá hubo un login". La cookie de sesión es httpOnly —como
+ * debe ser—, así que el cliente no puede leerla para saber si tiene sesión.
+ * Este flag es la única señal local disponible.
+ *
+ * No es una credencial y no da acceso a nada: sólo evita salir a la red a
+ * preguntar por una sesión que sabemos que nunca se abrió. Quien lo escriba
+ * a mano no gana nada; el backend igual responde 401 y se limpia.
+ */
+const SESSION_HINT_KEY = 'tindog.auth.hint.v1';
+
+export function markSessionStarted(): void {
+  if (canUseBrowserStorage()) window.localStorage.setItem(SESSION_HINT_KEY, '1');
+}
+
+export function clearSessionHint(): void {
+  if (canUseBrowserStorage()) window.localStorage.removeItem(SESSION_HINT_KEY);
+}
+
+function hasSessionHint(): boolean {
+  return canUseBrowserStorage() && window.localStorage.getItem(SESSION_HINT_KEY) === '1';
+}
+
 export async function restoreAuthSession(): Promise<LoginResponse | null> {
   const token = getStoredAuthToken();
+
+  // Nunca hubo login en este navegador: no hay nada que validar y la
+  // pantalla puede resolverse en el mismo tick, sin viaje de red.
+  if (!token && !hasSessionHint()) return null;
 
   try {
     const { user, platform, unauthorized } = await validateStoredAuthToken(token);
@@ -118,6 +162,8 @@ export async function restoreAuthSession(): Promise<LoginResponse | null> {
     if (!user) {
       if (unauthorized) {
         clearStoredAuthToken();
+        // El backend confirmó que no hay sesión: el marcador quedó viejo.
+        clearSessionHint();
       }
 
       return null;
@@ -149,6 +195,7 @@ export async function logoutCurrentAuthSession(): Promise<void> {
     }).catch(() => undefined);
 
   clearStoredAuthToken();
+  clearSessionHint();
 }
 
 /**
@@ -177,6 +224,7 @@ export function clearLocalSession(): void {
 
 function openLocalSession(user: LocalSessionUser): LocalSessionUser {
   if (canUseBrowserStorage()) window.localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(user));
+  markSessionStarted();
   return user;
 }
 

@@ -63,12 +63,26 @@ export const Dismiss = styled.div`
 `;
 
 export const Panel = styled(motion.div)`
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
+  /* En pantallas angostas el panel se fija al viewport y no a la campana:
+     anclado a la campana, un panel de 360px sobre un viewport de 375 se
+     salía por el borde izquierdo. Desde sm queda colgado del ícono, que es
+     donde hay lugar de sobra. */
+  position: fixed;
+  top: 4.5rem;
+  left: 12px;
+  right: 12px;
   z-index: 2600;
-  width: min(360px, calc(100vw - 32px));
-  max-height: min(60vh, 460px);
+  width: auto;
+  max-height: min(70vh, 460px);
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.sm}) {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: auto;
+    right: 0;
+    width: min(360px, calc(100vw - 32px));
+    max-height: min(60vh, 460px);
+  }
   display: flex;
   flex-direction: column;
   overflow: hidden;

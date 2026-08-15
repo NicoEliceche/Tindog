@@ -133,6 +133,15 @@ function strokePawPair(ctx: CanvasRenderingContext2D, size: number) {
 export function AuroraBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const reduceMotion = useReducedMotion();
+  /**
+   * `prefers-reduced-motion` pide movimiento contenido, no una pantalla
+   * muerta: la preferencia existe para evitar el mareo del movimiento
+   * amplio y brusco, no para prohibir toda animación. Antes se congelaba el
+   * fondo por completo y quien tuviera la preferencia activada veía una
+   * imagen fija. Ahora se mueve a un quinto de velocidad, sin pulsos ni
+   * reacción al cursor.
+   */
+  const speedScale = reduceMotion ? 0.2 : 1;
   // Al cambiar de tema hay que releer los dorados y repintar.
   const theme = useTheme();
 
@@ -261,15 +270,13 @@ export function AuroraBackground() {
 
       // ── Auroras ────────────────────────────────────────────────────────
       for (const a of auroras) {
-        if (!reduceMotion) {
-          a.wobble += a.wobbleSpeed;
-          // El wobble desvía la trayectoria recta, de modo que el recorrido
-          // no se repite de forma perceptible.
-          a.x += a.vx + Math.cos(a.wobble) * 0.34;
-          a.y += a.vy + Math.sin(a.wobble * 0.8) * 0.28;
-          a.x = wrap(a.x, width, a.radius);
-          a.y = wrap(a.y, height, a.radius);
-        }
+        a.wobble += a.wobbleSpeed * speedScale;
+        // El wobble desvía la trayectoria recta, de modo que el recorrido
+        // no se repite de forma perceptible.
+        a.x += (a.vx + Math.cos(a.wobble) * 0.34) * speedScale;
+        a.y += (a.vy + Math.sin(a.wobble * 0.8) * 0.28) * speedScale;
+        a.x = wrap(a.x, width, a.radius);
+        a.y = wrap(a.y, height, a.radius);
 
         const color = a.hue === 'primary' ? gold : a.hue === 'accent' ? goldDeep : goldLight;
         const gradient = ctx.createRadialGradient(a.x, a.y, 0, a.x, a.y, a.radius);
@@ -285,12 +292,10 @@ export function AuroraBackground() {
       // ── Patitas ────────────────────────────────────────────────────────
       ctx.lineWidth = 1.6;
       for (const p of paws) {
-        if (!reduceMotion) {
-          p.x += p.vx;
-          p.y += p.vy;
-          p.angle += p.spin;
-          bounce(p, p.size);
-        }
+        p.x += p.vx * speedScale;
+        p.y += p.vy * speedScale;
+        p.angle += p.spin * speedScale;
+        bounce(p, p.size);
 
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -306,10 +311,12 @@ export function AuroraBackground() {
 
       // ── Partículas y sus enlaces ───────────────────────────────────────
       for (const p of particles) {
-        if (!reduceMotion) {
-          p.x += p.vx;
-          p.y += p.vy;
+        p.x += p.vx * speedScale;
+        p.y += p.vy * speedScale;
 
+        // El empuje del cursor es un movimiento reactivo y brusco: se
+        // omite bajo movimiento reducido.
+        if (!reduceMotion) {
           const dx = p.x - pointer.x;
           const dy = p.y - pointer.y;
           const dist = Math.hypot(dx, dy);
@@ -318,10 +325,10 @@ export function AuroraBackground() {
             p.x += (dx / dist) * push;
             p.y += (dy / dist) * push;
           }
-
-          p.angle += p.spin;
-          bounce(p, p.r + 2);
         }
+
+        p.angle += p.spin * speedScale;
+        bounce(p, p.r + 2);
       }
 
       // Los enlaces son O(n²) y con muchas partículas eso pesa. Ordenamos
@@ -366,9 +373,7 @@ export function AuroraBackground() {
         ctx.restore();
       }
 
-      // Con reduce-motion basta un cuadro: nada se mueve, así que no
-      // gastamos CPU en un bucle inmóvil.
-      if (!reduceMotion) frame = requestAnimationFrame(draw);
+      frame = requestAnimationFrame(draw);
     }
 
     resize();
