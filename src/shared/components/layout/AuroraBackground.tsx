@@ -56,7 +56,14 @@ interface Paw {
   alpha: number;
 }
 
-interface Particle { x: number; y: number; vx: number; vy: number; r: number; }
+interface Particle {
+  x: number; y: number;
+  vx: number; vy: number;
+  r: number;
+  /** Rotación propia del nodo: gira sobre su eje mientras se desplaza. */
+  angle: number;
+  spin: number;
+}
 
 const AURORA_COUNT = 5;
 /** Cada "paw" dibuja un par de huellas, como un paso. */
@@ -186,6 +193,8 @@ export function AuroraBackground() {
         vx: drift(0.05, 0.22),
         vy: drift(0.05, 0.22),
         r: rand(0.8, 2.4),
+        angle: rand(0, Math.PI * 2),
+        spin: drift(0.004, 0.016),
       }));
     };
 
@@ -204,6 +213,32 @@ export function AuroraBackground() {
       if (value < -margin) return limit + margin;
       if (value > limit + margin) return -margin;
       return value;
+    };
+
+    /**
+     * Rebota contra los bordes invirtiendo la velocidad, con una desviación
+     * al azar en cada choque para que las trayectorias no se vuelvan un
+     * ciclo predecible. Devuelve la nueva velocidad; la posición se corrige
+     * dentro del área para que no quede trabada fuera del borde.
+     */
+    interface Bouncer { x: number; y: number; vx: number; vy: number; }
+    const bounce = (b: Bouncer, margin: number) => {
+      const jitter = () => (Math.random() - 0.5) * 0.35;
+      if (b.x < margin) { b.x = margin; b.vx = Math.abs(b.vx) + jitter(); b.vy += jitter(); }
+      else if (b.x > width - margin) { b.x = width - margin; b.vx = -Math.abs(b.vx) + jitter(); b.vy += jitter(); }
+      if (b.y < margin) { b.y = margin; b.vy = Math.abs(b.vy) + jitter(); b.vx += jitter(); }
+      else if (b.y > height - margin) { b.y = height - margin; b.vy = -Math.abs(b.vy) + jitter(); b.vx += jitter(); }
+      // El jitter acumulado puede acelerarlas sin límite o, al revés, dejar
+      // una casi inmóvil si los signos se cancelan. Se acota por arriba y
+      // por abajo para que todas sigan viajando.
+      const speed = Math.hypot(b.vx, b.vy);
+      const MAX = 1.5;
+      const MIN = 0.08;
+      if (speed > MAX) { b.vx = (b.vx / speed) * MAX; b.vy = (b.vy / speed) * MAX; }
+      else if (speed < MIN) {
+        const a = Math.random() * Math.PI * 2;
+        b.vx = Math.cos(a) * MIN; b.vy = Math.sin(a) * MIN;
+      }
     };
 
     const onPointerMove = (event: PointerEvent) => {
@@ -254,8 +289,7 @@ export function AuroraBackground() {
           p.x += p.vx;
           p.y += p.vy;
           p.angle += p.spin;
-          p.x = wrap(p.x, width, p.size * 2);
-          p.y = wrap(p.y, height, p.size * 2);
+          bounce(p, p.size);
         }
 
         ctx.save();
@@ -285,8 +319,8 @@ export function AuroraBackground() {
             p.y += (dy / dist) * push;
           }
 
-          p.x = wrap(p.x, width, 20);
-          p.y = wrap(p.y, height, 20);
+          p.angle += p.spin;
+          bounce(p, p.r + 2);
         }
       }
 
@@ -313,12 +347,23 @@ export function AuroraBackground() {
         }
       }
 
+      // Los nodos se dibujan como rombos y no como círculos: en un círculo
+      // la rotación sobre el propio eje sería invisible.
       for (const p of particles) {
         const near = Math.hypot(p.x - pointer.x, p.y - pointer.y) < CURSOR_RADIUS;
         ctx.fillStyle = near ? `${goldLight}D9` : `${gold}80`;
+        const d = p.r * 1.5;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle);
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.moveTo(0, -d);
+        ctx.lineTo(d * 0.7, 0);
+        ctx.lineTo(0, d);
+        ctx.lineTo(-d * 0.7, 0);
+        ctx.closePath();
         ctx.fill();
+        ctx.restore();
       }
 
       // Con reduce-motion basta un cuadro: nada se mueve, así que no

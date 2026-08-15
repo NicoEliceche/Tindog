@@ -9,7 +9,7 @@ import { useWebApp } from '@core/providers/WebAppProvider';
 import { withPublicBasePath } from '@core/routing/publicPath';
 import { logoutCurrentAuthSession } from '@core/data/services/authService';
 import { Avatar } from '@shared/components/ui';
-import { NAV_ITEMS, isNavHidden } from './navigation.config';
+import { NAV_ITEMS, SECONDARY_NAV_ITEMS, isNavHidden } from './navigation.config';
 
 const Aside = styled.aside`
   display: none;
@@ -180,6 +180,20 @@ export function SidebarNavigation() {
 
         <NavList>
           {NAV_ITEMS.map(({ path, label, Icon }) => {
+            const active = pathname.startsWith(path);
+            return (
+              <NavLink key={path} $active={active} onClick={() => router.push(path)} aria-current={active ? 'page' : undefined}>
+                <Icon size={20} strokeWidth={active ? 2.6 : 2} />
+                {label}
+              </NavLink>
+            );
+          })}
+        </NavList>
+
+        {/* Secciones de gestión: separadas de la navegación principal
+            porque se visitan de a ratos, no en cada sesión. */}
+        <NavList>
+          {SECONDARY_NAV_ITEMS.map(({ path, label, Icon }) => {
             const active = pathname.startsWith(path);
             return (
               <NavLink key={path} $active={active} onClick={() => router.push(path)} aria-current={active ? 'page' : undefined}>

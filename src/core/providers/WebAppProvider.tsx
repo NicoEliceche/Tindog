@@ -89,6 +89,10 @@ interface WebAppValue {
   locations: WebSafeLocation[]; appointments: WebAppointment[]; scheduleAppointment: (chatId: string, locationId: string, startAt: string) => WebAppointment | null; setAppointmentStatus: (id: string, status: WebAppointmentStatus) => void; addReview: (locationId: string, rating: number, comment: string) => void;
   /** Derivadas del estado real: solicitudes, chats sin leer y citas próximas. */
   notifications: WebNotification[]; unreadNotifications: number; markNotificationsRead: () => void;
+  /** Perfiles guardados desde Discovery para revisarlos después. */
+  savedPets: Pet[]; savePet: (pet: Pet) => void; unsavePet: (id: string) => void; isSaved: (id: string) => boolean;
+  /** Usuarios bloqueados: dejan de aparecer en Discovery. */
+  blockedOwners: string[]; blockOwner: (name: string) => void; unblockOwner: (name: string) => void;
 }
 
 const WebAppContext = createContext<WebAppValue | null>(null);
@@ -140,8 +144,7 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
         title: 'Nueva solicitud de conexión',
         body: `${request.ownerName} quiere conectar a ${request.pet.name} con Firulais.`,
         avatar: request.avatar,
-        // Las solicitudes se aceptan/rechazan desde la lista de chats.
-        href: '/chat',
+        href: '/requests',
         read: false,
       });
     }
@@ -188,7 +191,37 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
     });
   }, [notifications]);
 
+  // Favoritos y bloqueos. Persisten en el navegador para que sobrevivan a
+  // una recarga, como haría el backend real.
+  const [savedPets, setSavedPets] = useState<Pet[]>([]);
+  const [blockedOwners, setBlockedOwners] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      const rawSaved = window.localStorage.getItem('tindog.web.saved.v1');
+      if (rawSaved) setSavedPets(JSON.parse(rawSaved) as Pet[]);
+      const rawBlocked = window.localStorage.getItem('tindog.web.blocked.v1');
+      if (rawBlocked) setBlockedOwners(JSON.parse(rawBlocked) as string[]);
+    } catch { /* almacenamiento no disponible o corrupto: se arranca vacío */ }
+  }, []);
+
+  const persistSaved = (next: Pet[]) => {
+    setSavedPets(next);
+    try { window.localStorage.setItem('tindog.web.saved.v1', JSON.stringify(next)); } catch { /* ignorado */ }
+  };
+  const persistBlocked = (next: string[]) => {
+    setBlockedOwners(next);
+    try { window.localStorage.setItem('tindog.web.blocked.v1', JSON.stringify(next)); } catch { /* ignorado */ }
+  };
+
   const value: WebAppValue = {
+    savedPets,
+    savePet: (pet) => { if (!savedPets.some((item) => item.id === pet.id)) persistSaved([pet, ...savedPets]); },
+    unsavePet: (id) => persistSaved(savedPets.filter((item) => item.id !== id)),
+    isSaved: (id) => savedPets.some((item) => item.id === id),
+    blockedOwners,
+    blockOwner: (name) => { if (!blockedOwners.includes(name)) persistBlocked([name, ...blockedOwners]); },
+    unblockOwner: (name) => persistBlocked(blockedOwners.filter((item) => item !== name)),
     preferences, resolvedTheme: preferences.themeMode === 'system' ? (systemDark ? 'dark' : 'light') : preferences.themeMode, updatePreference,
     notifications, unreadNotifications, markNotificationsRead,
     profile, updateProfile: (value) => setProfile((current) => ({ ...current, ...value })), discoveryPets, dismissPet: (id) => setDiscoveryPets((current) => current.filter((item) => item.id !== id)), resetDiscovery: () => setDiscoveryPets(pets), restorePet: (pet) => setDiscoveryPets((current) => (current.some((item) => item.id === pet.id) ? current : [pet, ...current])), requests,
