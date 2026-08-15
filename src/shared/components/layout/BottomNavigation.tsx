@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import styled from 'styled-components';
-import { NAV_ITEMS, isNavHidden } from './navigation.config';
+import { NAV_ITEMS, isBottomNavHidden } from './navigation.config';
 
 const Nav = styled.nav`
   position: fixed; z-index: 1000; left: 0; right: 0; bottom: 0;
@@ -27,6 +27,6 @@ const Item = styled.button<{ $active: boolean }>`
 
 export function BottomNavigation() {
   const pathname = usePathname(); const router = useRouter();
-  if (isNavHidden(pathname)) return null;
+  if (isBottomNavHidden(pathname)) return null;
   return <Nav aria-label="Navegación principal">{NAV_ITEMS.map(({ path, label, Icon }) => { const active = pathname.startsWith(path); return <Item key={path} $active={active} onClick={() => router.push(path)} aria-current={active ? 'page' : undefined}><Icon size={22} strokeWidth={active ? 2.6 : 2} /><span>{label}</span></Item>; })}</Nav>;
 }

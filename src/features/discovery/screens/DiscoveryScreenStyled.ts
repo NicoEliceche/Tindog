@@ -41,7 +41,12 @@ export const Header = styled.header`
   align-items: center;
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    grid-template-columns: 1fr auto 1fr;
+    /* Las columnas replican las del contenido (paneles laterales + tarjeta)
+       para que la marca quede centrada sobre la tarjeta y no sobre la
+       pantalla entera, que la dejaba corrida respecto de "Tu actividad" y
+       "A continuación". */
+    grid-template-columns: 18rem minmax(0, 30rem) 18rem;
+    gap: ${({ theme }) => theme.spacing[6]};
     min-height: 0;
     margin-bottom: ${({ theme }) => theme.spacing[4]};
   }
@@ -52,14 +57,17 @@ export const Brand = styled.div`
   flex-direction: column;
   align-items: center;
   color: ${({ theme }) => theme.color.primary};
-  font-size: 1rem;
+  /* En el teléfono sobra alto en la cabecera y la marca se perdía: al doble
+     de cuerpo llena ese espacio y ancla la pantalla. */
+  font-size: 2rem;
   font-weight: 900;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
+  line-height: 1.1;
 
   small {
     color: ${({ theme }) => theme.color.textTertiary};
-    font-size: 0.48rem;
-    letter-spacing: 0.8px;
+    font-size: 0.96rem;
+    letter-spacing: 1.2px;
   }
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
@@ -77,12 +85,12 @@ export const BrandCopy = styled.div`
     gap: 2px;
 
     span {
-      font-size: 2.1rem;
+      font-size: 2.4rem;
       letter-spacing: 4px;
     }
 
     small {
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       letter-spacing: 1.6px;
       font-weight: 800;
     }

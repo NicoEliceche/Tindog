@@ -10,7 +10,10 @@ export const FormWrapper = styled(motion.div)`
   max-width: 500px;
   margin: 0 auto;
   color: ${({ theme }) => theme.color.text};
-  padding-bottom: 40px;
+  /* La barra inferior de navegación flota sobre el contenido, así que el
+     último control del formulario (Guardar) quedaba tapado. Se reserva su
+     alto más el área segura del teléfono. */
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     max-width: ${({ theme }) => theme.layout.shellMaxWidth};
@@ -83,7 +86,10 @@ export const FormColumn = styled.div`
   min-width: 0;
 `;
 
-export const PhotoUpload = styled.div`
+/** Etiqueta que envuelve un input file oculto: el clic abre el selector. */
+export const PhotoUpload = styled.label`
+  position: relative;
+  overflow: hidden;
   width: 120px;
   height: 120px;
   border-radius: ${({ theme }) => theme.radius['2xl']};
@@ -100,8 +106,47 @@ export const PhotoUpload = styled.div`
   font-size: 12px;
   font-weight: bold;
 
+  &:hover {
+    border-color: ${({ theme }) => theme.color.primaryLight};
+    box-shadow: ${({ theme }) => theme.glow.subtle};
+  }
+
+  &:focus-within {
+    outline: 2px solid ${({ theme }) => theme.color.primary};
+    outline-offset: 2px;
+  }
+
+  /* Vista previa de la foto elegida, cubriendo el recuadro. */
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     margin: 0;
+  }
+`;
+
+/** Aviso bajo el recuadro: formato aceptado o error de validación. */
+export const PhotoHint = styled.p<{ $error?: boolean }>`
+  margin-top: 8px;
+  text-align: center;
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  color: ${({ theme, $error }) => ($error ? theme.color.error : theme.color.textTertiary)};
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    text-align: left;
   }
 `;
 

@@ -5,6 +5,10 @@ import styled from 'styled-components';
 export const Root = styled.div`
   position: relative;
   display: inline-flex;
+  /* El badge sobresale sólo hacia arriba y a la derecha, así que el conjunto
+     campana+contador pesa visualmente hacia ese lado aunque el botón esté
+     centrado. Este medio píxel compensa esa asimetría óptica. */
+  margin-right: -1px;
 `;
 
 export const BellButton = styled.button<{ $open: boolean }>`
@@ -15,6 +19,10 @@ export const BellButton = styled.button<{ $open: boolean }>`
   display: grid;
   place-items: center;
   color: ${({ theme, $open }) => ($open ? theme.color.primary : theme.color.textSecondary)};
+
+  /* La campana tiene el asa arriba y el badajo abajo: su masa se concentra
+     en la mitad superior, así que centrarla por caja la deja mirando alto. */
+  svg { transform: translateY(0.5px); }
   background: ${({ theme, $open }) => ($open ? theme.color.primaryFaded : theme.color.surface)};
   border: 1px solid ${({ theme, $open }) => ($open ? theme.color.borderFocus : theme.color.border)};
   transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;

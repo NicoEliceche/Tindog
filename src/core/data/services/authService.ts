@@ -196,6 +196,9 @@ export async function logoutCurrentAuthSession(): Promise<void> {
 
   clearStoredAuthToken();
   clearSessionHint();
+  // La sesión local de los métodos sin backend (email) vive aparte: si no
+  // se limpia acá, cerrar sesión deja al usuario logueado igual.
+  clearLocalSession();
 }
 
 /**

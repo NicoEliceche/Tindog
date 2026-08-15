@@ -2,7 +2,7 @@
 
 import { useWebApp, type WebNotificationKind } from '@core/providers/WebAppProvider';
 import { AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Bell, BellOff, CalendarClock, MessageCircle, UserPlus } from 'lucide-react';
+import { Bell, BellOff, CalendarClock, MessageCircle, UserPlus, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -14,6 +14,7 @@ const KIND_ICON: Record<WebNotificationKind, typeof Bell> = {
   request: UserPlus,
   message: MessageCircle,
   appointment: CalendarClock,
+  cancelled: XCircle,
 };
 
 /**

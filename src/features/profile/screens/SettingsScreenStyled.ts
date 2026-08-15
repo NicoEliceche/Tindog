@@ -8,6 +8,12 @@ export const BackButton = styled.button`
   color: ${({ theme }) => theme.color.primary};
   font-weight: 900;
   margin-bottom: 8px;
+
+  /* En escritorio la barra lateral queda visible en ajustes, así que este
+     botón sería un segundo camino de vuelta para lo mismo. */
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    display: none;
+  }
 `;
 
 export const Layout = styled.div`

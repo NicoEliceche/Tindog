@@ -100,17 +100,29 @@ export const AddPetCard = styled.button`
   justify-content: center;
   gap: 8px;
   border-radius: ${({ theme }) => theme.radius.xl};
-  border: 1px dashed ${({ theme }) => theme.color.border};
+  /* Sin fondo propio no se leía como algo pulsable: quedaba como un hueco
+     con borde punteado y el color sólo aparecía al pasar el mouse, que en
+     un teléfono no ocurre nunca. */
+  background: ${({ theme }) => theme.color.primaryFaded};
+  border: 1px dashed ${({ theme }) => theme.color.borderFocus};
   color: ${({ theme }) => theme.color.primary};
   font-weight: ${({ theme }) => theme.typography.weight.extrabold};
-  transition: border-color 0.18s ease, background 0.18s ease;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
 
   &:hover {
-    border-color: ${({ theme }) => theme.color.borderFocus};
-    background: ${({ theme }) => theme.color.primaryFaded};
+    border-color: ${({ theme }) => theme.color.primary};
+    box-shadow: ${({ theme }) => theme.glow.subtle};
+  }
+
+  &:active {
+    background: ${({ theme }) => theme.color.surfaceRaised};
   }
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     min-height: 100%;
+    /* Con la grilla más ancha la tarjeta quedaba baja respecto de las de
+       mascota, que llevan foto. */
+    padding: ${({ theme }) => theme.spacing[8]} ${({ theme }) => theme.spacing[4]};
+    font-size: ${({ theme }) => theme.typography.size.lg};
   }
 `;

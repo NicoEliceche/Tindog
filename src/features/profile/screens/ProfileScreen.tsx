@@ -31,7 +31,9 @@ export function ProfileScreen() {
 
   const handleLogout = async () => {
     await logoutCurrentAuthSession();
-    window.location.replace(withPublicBasePath('/'));
+    // Al login y no a la landing: quien cierra sesión quiere volver a
+    // entrar, y la landing lo obligaría a un paso extra.
+    window.location.replace(withPublicBasePath('/login'));
   };
 
   const handleSaveName = () => {

@@ -22,14 +22,26 @@ export interface WebPreferences {
   healthVisibility: 'connections' | 'private';
 }
 
-export interface WebConnectionRequest { id: string; direction: 'incoming' | 'outgoing'; status: 'pending' | 'accepted' | 'declined'; ownerName: string; pet: Pet; avatar: string; }
+export interface WebConnectionRequest {
+  id: string;
+  direction: 'incoming' | 'outgoing';
+  status: 'pending' | 'accepted' | 'declined' | 'cancelled';
+  ownerName: string;
+  pet: Pet;
+  avatar: string;
+  /** Momento en que se envió, para ordenar y agrupar por mes. */
+  createdAt: string;
+}
 export interface WebConversation { id: string; ownerName: string; petName: string; avatar: string; intent: 'Cita' | 'Cruza' | 'Juego'; lastMessage: string; timeLabel: string; unread: boolean; }
 export interface WebMessage { id: string; sender: 'me' | 'them' | 'system'; body: string; sentAt: string; }
 export interface WebLocationReview { id: string; authorName: string; rating: number; comment: string; verified: boolean; }
 export interface WebSafeLocation { id: string; googlePlaceId: string; name: string; address: string; lat: number; lng: number; rating: number; reviewCount: number; distanceKm: number; tags: string[]; reviews: WebLocationReview[]; }
 export interface WebAppointment { id: string; conversationId: string; ownerName: string; petNames: string[]; startAt: string; endAt: string; status: WebAppointmentStatus; location: WebSafeLocation; checkedIn: boolean; reviewSubmitted: boolean; shared: boolean; }
 
-export type WebNotificationKind = 'request' | 'message' | 'appointment';
+/** Mascota guardada con el momento en que se guardó. */
+export interface WebSavedPet { pet: Pet; savedAt: string; }
+
+export type WebNotificationKind = 'request' | 'message' | 'appointment' | 'cancelled';
 export interface WebNotification {
   id: string;
   kind: WebNotificationKind;
@@ -85,12 +97,14 @@ interface WebAppValue {
   /** Devuelve una mascota descartada al frente de la pila (undo del swipe). */
   restorePet: (pet: Pet) => void;
   requests: WebConnectionRequest[]; sendRequest: (pet: Pet) => void; respondRequest: (id: string, accepted: boolean) => void;
+  /** Cancela una solicitud enviada: la retira del otro lado y avisa. */
+  cancelRequest: (id: string) => void;
   conversations: WebConversation[]; messages: Record<string, WebMessage[]>; sendMessage: (chatId: string, body: string) => void;
   locations: WebSafeLocation[]; appointments: WebAppointment[]; scheduleAppointment: (chatId: string, locationId: string, startAt: string) => WebAppointment | null; setAppointmentStatus: (id: string, status: WebAppointmentStatus) => void; addReview: (locationId: string, rating: number, comment: string) => void;
   /** Derivadas del estado real: solicitudes, chats sin leer y citas próximas. */
   notifications: WebNotification[]; unreadNotifications: number; markNotificationsRead: () => void;
   /** Perfiles guardados desde Discovery para revisarlos después. */
-  savedPets: Pet[]; savePet: (pet: Pet) => void; unsavePet: (id: string) => void; isSaved: (id: string) => boolean;
+  savedPets: WebSavedPet[]; savePet: (pet: Pet) => void; unsavePet: (id: string) => void; isSaved: (id: string) => boolean;
   /** Usuarios bloqueados: dejan de aparecer en Discovery. */
   blockedOwners: string[]; blockOwner: (name: string) => void; unblockOwner: (name: string) => void;
 }
@@ -113,7 +127,12 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
   });
   const [systemDark, setSystemDark] = useState(() => typeof window === 'undefined' || window.matchMedia('(prefers-color-scheme: dark)').matches);
   const [profile, setProfile] = useState<{ name: string; email: string; avatar?: string }>({ name: 'Nico Eliceche', email: 'nico@tindog.app' });
-  const [discoveryPets, setDiscoveryPets] = useState(pets); const [requests, setRequests] = useState<WebConnectionRequest[]>([{ id: 'req-1', direction: 'incoming', status: 'pending', ownerName: 'Laura Martínez', pet: pets[0], avatar: pets[0].photos[0] }]);
+  const [discoveryPets, setDiscoveryPets] = useState(pets); const [requests, setRequests] = useState<WebConnectionRequest[]>([
+    { id: 'req-1', direction: 'incoming', status: 'pending', ownerName: 'Laura Martínez', pet: pets[0], avatar: pets[0].photos[0], createdAt: '2026-08-11T14:20:00Z' },
+    { id: 'req-2', direction: 'incoming', status: 'pending', ownerName: 'Diego Sosa', pet: pets[3], avatar: pets[3].photos[0], createdAt: '2026-07-04T10:05:00Z' },
+    { id: 'req-3', direction: 'outgoing', status: 'pending', ownerName: 'Tutor de Nala', pet: pets[2], avatar: pets[2].photos[0], createdAt: '2026-08-09T18:40:00Z' },
+    { id: 'req-4', direction: 'outgoing', status: 'accepted', ownerName: 'Tutor de Kira', pet: pets[4], avatar: pets[4].photos[0], createdAt: '2026-06-22T09:15:00Z' },
+  ]);
   const [conversations, setConversations] = useState(initialChats); const [messages, setMessages] = useState(initialMessages); const [locations, setLocations] = useState(safeLocations);
   const [appointments, setAppointments] = useState<WebAppointment[]>([
     { id: 'a1', conversationId: 'chat-2', ownerName: 'Carlos Ruiz', petNames: ['Firulais', 'Roco'], startAt: '2026-08-02T18:00:00-03:00', endAt: '2026-08-02T19:00:00-03:00', status: 'scheduled', location: safeLocations[0], checkedIn: false, reviewSubmitted: false, shared: true },
@@ -128,6 +147,29 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
   }, []);
   const updatePreference = <K extends keyof WebPreferences>(key: K, value: WebPreferences[K]) => setPreferences((current) => { const next = { ...current, [key]: value }; window.localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(next)); return next; });
   const respondRequest = (id: string, accepted: boolean) => { const request = requests.find((item) => item.id === id); setRequests((current) => current.map((item) => item.id === id ? { ...item, status: accepted ? 'accepted' : 'declined' } : item)); if (request && accepted) { const chat: WebConversation = { id: `chat-${Date.now()}`, ownerName: request.ownerName, petName: request.pet.name, avatar: request.avatar, intent: 'Cruza', lastMessage: 'Solicitud aceptada. Ya pueden conversar.', timeLabel: 'Ahora', unread: false }; setConversations((current) => [chat, ...current]); setMessages((current) => ({ ...current, [chat.id]: [{ id: `system-${Date.now()}`, sender: 'system', body: 'Solicitud aceptada. Coordiná el primer encuentro en un lugar público.', sentAt: new Date().toISOString() }] })); } };
+  /**
+   * Cancela una solicitud enviada.
+   *
+   * En producción esto viaja al otro usuario: su solicitud recibida pasa a
+   * rechazada sola y le llega el aviso. Acá hay un único usuario, así que se
+   * marca como cancelada —desaparece de las pendientes de ambos lados— y se
+   * deja registro para mostrar el aviso correspondiente.
+   */
+  const [cancelledNotices, setCancelledNotices] = useState<Array<{ id: string; petName: string; at: string }>>([]);
+  const cancelRequest = useCallback((id: string) => {
+    setRequests((current) => {
+      const target = current.find((item) => item.id === id);
+      if (target) {
+        setCancelledNotices((notices) => (
+          notices.some((notice) => notice.id === id)
+            ? notices
+            : [{ id, petName: target.pet.name, at: new Date().toISOString() }, ...notices]
+        ));
+      }
+      return current.map((item) => (item.id === id ? { ...item, status: 'cancelled' as const } : item));
+    });
+  }, []);
+
   const scheduleAppointment = (chatId: string, locationId: string, startAt: string) => { const chat = conversations.find((item) => item.id === chatId); const location = locations.find((item) => item.id === locationId); if (!chat || !location) return null; const start = new Date(startAt); const next: WebAppointment = { id: `a-${Date.now()}`, conversationId: chatId, ownerName: chat.ownerName, petNames: ['Firulais', chat.petName], startAt: start.toISOString(), endAt: new Date(start.getTime() + 3600000).toISOString(), status: 'scheduled', location, checkedIn: false, reviewSubmitted: false, shared: false }; setAppointments((current) => [next, ...current]); return next; };
   // Las notificaciones no son un estado aparte: se derivan de lo que ya pasó
   // en la app, así no pueden quedar desincronizadas con la realidad. Sólo se
@@ -162,6 +204,17 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
       });
     }
 
+    for (const notice of cancelledNotices) {
+      items.push({
+        id: `notif-cancel-${notice.id}`,
+        kind: 'cancelled',
+        title: 'Solicitud cancelada',
+        body: `Se canceló la solicitud de conexión con ${notice.petName}.`,
+        href: '/requests',
+        read: false,
+      });
+    }
+
     const now = Date.now();
     for (const appointment of appointments) {
       if (appointment.status !== 'scheduled') continue;
@@ -180,7 +233,7 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
     }
 
     return items.map((item) => ({ ...item, read: readNotifications.includes(item.id) }));
-  }, [requests, conversations, appointments, readNotifications]);
+  }, [requests, conversations, appointments, cancelledNotices, readNotifications]);
 
   const unreadNotifications = notifications.filter((item) => !item.read).length;
   const markNotificationsRead = useCallback(() => {
@@ -193,19 +246,19 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
 
   // Favoritos y bloqueos. Persisten en el navegador para que sobrevivan a
   // una recarga, como haría el backend real.
-  const [savedPets, setSavedPets] = useState<Pet[]>([]);
+  const [savedPets, setSavedPets] = useState<WebSavedPet[]>([]);
   const [blockedOwners, setBlockedOwners] = useState<string[]>([]);
 
   useEffect(() => {
     try {
       const rawSaved = window.localStorage.getItem('tindog.web.saved.v1');
-      if (rawSaved) setSavedPets(JSON.parse(rawSaved) as Pet[]);
+      if (rawSaved) setSavedPets(JSON.parse(rawSaved) as WebSavedPet[]);
       const rawBlocked = window.localStorage.getItem('tindog.web.blocked.v1');
       if (rawBlocked) setBlockedOwners(JSON.parse(rawBlocked) as string[]);
     } catch { /* almacenamiento no disponible o corrupto: se arranca vacío */ }
   }, []);
 
-  const persistSaved = (next: Pet[]) => {
+  const persistSaved = (next: WebSavedPet[]) => {
     setSavedPets(next);
     try { window.localStorage.setItem('tindog.web.saved.v1', JSON.stringify(next)); } catch { /* ignorado */ }
   };
@@ -216,16 +269,16 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
 
   const value: WebAppValue = {
     savedPets,
-    savePet: (pet) => { if (!savedPets.some((item) => item.id === pet.id)) persistSaved([pet, ...savedPets]); },
-    unsavePet: (id) => persistSaved(savedPets.filter((item) => item.id !== id)),
-    isSaved: (id) => savedPets.some((item) => item.id === id),
+    savePet: (pet) => { if (!savedPets.some((item) => item.pet.id === pet.id)) persistSaved([{ pet, savedAt: new Date().toISOString() }, ...savedPets]); },
+    unsavePet: (id) => persistSaved(savedPets.filter((item) => item.pet.id !== id)),
+    isSaved: (id) => savedPets.some((item) => item.pet.id === id),
     blockedOwners,
     blockOwner: (name) => { if (!blockedOwners.includes(name)) persistBlocked([name, ...blockedOwners]); },
     unblockOwner: (name) => persistBlocked(blockedOwners.filter((item) => item !== name)),
     preferences, resolvedTheme: preferences.themeMode === 'system' ? (systemDark ? 'dark' : 'light') : preferences.themeMode, updatePreference,
     notifications, unreadNotifications, markNotificationsRead,
     profile, updateProfile: (value) => setProfile((current) => ({ ...current, ...value })), discoveryPets, dismissPet: (id) => setDiscoveryPets((current) => current.filter((item) => item.id !== id)), resetDiscovery: () => setDiscoveryPets(pets), restorePet: (pet) => setDiscoveryPets((current) => (current.some((item) => item.id === pet.id) ? current : [pet, ...current])), requests,
-    sendRequest: (pet) => { if (!requests.some((item) => item.pet.id === pet.id && item.direction === 'outgoing' && item.status === 'pending')) setRequests((current) => [{ id: `req-${Date.now()}`, direction: 'outgoing', status: 'pending', ownerName: `Tutor de ${pet.name}`, pet, avatar: pet.photos[0] }, ...current]); }, respondRequest,
+    sendRequest: (pet) => { if (!requests.some((item) => item.pet.id === pet.id && item.direction === 'outgoing' && item.status === 'pending')) setRequests((current) => [{ id: `req-${Date.now()}`, direction: 'outgoing', status: 'pending', ownerName: `Tutor de ${pet.name}`, pet, avatar: pet.photos[0], createdAt: new Date().toISOString() }, ...current]); }, respondRequest, cancelRequest,
     conversations, messages, sendMessage: (chatId, body) => { const clean = body.trim(); if (!clean) return; setMessages((current) => ({ ...current, [chatId]: [...(current[chatId] ?? []), { id: `m-${Date.now()}`, sender: 'me', body: clean, sentAt: new Date().toISOString() }] })); setConversations((current) => current.map((item) => item.id === chatId ? { ...item, lastMessage: clean, timeLabel: 'Ahora' } : item)); },
     locations, appointments, scheduleAppointment, setAppointmentStatus: (id, status) => setAppointments((current) => current.map((item) => item.id === id ? { ...item, status, checkedIn: status === 'completed' ? true : item.checkedIn } : item)),
     addReview: (locationId, rating, comment) => { setLocations((current) => current.map((item) => item.id === locationId ? { ...item, reviewCount: item.reviewCount + 1, rating: Number(((item.rating * item.reviewCount + rating) / (item.reviewCount + 1)).toFixed(1)), reviews: [{ id: `r-${Date.now()}`, authorName: profile.name.split(' ')[0], rating, comment, verified: true }, ...item.reviews] } : item)); setAppointments((current) => current.map((item) => item.location.id === locationId && item.status === 'completed' ? { ...item, reviewSubmitted: true } : item)); },

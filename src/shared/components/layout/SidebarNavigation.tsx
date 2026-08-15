@@ -9,7 +9,7 @@ import { useWebApp } from '@core/providers/WebAppProvider';
 import { withPublicBasePath } from '@core/routing/publicPath';
 import { logoutCurrentAuthSession } from '@core/data/services/authService';
 import { Avatar } from '@shared/components/ui';
-import { NAV_ITEMS, SECONDARY_NAV_ITEMS, isNavHidden } from './navigation.config';
+import { NAV_ITEMS, SECONDARY_NAV_ITEMS, isSidebarHidden } from './navigation.config';
 
 const Aside = styled.aside`
   display: none;
@@ -163,11 +163,13 @@ export function SidebarNavigation() {
   const router = useRouter();
   const { profile } = useWebApp();
 
-  if (isNavHidden(pathname)) return null;
+  if (isSidebarHidden(pathname)) return null;
 
   const handleLogout = async () => {
     await logoutCurrentAuthSession();
-    window.location.replace(withPublicBasePath('/'));
+    // Al login y no a la landing: quien cierra sesión quiere volver a
+    // entrar, y la landing lo obligaría a un paso extra.
+    window.location.replace(withPublicBasePath('/login'));
   };
 
   return (

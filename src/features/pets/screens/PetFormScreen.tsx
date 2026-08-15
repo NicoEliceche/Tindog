@@ -11,7 +11,7 @@ import {
   AddButton, BackButton, CardTopInput, CheckboxGroup, CheckboxItem, CheckboxRow,
   CoiInput, CompetitionCard, DateSmallInput, Divider, FieldGrid, FieldRow, Form, FormColumn,
   FormGroup, FormWrapper, HealthCard, Header, HeaderTitle, HelperText, InlineLabelRow,
-  Input, Label, Layout, LineageGrid, PhotoUpload, RevealGroup, SectionBody, SectionNav,
+  Input, Label, Layout, LineageGrid, PhotoUpload, PhotoHint, RevealGroup, SectionBody, SectionNav,
   SectionNavLink, SmallInput, SubmitButton, SwitchContainer, TextArea, YearInput,
 } from './PetFormScreenStyled';
 
@@ -95,13 +95,41 @@ export function PetFormScreen() {
     setFormData({ ...formData, health_records: newRecords });
   };
 
+  /**
+   * Foto de la mascota. Se guarda como data URL en el mock; con backend
+   * real acá iría la subida al almacenamiento y se guardaría la URL.
+   */
+  const [photo, setPhoto] = useState('');
+  const [photoError, setPhotoError] = useState('');
+  const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setPhotoError('El archivo tiene que ser una imagen.');
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      setPhotoError('La imagen no puede superar los 5 MB.');
+      return;
+    }
+    setPhotoError('');
+    const reader = new FileReader();
+    reader.onload = () => setPhoto(typeof reader.result === 'string' ? reader.result : '');
+    reader.onerror = () => setPhotoError('No pudimos leer el archivo. Probá con otro.');
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await createPet({
       ...formData,
       age: parseInt(formData.age),
       weight: formData.weight ? parseFloat(formData.weight) : undefined,
-      photos: ['https://images.unsplash.com/photo-1517849845537-4d257902454a?q=80&w=500'],
+      // Sin foto elegida se usa una de reserva para que la tarjeta no quede
+      // vacía en la lista.
+      photos: [photo || 'https://images.unsplash.com/photo-1517849845537-4d257902454a?q=80&w=500'],
     });
     router.push('/pets');
   };
@@ -145,10 +173,23 @@ export function PetFormScreen() {
         </SectionNav>
 
         <FormColumn>
-          <PhotoUpload>
-            <Camera size={32} />
-            <span>Añadir Foto</span>
-          </PhotoUpload>
+          <div>
+            <PhotoUpload>
+              {photo ? <img src={photo} alt="Vista previa de la foto elegida" /> : (<>
+                <Camera size={32} />
+                <span>Añadir Foto</span>
+              </>)}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                aria-label="Elegir foto de la mascota"
+              />
+            </PhotoUpload>
+            <PhotoHint $error={!!photoError}>
+              {photoError || (photo ? 'Tocá la foto para cambiarla.' : 'JPG o PNG, hasta 5 MB.')}
+            </PhotoHint>
+          </div>
 
           <Form onSubmit={handleSubmit}>
             <FormGroup id="basic" ref={(el) => { sectionRefs.current.basic = el; }}>

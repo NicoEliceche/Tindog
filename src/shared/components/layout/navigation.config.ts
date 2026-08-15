@@ -29,13 +29,42 @@ export const SECONDARY_NAV_ITEMS: NavItem[] = [
   { path: '/safety', label: 'Seguridad', Icon: ShieldCheck },
 ];
 
+/** Rutas públicas: no hay sesión, así que no va navegación de ningún tipo. */
+function isPublicRoute(pathname: string): boolean {
+  return pathname === '/' || pathname === '/login';
+}
+
+/**
+ * Oculta toda la navegación. Sólo aplica a las rutas públicas y a las
+ * pantallas inmersivas de teléfono, donde el contenido ocupa todo el alto.
+ */
 export function isNavHidden(pathname: string): boolean {
+  return isPublicRoute(pathname);
+}
+
+/**
+ * La barra inferior se oculta en las pantallas que ya usan todo el alto y
+ * traen su propia navegación de retroceso: la conversación abierta, el mapa
+ * y el detalle de una mascota.
+ *
+ * Ajustes ya no está en la lista: se llega desde Perfil, que es una sección
+ * de la barra, y perderla ahí obligaba a usar el gesto de atrás del sistema
+ * para volver a cualquier otra parte.
+ */
+export function isBottomNavHidden(pathname: string): boolean {
   return (
-    pathname === '/' ||
-    pathname === '/login' ||
+    isPublicRoute(pathname) ||
     /^\/chat\/[^/]+$/.test(pathname) ||
     pathname === '/appointments/location' ||
-    pathname === '/settings' ||
     /^\/pets\/[^/]+\//.test(pathname)
   );
+}
+
+/**
+ * La barra lateral de escritorio sólo desaparece en las rutas públicas: hay
+ * espacio de sobra y perderla obliga a volver con el navegador. Ajustes y el
+ * mapa la conservan.
+ */
+export function isSidebarHidden(pathname: string): boolean {
+  return isPublicRoute(pathname);
 }
