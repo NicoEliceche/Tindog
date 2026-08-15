@@ -67,18 +67,37 @@ export const SectionTitle = styled.h2`
   letter-spacing: 0.08em;
 `;
 
+/**
+ * Grilla de tarjetas. El mínimo de columna es amplio a propósito: cada
+ * tarjeta lleva miniatura, dos líneas de texto y hasta dos botones en una
+ * misma fila. Con columnas angostas al texto le quedaban unas decenas de
+ * píxeles y envolvía debajo de los botones. Mejor pocas columnas anchas y
+ * legibles que muchas apretadas.
+ */
 export const Grid = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing[3]};
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr));
+  }
+`;
+
+/**
+ * Una sola columna ancha, para listas de decisión como las solicitudes:
+ * son pocas filas y cada una se lee de un vistazo, no se comparan entre sí
+ * como en una galería.
+ */
+export const List = styled(Grid)`
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    grid-template-columns: minmax(0, 46rem);
   }
 `;
 
 export const Card = styled.article`
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing[3]};
   padding: ${({ theme }) => theme.spacing[3]};
   border-radius: ${({ theme }) => theme.radius.xl};
@@ -108,7 +127,10 @@ export const Thumb = styled.div`
 `;
 
 export const Copy = styled.div`
-  min-width: 0;
+  /* Un min-width de cero deja que el texto se encoja hasta desaparecer
+     dentro de un flex; con este piso, el contenedor prefiere ceder el
+     espacio sobrante antes que aplastar el nombre. */
+  min-width: 8rem;
   flex: 1;
 
   strong {
@@ -131,6 +153,10 @@ export const Row = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing[2]};
   flex-shrink: 0;
+  /* En pantallas angostas los botones bajan a su propia línea en vez de
+     estrujar el texto. */
+  flex-wrap: wrap;
+  justify-content: flex-end;
 `;
 
 export const Action = styled.button<{ $variant?: 'primary' | 'ghost' | 'danger' }>`

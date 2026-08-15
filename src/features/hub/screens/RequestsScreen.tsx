@@ -3,7 +3,7 @@
 import { useWebApp } from '@core/providers/WebAppProvider';
 import { Inbox, Send } from 'lucide-react';
 import {
-  Page, Shell, Header, Section, SectionTitle, Grid, Card, Thumb, Copy, Row, Action, Empty,
+  Page, Shell, Header, Section, SectionTitle, List, Card, Thumb, Copy, Row, Action, Empty,
 } from './HubStyled';
 
 /**
@@ -33,13 +33,20 @@ export function RequestsScreen() {
         <Section>
           <SectionTitle>Recibidas</SectionTitle>
           {incoming.length > 0 ? (
-            <Grid>
+            <List>
               {incoming.map((request) => (
                 <Card key={request.id}>
                   <Thumb><img src={request.avatar} alt="" /></Thumb>
                   <Copy>
                     <strong>{request.ownerName}</strong>
-                    <p>{request.pet.name} · {request.pet.breed}</p>
+                    {/* Con la fila ancha entra el contexto que hace falta
+                        para decidir sin abrir el perfil. */}
+                    <p>
+                      {request.pet.name} · {request.pet.breed} · {request.pet.age} años
+                      {request.pet.personality_traits?.length
+                        ? ` · ${request.pet.personality_traits.slice(0, 3).join(', ')}`
+                        : ''}
+                    </p>
                   </Copy>
                   {request.status === 'pending' ? (
                     <Row>
@@ -51,7 +58,7 @@ export function RequestsScreen() {
                   )}
                 </Card>
               ))}
-            </Grid>
+            </List>
           ) : (
             <Empty>
               <Inbox size={30} />
@@ -63,17 +70,17 @@ export function RequestsScreen() {
         <Section>
           <SectionTitle>Enviadas</SectionTitle>
           {outgoing.length > 0 ? (
-            <Grid>
+            <List>
               {outgoing.map((request) => (
                 <Card key={request.id}>
                   <Thumb><img src={request.avatar} alt="" /></Thumb>
                   <Copy>
                     <strong>{request.pet.name}</strong>
-                    <p>{statusLabel(request.status)}</p>
+                    <p>{request.pet.breed} · {statusLabel(request.status)}</p>
                   </Copy>
                 </Card>
               ))}
-            </Grid>
+            </List>
           ) : (
             <Empty>
               <Send size={30} />
