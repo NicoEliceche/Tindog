@@ -1,3 +1,5 @@
+import { Ionicons } from '@expo/vector-icons';
+import Svg, { Line } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
@@ -7,6 +9,10 @@ import Animated, {
 import type { AppTheme } from '../../core/theme/tokens';
 
 const AURORA_COUNT = 5;
+/** Nodos de la red: rombos que giran sobre su eje mientras derivan. */
+const NODE_COUNT = 26;
+/** Distancia bajo la cual dos nodos se unen con una línea. */
+const LINK_DISTANCE = 120;
 /** Cada "paw" dibuja un par de huellas, como un paso. */
 const PAW_COUNT = 18;
 
@@ -23,6 +29,18 @@ interface DrifterSpec {
   dy: number;
   duration: number;
   colorKey: 'glow' | 'glowSoft' | 'primaryFaded';
+}
+
+interface NodeSpec {
+  id: number;
+  size: number;
+  startX: number;
+  startY: number;
+  pathX: number[];
+  pathY: number[];
+  duration: number;
+  rotation: number;
+  spinTurns: number;
 }
 
 interface PawSpec {
@@ -85,38 +103,61 @@ function AuroraOrb({ spec, color, disabled }: { spec: DrifterSpec; color: string
   );
 }
 
-/** Contorno de una huella suelta: almohadilla + cuatro dedos. */
+/**
+ * Huella dorada. Antes se componía con Views redondeados —una almohadilla y
+ * cuatro dedos—, pero a tamaño chico esos círculos se leían como burbujas y
+ * no como una pata. El ícono del set tiene la silueta correcta y escala sin
+ * deformarse.
+ */
 function PawPrint({ size, color }: { size: number; color: string }) {
-  const toe = (toeSize: number, left: number, top: number) => ({
-    position: 'absolute' as const,
-    width: toeSize,
-    height: toeSize * 1.15,
-    borderRadius: toeSize,
-    borderWidth: 1.5,
-    borderColor: color,
-    left,
-    top,
-  });
+  return <Ionicons name="paw-outline" size={size} color={color} />;
+}
+
+/**
+ * Nodo de la red. Es un cuadrado rotado 45 grados —un rombo— porque en un
+ * círculo el giro sobre el propio eje sería invisible.
+ */
+function FloatingNode({ spec, color, disabled }: { spec: NodeSpec; color: string; disabled: boolean }) {
+  const tx = useSharedValue(0);
+  const ty = useSharedValue(0);
+  const spin = useSharedValue(0);
+
+  useEffect(() => {
+    if (disabled) return;
+    const leg = (v: number) => withTiming(v, { duration: spec.duration, easing: Easing.inOut(Easing.sin) });
+    tx.value = withRepeat(withSequence(...spec.pathX.map(leg)), -1, false);
+    ty.value = withRepeat(withSequence(...spec.pathY.map(leg)), -1, false);
+    spin.value = withRepeat(
+      withTiming(spec.spinTurns * 360, { duration: spec.duration * 4, easing: Easing.linear }),
+      -1,
+      false,
+    );
+    return () => { cancelAnimation(tx); cancelAnimation(ty); cancelAnimation(spin); };
+  }, [disabled, spec, tx, ty, spin]);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: tx.value },
+      { translateY: ty.value },
+      { rotate: `${spec.rotation + spin.value}deg` },
+    ],
+  }));
 
   return (
-    <View style={{ position: 'absolute', width: size, height: size }}>
-      {/* Almohadilla */}
-      <View style={{
-        position: 'absolute',
-        bottom: 0,
-        left: size * 0.2,
-        width: size * 0.6,
-        height: size * 0.48,
-        borderRadius: size * 0.3,
-        borderWidth: 1.5,
-        borderColor: color,
-      }} />
-      {/* Dedos */}
-      <View style={toe(size * 0.2, size * 0.02, size * 0.2)} />
-      <View style={toe(size * 0.21, size * 0.28, size * 0.02)} />
-      <View style={toe(size * 0.21, size * 0.56, size * 0.02)} />
-      <View style={toe(size * 0.2, size * 0.82, size * 0.2)} />
-    </View>
+    <Animated.View
+      style={[
+        {
+          position: 'absolute',
+          left: spec.startX,
+          top: spec.startY,
+          width: spec.size,
+          height: spec.size,
+          backgroundColor: color,
+          opacity: 0.5,
+        },
+        style,
+      ]}
+    />
   );
 }
 
@@ -241,6 +282,48 @@ export function AuroraBackground({ theme }: { theme: AppTheme }) {
     };
   }), [width, height]);
 
+  const nodes = useMemo<NodeSpec[]>(() => Array.from({ length: NODE_COUNT }, (_, i) => {
+    const size = rand(4, 9);
+    const startX = rand(0, Math.max(1, width - size));
+    const startY = rand(0, Math.max(1, height - size));
+    const pathX: number[] = [];
+    const pathY: number[] = [];
+    for (let leg = 0; leg < 4; leg += 1) {
+      pathX.push(rand(0, Math.max(1, width - size)) - startX);
+      pathY.push(rand(0, Math.max(1, height - size)) - startY);
+    }
+    pathX.push(0);
+    pathY.push(0);
+    return {
+      id: i, size, startX, startY, pathX, pathY,
+      duration: rand(5000, 11000),
+      rotation: rand(0, 360),
+      spinTurns: signed(0.8, 2.2),
+    };
+  }), [width, height]);
+
+  /**
+   * Enlaces entre nodos cercanos. Se calculan una vez sobre las posiciones
+   * iniciales y no siguen el movimiento: recalcularlos por frame obligaría a
+   * traer las posiciones del hilo de UI al de JavaScript en cada cuadro, que
+   * es justo lo que Reanimated evita. Como red de fondo, la trama estática
+   * cumple el mismo papel visual.
+   */
+  const links = useMemo(() => {
+    const result: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+    for (let i = 0; i < nodes.length; i += 1) {
+      for (let j = i + 1; j < nodes.length; j += 1) {
+        const a = nodes[i];
+        const b = nodes[j];
+        const distance = Math.hypot(a.startX - b.startX, a.startY - b.startY);
+        if (distance < LINK_DISTANCE) {
+          result.push({ x1: a.startX, y1: a.startY, x2: b.startX, y2: b.startY });
+        }
+      }
+    }
+    return result;
+  }, [nodes]);
+
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       <LinearGradient colors={theme.gradients.app} style={StyleSheet.absoluteFill} />
@@ -252,6 +335,25 @@ export function AuroraBackground({ theme }: { theme: AppTheme }) {
           disabled={reduceMotion}
         />
       ))}
+      <Svg style={[StyleSheet.absoluteFill]} pointerEvents="none">
+        {links.map((link, index) => (
+          <Line
+            key={index}
+            x1={link.x1}
+            y1={link.y1}
+            x2={link.x2}
+            y2={link.y2}
+            stroke={theme.colors.primary}
+            strokeWidth={1}
+            strokeOpacity={0.16}
+          />
+        ))}
+      </Svg>
+
+      {nodes.map((spec) => (
+        <FloatingNode key={`node-${spec.id}`} spec={spec} color={theme.colors.primary} disabled={reduceMotion} />
+      ))}
+
       {paws.map((spec) => (
         <FloatingPaw key={spec.id} spec={spec} color={theme.colors.primary} disabled={reduceMotion} />
       ))}

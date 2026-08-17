@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { requestPushPermission } from '../../../core/data/services/pushNotifications';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme, ThemeMode } from '../../../core/theme/tokens';
@@ -9,6 +10,7 @@ import type { AppPreferences } from '../../../core/types/preferences.types';
 export function SettingsScreen() {
   const { theme, preferences, updatePreference } = useAppPreferences();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const insets = useSafeAreaInsets();
 
   const togglePush = async (key: 'pushMessages' | 'pushRequests' | 'pushAppointments', value: boolean) => {
     if (!value) { updatePreference(key, false); return; }
@@ -17,7 +19,7 @@ export function SettingsScreen() {
     else Alert.alert('Notificaciones desactivadas', 'Podés habilitarlas más adelante desde los ajustes del teléfono.');
   };
 
-  return <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+  return <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, 12) + 16 }]} showsVerticalScrollIndicator={false}>
     <Text style={styles.intro}>Controlá qué mostrás, cuándo recibís avisos y cómo querés proteger tus encuentros.</Text>
     <Section title="Apariencia" theme={theme}>
       <View style={styles.appearance}>{(['dark', 'light', 'system'] as ThemeMode[]).map((mode) => <Pressable key={mode} accessibilityRole="button" onPress={() => updatePreference('themeMode', mode)} style={[styles.appearanceOption, preferences.themeMode === mode && styles.appearanceActive]}><Ionicons name={mode === 'dark' ? 'moon' : mode === 'light' ? 'sunny' : 'phone-portrait'} size={18} color={preferences.themeMode === mode ? theme.colors.onPrimary : theme.colors.textSecondary} /><Text style={[styles.appearanceText, preferences.themeMode === mode && { color: theme.colors.onPrimary }]}>{mode === 'dark' ? 'Oscuro' : mode === 'light' ? 'Claro' : 'Sistema'}</Text></Pressable>)}</View>

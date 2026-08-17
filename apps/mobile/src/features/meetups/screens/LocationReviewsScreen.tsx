@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMemo, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
@@ -12,6 +13,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'LocationReviews'>;
 
 export function LocationReviewsScreen({ route }: Props) {
   const theme = useAppTheme(); const styles = useMemo(() => createStyles(theme), [theme]);
+  const insets = useSafeAreaInsets();
   const { locations, appointments, addLocationReview, profile } = useAppData();
   const location = locations.find((item) => item.id === route.params.locationId);
   const appointment = appointments.find((item) => item.id === route.params.appointmentId);
@@ -24,7 +26,7 @@ export function LocationReviewsScreen({ route }: Props) {
   return <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}><FlatList
     data={location.reviews}
     keyExtractor={(item) => item.id}
-    contentContainerStyle={styles.content}
+    contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, 12) + 16 }]}
     showsVerticalScrollIndicator={false}
     ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
     ListHeaderComponent={<View style={styles.header}>
