@@ -7,7 +7,7 @@ import { Ban, Bell, CalendarDays, CheckCheck, ChevronRight, Download, Heart, Map
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { WebContent, WebHeading, WebScreen, WebSubtitle } from '@shared/components/layout/WebScreen';
-import { Toggle as ToggleControl } from '@shared/components/ui';
+import { Toggle as ToggleControl, useToast } from '@shared/components/ui';
 import {
   BackButton, Layout, SectionNav, SectionNavLink, Content, Group, Row, Appearance, Distance, Action,
   ConfirmBackdrop, ConfirmDialog, ConfirmActions, ConfirmError,
@@ -23,6 +23,7 @@ const SECTIONS = [
 ];
 
 export function SettingsScreen() {
+  const toast = useToast();
   // Borrado de cuenta. Las tiendas exigen que se pueda hacer desde la app,
   // y pedir que se escriba la palabra evita el toque accidental en algo
   // que no tiene vuelta atrás.
@@ -142,7 +143,7 @@ export function SettingsScreen() {
                   <div className="copy"><strong>Visibilidad de salud</strong><small>{preferences.healthVisibility === 'connections' ? 'Sólo conexiones aceptadas' : 'Sólo vos'}</small></div>
                   <ChevronRight />
                 </Action>
-                <Action onClick={() => alert('No tenés personas bloqueadas.')}>
+                <Action onClick={() => toast({ title: 'Sin bloqueos', body: 'No tenés personas bloqueadas.' })}>
                   <Ban />
                   <div className="copy"><strong>Personas bloqueadas</strong><small>Revisá y administrá bloqueos</small></div>
                   <ChevronRight />
@@ -164,7 +165,7 @@ export function SettingsScreen() {
               <h2>Seguridad de citas</h2>
               <div className="box">
                 <SettingRow icon={ShieldCheck} title="Check-in de seguridad" detail="Confirmamos inicio y finalización" value={preferences.safetyCheckIns} onChange={(value) => updatePreference('safetyCheckIns', value)} />
-                <Action onClick={() => alert('La agenda de contactos se abrirá sólo con tu permiso.')}>
+                <Action onClick={() => toast({ title: 'Contacto de confianza', body: 'La agenda se abrirá sólo con tu permiso.' })}>
                   <Users />
                   <div className="copy"><strong>Contacto de confianza</strong><small>Configurá a quién compartir una cita</small></div>
                   <ChevronRight />
@@ -175,7 +176,7 @@ export function SettingsScreen() {
             <Group id="data" ref={(el) => { sectionRefs.current.data = el; }}>
               <h2>Tus datos</h2>
               <div className="box">
-                <Action onClick={() => alert('Solicitud registrada.')}>
+                <Action onClick={() => toast({ title: 'Solicitud registrada', body: 'Te avisaremos cuando la copia esté lista.', tone: 'success' })}>
                   <Download />
                   <div className="copy"><strong>Descargar mis datos</strong><small>Solicitá una copia portable</small></div>
                   <ChevronRight />

@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useToast } from '../../../shared/components/Toast';
 import { fetchMyPets } from '../../../core/data/services/petService';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
@@ -12,6 +13,7 @@ import type { RootStackParamList } from '../../../navigation/types';
 import { BreederBadge } from '../components/BreederBadge';
 
 export function PetsScreen() {
+  const toast = useToast();
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
@@ -49,10 +51,10 @@ export function PetsScreen() {
           // El alta de mascotas todavía sólo existe en la web. Sin onPress el
           // botón no hacía nada y parecía roto; avisar es más honesto que
           // simular una acción que no ocurre.
-          onPress={() => Alert.alert(
-            'Disponible en la web',
-            'Por ahora las mascotas se agregan desde tindog en el navegador. Estamos trabajando en traerlo a la aplicación.',
-          )}
+          onPress={() => toast({
+            title: 'Disponible en la web',
+            body: 'Por ahora las mascotas se agregan desde el navegador. Estamos trabajando en traerlo a la aplicación.',
+          })}
         ><Ionicons name="add" size={22} color={theme.colors.onPrimary} /><Text style={styles.addText}>Agregar mascota</Text></Pressable>}
       />
     </View>

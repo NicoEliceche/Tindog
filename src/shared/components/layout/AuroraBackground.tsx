@@ -81,20 +81,24 @@ const CURSOR_RADIUS = 180;
 
 /** Dibuja el contorno de una huella: almohadilla central y cuatro dedos. */
 function strokeSinglePaw(ctx: CanvasRenderingContext2D, size: number) {
-  const pad = size * 0.42;
+  // La silueta sigue a la del ícono `paw-outline` que usa la aplicación
+  // nativa, para que el mismo motivo se vea igual en las dos plataformas:
+  // almohadilla ancha y baja, y cuatro dedos alargados en arco, los dos
+  // centrales más altos que los externos.
   ctx.beginPath();
-  ctx.ellipse(0, size * 0.18, pad * 0.62, pad * 0.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, size * 0.26, size * 0.33, size * 0.27, 0, 0, Math.PI * 2);
   ctx.stroke();
 
-  const toes: Array<[number, number, number]> = [
-    [-size * 0.34, -size * 0.18, size * 0.15],
-    [-size * 0.13, -size * 0.34, size * 0.16],
-    [size * 0.13, -size * 0.34, size * 0.16],
-    [size * 0.34, -size * 0.18, size * 0.15],
+  // [x, y, radio, inclinación]
+  const toes: Array<[number, number, number, number]> = [
+    [-size * 0.38, -size * 0.1, size * 0.15, -0.35],
+    [-size * 0.15, -size * 0.33, size * 0.155, -0.12],
+    [size * 0.15, -size * 0.33, size * 0.155, 0.12],
+    [size * 0.38, -size * 0.1, size * 0.15, 0.35],
   ];
-  for (const [tx, ty, tr] of toes) {
+  for (const [tx, ty, tr, tilt] of toes) {
     ctx.beginPath();
-    ctx.ellipse(tx, ty, tr * 0.85, tr, 0, 0, Math.PI * 2);
+    ctx.ellipse(tx, ty, tr * 0.78, tr * 1.15, tilt, 0, Math.PI * 2);
     ctx.stroke();
   }
 }

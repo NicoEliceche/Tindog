@@ -3,6 +3,7 @@ import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useMemo } from 'react';
+import { AuroraBackground } from '../shared/components/AuroraBackground';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '../core/providers/AppPreferencesProvider';
@@ -91,13 +92,19 @@ export function AppNavigator({ onLogout }: { onLogout: () => Promise<void> }) {
 
   return (
     <NavigationContainer theme={navigationTheme}>
+      {/* El fondo animado va acá y no dentro de cada pantalla: en la web vive
+          en el layout, así que se mantiene al navegar. Antes sólo estaba en
+          el ingreso y en el descubrimiento, y desaparecía en el resto. */}
+      <AuroraBackground theme={theme} />
       <Stack.Navigator
         screenOptions={{
-          headerStyle: { backgroundColor: theme.colors.surface },
+          headerStyle: { backgroundColor: 'transparent' },
+          headerTransparent: true,
           headerTintColor: theme.colors.text,
           headerTitleStyle: { fontWeight: '900' },
           headerShadowVisible: false,
-          contentStyle: { backgroundColor: theme.colors.background },
+          // Transparente para que el fondo se vea a través de las pantallas.
+          contentStyle: { backgroundColor: 'transparent' },
           animation: Platform.OS === 'android' ? 'fade_from_bottom' : 'default',
         }}
       >

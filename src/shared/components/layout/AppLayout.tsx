@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { WebAppProvider, useWebApp } from '@core/providers/WebAppProvider';
 import { lightTheme, theme as darkTheme } from '@core/theme/theme';
-import { PageTransition } from '@shared/components/ui';
+import { PageTransition, ToastProvider } from '@shared/components/ui';
 import React from 'react';
 import styled, { ThemeProvider } from 'styled-components';
 import { AuroraBackground } from './AuroraBackground';
@@ -57,6 +57,7 @@ function ThemedShell({ children }: { children: React.ReactNode }) {
   const showBottomNav = !isBottomNavHidden(pathname);
 
   return <ThemeProvider theme={resolvedTheme === 'light' ? lightTheme : darkTheme}>
+    <ToastProvider>
     <GlobalStyles /><AuroraBackground />
     <Viewport $showChrome={showSidebar}>
       <SkipLink href="#tindog-main">Saltar al contenido</SkipLink>
@@ -75,6 +76,7 @@ function ThemedShell({ children }: { children: React.ReactNode }) {
       </Main>
       {showBottomNav && <BottomNavigation />}
     </Viewport>
+    </ToastProvider>
   </ThemeProvider>;
 }
 
