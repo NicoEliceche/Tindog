@@ -16,7 +16,8 @@
     "mobile:icons": "node scripts/generate-mobile-icons.mjs",
     "test": "vitest run",
     "security:check": "node scripts/security-check.mjs",
-    "security:revoke-sessions": "node scripts/revoke-sessions.mjs"
+    "security:revoke-sessions": "node scripts/revoke-sessions.mjs",
+    "secretos": "node scripts/generar-secretos.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1100.0",

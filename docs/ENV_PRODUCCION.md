@@ -31,12 +31,18 @@ exponerla.
 ## Generarlos de una vez
 
 ```bash
-node scripts/generar-secretos.mjs
+npm run secretos
 ```
 
 Crea los cinco secretos propios con el formato correcto, en tu máquina. No
 guarda nada en disco: copiá el resultado a tu `.env` y al panel de Render.
-Con `--env` los imprime listos para pegar.
+
+El atajo de npm funciona desde cualquier carpeta del repositorio. Para
+pegarlos directo en un archivo:
+
+```bash
+npm run secretos -- --env
+```
 
 ---
 
