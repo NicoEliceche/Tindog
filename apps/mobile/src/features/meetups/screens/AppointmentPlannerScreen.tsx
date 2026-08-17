@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
@@ -16,9 +17,10 @@ function buildSlots() {
 
 export function AppointmentPlannerScreen({ route, navigation }: Props) {
   const theme = useAppTheme(); const styles = useMemo(() => createStyles(theme), [theme]);
+  const insets = useSafeAreaInsets();
   const { conversations } = useAppData(); const conversation = conversations.find((item) => item.id === route.params.conversationId);
   const slots = useMemo(buildSlots, []); const [selected, setSelected] = useState(slots[0].toISOString());
-  return <View style={styles.screen}>
+  return <View style={[styles.screen, { paddingBottom: Math.max(insets.bottom, 12) + 12 }]}>
     <View><Text style={styles.eyebrow}>ENCUENTRO CON {conversation?.ownerName.toUpperCase()}</Text><Text style={styles.title}>{conversation?.petName} + Firulais</Text><Text style={styles.subtitle}>Elegí un horario y después un punto público recomendado.</Text></View>
     <View style={styles.card}><Text style={styles.section}>Fecha y hora</Text>{slots.map((slot) => { const iso = slot.toISOString(); const active = selected === iso; return <Pressable key={iso} onPress={() => setSelected(iso)} style={[styles.slot, active && styles.slotActive]}><View style={[styles.radio, active && styles.radioActive]}>{active ? <View style={styles.radioDot} /> : null}</View><View style={{ flex: 1 }}><Text style={[styles.slotTitle, active && { color: theme.colors.onPrimary }]}>{slot.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}</Text><Text style={[styles.slotTime, active && { color: 'rgba(5,5,5,.7)' }]}>{slot.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} · 60 minutos</Text></View></Pressable>; })}</View>
     <View style={styles.safety}><Ionicons name="shield-checkmark" size={24} color={theme.colors.primary} /><View style={{ flex: 1 }}><Text style={styles.safetyTitle}>Cita con protección Tindog</Text><Text style={styles.safetyText}>Podrás compartir lugar y horario con un contacto de confianza. No compartimos tu ubicación continua.</Text></View></View>

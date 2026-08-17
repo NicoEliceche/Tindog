@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchMyPets } from '../../../core/data/services/petService';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
@@ -43,7 +43,17 @@ export function PetsScreen() {
           </Pressable>
         )}
         ListEmptyComponent={loading ? <ActivityIndicator size="large" color={theme.colors.primary} /> : <Text style={styles.subtitle}>Todavía no cargaste mascotas.</Text>}
-        ListFooterComponent={<Pressable accessibilityRole="button" style={styles.addButton}><Ionicons name="add" size={22} color={theme.colors.onPrimary} /><Text style={styles.addText}>Agregar mascota</Text></Pressable>}
+        ListFooterComponent={<Pressable
+          accessibilityRole="button"
+          style={styles.addButton}
+          // El alta de mascotas todavía sólo existe en la web. Sin onPress el
+          // botón no hacía nada y parecía roto; avisar es más honesto que
+          // simular una acción que no ocurre.
+          onPress={() => Alert.alert(
+            'Disponible en la web',
+            'Por ahora las mascotas se agregan desde tindog en el navegador. Estamos trabajando en traerlo a la aplicación.',
+          )}
+        ><Ionicons name="add" size={22} color={theme.colors.onPrimary} /><Text style={styles.addText}>Agregar mascota</Text></Pressable>}
       />
     </View>
   );

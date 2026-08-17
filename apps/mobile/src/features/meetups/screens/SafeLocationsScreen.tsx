@@ -3,6 +3,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Constants from 'expo-constants';
 import { useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { requestForegroundCoordinates } from '../../../core/data/services/foregroundLocation';
 import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
@@ -15,6 +16,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'SafeLocations'>;
 
 export function SafeLocationsScreen({ route, navigation }: Props) {
   const theme = useAppTheme(); const styles = useMemo(() => createStyles(theme), [theme]);
+  const insets = useSafeAreaInsets();
   const { locations, appointments, scheduleAppointment } = useAppData();
   const appointment = appointments.find((item) => item.id === route.params?.appointmentId);
   const [selectedId, setSelectedId] = useState(appointment?.location.id ?? locations[0]?.id ?? '');
@@ -30,7 +32,7 @@ export function SafeLocationsScreen({ route, navigation }: Props) {
     if (created) { Alert.alert('Cita agendada', 'El encuentro quedó guardado y visible en Citas.', [{ text: 'Ver citas', onPress: () => navigation.navigate('Main', { screen: 'Appointments' }) }]); }
   };
 
-  return <View style={styles.screen}>
+  return <View style={[styles.screen, { paddingBottom: Math.max(insets.bottom, 12) }]}>
     <View style={styles.mapWrap}>
       {mapsConfigured ? <SafeMap locations={locations} selectedId={selectedId} userCoordinates={coordinates} onSelect={setSelectedId} /> : <View style={styles.mapFallback}><Ionicons name="map" size={40} color={theme.colors.primary} /><Text style={styles.mapTitle}>Mapa listo para configurar</Text><Text style={styles.mapText}>La lista funciona ahora. Para ver Google Maps agregá las claves nativas restringidas y generá un nuevo development build.</Text></View>}
       <Pressable accessibilityRole="button" accessibilityLabel="Usar mi ubicación" disabled={locating} onPress={locate} style={styles.locate}><Ionicons name={locating ? 'hourglass-outline' : 'locate'} size={20} color={theme.colors.primary} /></Pressable>

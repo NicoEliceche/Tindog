@@ -18,7 +18,9 @@ const Tabs = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const tabIcons: Record<keyof MainTabParamList, keyof typeof Ionicons.glyphMap> = {
-  Home: 'paw-outline',
+  // La pata pasó a ser el motivo del fondo animado; acá va la casa, que es
+  // el símbolo convencional de inicio y no compite con ese fondo.
+  Home: 'home-outline',
   Messages: 'chatbubble-ellipses-outline',
   Appointments: 'calendar-outline',
   Pets: 'heart-circle-outline',
