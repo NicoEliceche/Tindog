@@ -12,7 +12,6 @@ import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { Pet } from '../../../core/types/pet.types';
-import { AuroraBackground } from '../../../shared/components/AuroraBackground';
 import { PrimaryButton } from '../../../shared/components/PrimaryButton';
 
 const fallbackPetPhoto = 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=1200';
@@ -166,7 +165,6 @@ export function DiscoveryScreen() {
 
   return (
     <View style={styles.screen}>
-      <AuroraBackground theme={theme} />
       <View style={[styles.safeArea, { paddingTop: Math.max(insets.top + 6, 10) }]}>
         <View style={styles.header}>
           <View style={styles.headerSpacer} />

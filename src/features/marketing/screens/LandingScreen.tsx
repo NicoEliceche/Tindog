@@ -134,7 +134,7 @@ export function LandingScreen() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: reduceMotion ? 0 : 0.95, duration: reduceMotion ? 0 : 0.6, ease: [0.16, 1, 0.3, 1] }}
             >
-              Empezar Aventura
+              Empezar aventura
             </Button>
             <TrustNote>Gratis · Sin tarjeta de crédito</TrustNote>
           </CtaRow>

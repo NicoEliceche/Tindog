@@ -221,19 +221,28 @@ export const TrustNote = styled.span`
 
 // ── Hero mockup (solo lg+) ───────────────────────────────────────────────
 export const HeroMockup = styled(motion.div)`
-  display: none;
+  /* En el teléfono también se muestra: la captura es lo que explica de qué
+     se trata la app antes de que alguien se registre. Va más chica, debajo
+     del texto, para no empujar el botón fuera de la pantalla. */
+  display: flex;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  max-width: 190px;
+  margin: 0 auto;
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    display: flex;
-    justify-content: center;
-    position: relative;
+    max-width: none;
+    margin: 0;
   }
 `;
 
 export const MockupFrame = styled.div`
   width: min(100%, 320px);
-  aspect-ratio: 9 / 18;
-  border-radius: ${({ theme }) => theme.radius['2xl']};
+  /* La proporción sigue a la del archivo (389x827). Con un marco distinto,
+     object-fit recortaba los lados y la captura se veía ampliada. */
+  aspect-ratio: 389 / 827;
+  border-radius: ${({ theme }) => theme.radius.xl};
   overflow: hidden;
   border: 1px solid ${({ theme }) => theme.color.border};
   box-shadow: ${({ theme }) => theme.elevation.glow};
@@ -243,7 +252,8 @@ export const MockupFrame = styled.div`
 export const MockupImage = styled.img`
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* Se muestra entera, sin recorte: con cover se ampliaba. */
+  object-fit: contain;
 `;
 
 export const MockupGlow = styled.div`

@@ -7,12 +7,13 @@ import { webAllPets } from '@core/providers/WebAppProvider';
 import { requestCoOwnership } from '@core/data/services/petService';
 import { useRouter } from 'next/navigation';
 import { WebContent, WebScreen } from '@shared/components/layout/WebScreen';
-import { Avatar, Card, IconButton } from '@shared/components/ui';
+import { Avatar, Card, IconButton , useToast} from '@shared/components/ui';
 import {
   Header, Title, SearchBar, StatusText, ResultsGrid, ResultCardBody, ResultIdentity, ResultCopy, RequestButton,
 } from './PetSearchScreenStyled';
 
 export function PetSearchScreen() {
+  const toast = useToast();
   const [query, setQuery] = useState('');
   const [requestingId, setRequestingId] = useState<string | null>(null);
   const router = useRouter();
@@ -27,7 +28,7 @@ export function PetSearchScreen() {
     setRequestingId(petId);
     try {
       await requestCoOwnership(petId);
-      alert('Solicitud enviada al dueño principal.');
+      toast({ title: 'Solicitud enviada', body: 'El dueño principal recibió tu mensaje.', tone: 'success' });
       router.push('/pets');
     } finally {
       setRequestingId(null);

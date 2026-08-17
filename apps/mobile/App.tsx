@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ToastProvider } from './src/shared/components/Toast';
 import { logoutCurrentAuthSession, restoreAuthSession } from './src/core/data/services/authService';
 import { AppDataProvider } from './src/core/providers/AppDataProvider';
 import { AppPreferencesProvider, useAppTheme } from './src/core/providers/AppPreferencesProvider';
@@ -53,6 +54,7 @@ export default function App() {
     <GestureHandlerRootView style={styles.app}>
       <SafeAreaProvider>
         <AppPreferencesProvider>
+          <ToastProvider>
           {isHydrating ? (
             <BootstrapScreen />
           ) : auth ? (
@@ -63,6 +65,7 @@ export default function App() {
               <LoginScreen onAuthenticated={setAuth} />
             </View>
           )}
+          </ToastProvider>
         </AppPreferencesProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
