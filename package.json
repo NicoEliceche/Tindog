@@ -24,7 +24,7 @@
     "@aws-sdk/s3-request-presigner": "^3.1100.0",
     "@prisma/client": "6.19.3",
     "@upstash/ratelimit": "^2.0.8",
-    "@upstash/redis": "^1.38.1",
+    "@upstash/redis": "^1.38.2",
     "axios": "^1.18.0",
     "file-type": "^22.0.1",
     "framer-motion": "^11.2.10",
