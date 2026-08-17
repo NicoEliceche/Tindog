@@ -63,6 +63,11 @@ export const AvatarButton = styled.button`
   height: 94px;
   position: relative;
   border-radius: 30px;
+  /* Centra la inicial cuando no hay foto; sin esto quedaba pegada al borde
+     porque un button no centra su contenido por sí solo. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: ${({ theme }) => theme.color.primary};
   background: ${({ theme }) => theme.color.primaryFaded};
   font-size: 1.7rem;
@@ -73,6 +78,9 @@ export const AvatarButton = styled.button`
     height: 100%;
     border-radius: 30px;
     object-fit: cover;
+    /* Las fotos de perfil suelen tener la cara en el tercio superior: con
+       el centro geométrico, un retrato vertical se recorta por el mentón. */
+    object-position: 50% 35%;
   }
 
   i {
