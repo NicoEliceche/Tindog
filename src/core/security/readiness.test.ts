@@ -42,7 +42,7 @@ beforeEach(() => {
   for (const key of [...Object.keys(CORE), ...Object.keys(LAUNCH), 'TINDOG_PUBLIC_LAUNCH']) {
     delete process.env[key];
   }
-  process.env.NODE_ENV = 'production';
+  (process.env as Record<string, string>).NODE_ENV = 'production';
 });
 
 afterEach(() => {
@@ -53,7 +53,7 @@ const load = (vars: Record<string, string>) => Object.assign(process.env, vars);
 
 describe('securityReadiness', () => {
   it('fuera de producción no exige nada', () => {
-    process.env.NODE_ENV = 'development';
+    (process.env as Record<string, string>).NODE_ENV = 'development';
     expect(securityReadiness().ready).toBe(true);
   });
 
