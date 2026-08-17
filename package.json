@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:github-pages": "next build",
+    "build:github-pages": "node scripts/build-github-pages.mjs",
     "render:build": "prisma migrate deploy && prisma generate && next build",
     "db:migrate:deploy": "prisma migrate deploy",
     "start": "next start",
