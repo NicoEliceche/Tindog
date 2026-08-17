@@ -15,6 +15,9 @@ export async function GET() {
     ok: security.ready,
     service: 'tindog-api',
     securityReady: security.ready,
+    // Cuántas faltan, sin decir cuáles: el detalle vive en
+    // /api/admin/readiness, detrás de la clave de administración.
+    missingCount: security.missing.length,
     // Momento del build en export estático; del arranque en modo server.
     timestamp: new Date().toISOString(),
   });
