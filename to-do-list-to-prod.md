@@ -60,11 +60,14 @@ cada una:
 ### 1.3 Borrado de cuenta desde la aplicación
 
 Apple lo exige desde 2022 y Google desde 2024. **Es causa de rechazo
-automático.** El endpoint ya existe (`/api/account/delete`, con verificación
-reforzada); falta el botón en Ajustes y la pantalla de confirmación.
+automático.**
 
-- [ ] Botón en Ajustes con confirmación clara de que la acción es definitiva
-- [ ] Explicar qué se borra y qué se conserva por obligación legal
+- [x] Botón en Ajustes con confirmación: pide escribir ELIMINAR, lista qué
+      se borra y qué se conserva, y muestra la fecha programada
+- [x] Conectado a `/api/account/delete`, que agenda con período de
+      recuperación y cierra las demás sesiones
+- [ ] Replicar la pantalla en la aplicación nativa
+- [ ] Probar el flujo completo contra el backend (hoy bloqueado por el 503)
 
 ### 1.4 Política de privacidad y términos publicados
 
@@ -137,10 +140,11 @@ antes de enviar.
 
 ## 4. Calidad
 
-No hay pruebas automatizadas salvo `src/core/security/security.test.ts`.
-Para publicar no son obligatorias, pero sin ellas cada cambio se verifica a
-mano y el riesgo de romper algo crece con el tiempo.
+Vitest ya está configurado (`npm test`). Para publicar las pruebas no son
+obligatorias, pero sin ellas cada cambio se verifica a mano y el riesgo de
+romper algo crece con el tiempo.
 
+- [x] Helpers de filtrado y agrupación por mes (8 casos)
 - [ ] Pruebas de los flujos críticos: registro, envío de solicitud, chat
 - [ ] Registro de errores en producción (Sentry o equivalente)
 - [ ] Revisión de accesibilidad
@@ -155,6 +159,11 @@ del modelo de Tinder y la propuesta para Tindog.
 
 En resumen: conviene **no cobrar hasta tener comunidad**. Sin densidad de
 usuarios en una ciudad, cobrar por más alcance es vender algo que no existe.
+
+El primer ingreso previsto es la fase 2: perfiles verificados para
+paseadores, cuidadores, entrenadores y veterinarias, como directorio y no
+como intermediario —sin manejar pagos ni asumir responsabilidad por el
+servicio—.
 
 - [ ] Definir el modelo antes de publicar (las tiendas piden declarar si hay
       compras dentro de la app)

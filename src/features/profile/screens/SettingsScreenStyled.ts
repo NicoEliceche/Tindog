@@ -199,3 +199,109 @@ export const Action = styled.button<{ $danger?: boolean }>`
     font-size: 0.63rem;
   }
 `;
+
+/** Fondo del diálogo de confirmación de borrado. */
+export const ConfirmBackdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: ${({ theme }) => theme.spacing[4]};
+  background: ${({ theme }) => theme.color.overlay};
+`;
+
+export const ConfirmDialog = styled.div`
+  width: min(100%, 26rem);
+  padding: ${({ theme }) => theme.spacing[6]};
+  border-radius: ${({ theme }) => theme.radius.xl};
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  box-shadow: ${({ theme }) => theme.elevation.lg};
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing[3]};
+
+  h2 {
+    color: ${({ theme }) => theme.color.text};
+    font-size: ${({ theme }) => theme.typography.size.lg};
+    font-weight: ${({ theme }) => theme.typography.weight.extrabold};
+  }
+
+  p {
+    color: ${({ theme }) => theme.color.textSecondary};
+    font-size: ${({ theme }) => theme.typography.size.sm};
+    line-height: 1.55;
+  }
+
+  ul {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  li {
+    display: flex;
+    gap: 8px;
+    color: ${({ theme }) => theme.color.textSecondary};
+    font-size: ${({ theme }) => theme.typography.size.xs};
+    line-height: 1.5;
+  }
+
+  li::before {
+    content: '·';
+    color: ${({ theme }) => theme.color.primary};
+    font-weight: 900;
+  }
+
+  input {
+    min-height: 46px;
+    padding: 0 ${({ theme }) => theme.spacing[3]};
+    border-radius: ${({ theme }) => theme.radius.lg};
+    background: ${({ theme }) => theme.color.background};
+    border: 1px solid ${({ theme }) => theme.color.border};
+    color: ${({ theme }) => theme.color.text};
+    font-size: ${({ theme }) => theme.typography.size.sm};
+    letter-spacing: 0.08em;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.color.borderFocus};
+  }
+`;
+
+export const ConfirmActions = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing[2]};
+  justify-content: flex-end;
+  flex-wrap: wrap;
+
+  button {
+    min-height: 44px;
+    padding: 0 ${({ theme }) => theme.spacing[5]};
+    border-radius: 999px;
+    font-size: ${({ theme }) => theme.typography.size.sm};
+    font-weight: ${({ theme }) => theme.typography.weight.bold};
+    border: 1px solid ${({ theme }) => theme.color.border};
+    background: ${({ theme }) => theme.color.surfaceRaised};
+    color: ${({ theme }) => theme.color.textSecondary};
+  }
+
+  button[data-variant='danger'] {
+    background: ${({ theme }) => theme.color.error};
+    border-color: ${({ theme }) => theme.color.error};
+    color: ${({ theme }) => theme.color.textInverse};
+  }
+
+  button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+`;
+
+/** Mensaje de error dentro del diálogo. */
+export const ConfirmError = styled.p`
+  color: ${({ theme }) => theme.color.error} !important;
+  font-size: ${({ theme }) => theme.typography.size.xs} !important;
+`;
