@@ -29,17 +29,33 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const security = securityReadiness();
+
+  // La clave de administración es una de las variables que este diagnóstico
+  // sirve para revisar: si está ausente o mal formada, exigirla deja el
+  // problema sin forma de verse. En ese caso se responde igual, porque los
+  // nombres de las variables faltantes no son secretos —están en el código
+  // público del repositorio— y sin ellas el servidor no atiende a nadie.
+  let authorized = true;
   try {
     assertAdminNetworkAuthorization(request);
   } catch {
+    authorized = false;
+  }
+
+  if (!authorized && security.ready) {
+    // Con todo en orden ya no hay nada que diagnosticar, así que vuelve a
+    // pedir credencial: la lista deja de ser útil y pasa a ser información
+    // sobre la infraestructura.
     return NextResponse.json({ error: 'Administrator network authorization failed' }, { status: 401 });
   }
 
-  const security = securityReadiness();
   return NextResponse.json({
     ready: security.ready,
+    scope: security.scope,
     missingCount: security.missing.length,
     missing: security.missing,
+    authorized,
     checkedAt: new Date().toISOString(),
   });
 }
