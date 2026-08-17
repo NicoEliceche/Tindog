@@ -25,9 +25,15 @@ export function withinRange(date: Date, range: DateRange): boolean {
   return Date.now() - date.getTime() <= days * 24 * 60 * 60 * 1000;
 }
 
-/** Etiqueta de mes en español, para agrupar: "agosto 2026". */
+/**
+ * Etiqueta de mes en español: "Agosto de 2026".
+ *
+ * Se capitaliza sólo la inicial y no con `text-transform: capitalize`, que
+ * afecta a cada palabra y dejaba "Agosto De 2026".
+ */
 export function monthLabel(date: Date): string {
-  return date.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+  const label = date.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+  return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 interface FilterBarProps {

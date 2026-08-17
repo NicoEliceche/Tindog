@@ -36,6 +36,15 @@ export function ProfileScreen() {
     window.location.replace(withPublicBasePath('/login'));
   };
 
+  const [editingZone, setEditingZone] = useState(false);
+  const [zone, setZone] = useState(profile.zone);
+
+  const handleSaveZone = () => {
+    const clean = zone.trim();
+    if (clean.length >= 3) updateProfile({ zone: clean });
+    setEditingZone(false);
+  };
+
   const handleSaveName = () => {
     if (name.trim().length >= 2) updateProfile({ name: name.trim() });
     setEditing(false);
@@ -82,9 +91,9 @@ export function ProfileScreen() {
               <div><strong>Email</strong><small>{profile.email} · administrado por Google</small></div>
               <Lock size={16} />
             </Row>
-            <Row>
+            <Row onClick={() => { setZone(profile.zone); setEditingZone(true); }}>
               <MapPin />
-              <div><strong>Zona general</strong><small>Palermo, Buenos Aires · nunca mostramos tu domicilio</small></div>
+              <div><strong>Zona general</strong><small>{profile.zone} · nunca mostramos tu domicilio</small></div>
               <ChevronRight size={18} />
             </Row>
 
@@ -100,6 +109,22 @@ export function ProfileScreen() {
           </RightColumn>
         </Layout>
       </WebContent>
+
+      <Modal open={editingZone} onClose={() => setEditingZone(false)} title="Editar zona general">
+        <ModalForm>
+          <p>Es el área aproximada que ven otros usuarios. Nunca mostramos tu domicilio exacto.</p>
+          <input
+            value={zone}
+            onChange={(event) => setZone(event.target.value)}
+            placeholder="Barrio, ciudad"
+            aria-label="Zona general"
+          />
+          <div className="actions">
+            <button onClick={() => setEditingZone(false)}>Cancelar</button>
+            <button className="save" onClick={handleSaveZone}>Guardar</button>
+          </div>
+        </ModalForm>
+      </Modal>
 
       <Modal open={editing} onClose={() => setEditing(false)} title="Editar nombre visible">
         <ModalForm>

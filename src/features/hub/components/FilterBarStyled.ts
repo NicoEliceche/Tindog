@@ -77,7 +77,6 @@ export const MonthHeading = styled.h3`
   color: ${({ theme }) => theme.color.textTertiary};
   font-size: ${({ theme }) => theme.typography.size.xs};
   font-weight: ${({ theme }) => theme.typography.weight.bold};
-  text-transform: capitalize;
   letter-spacing: 0.04em;
 
   &:first-child {

@@ -41,6 +41,27 @@ export interface WebAppointment { id: string; conversationId: string; ownerName:
 /** Mascota guardada con el momento en que se guardó. */
 export interface WebSavedPet { pet: Pet; savedAt: string; }
 
+/**
+ * Convierte lo guardado en el navegador al formato actual.
+ *
+ * La primera versión guardaba la mascota suelta; después se la envolvió para
+ * sumarle la fecha, pero sin cambiar la clave de almacenamiento. Quien tenía
+ * favoritos de antes recibía la forma vieja y la pantalla fallaba al leer
+ * `item.pet`. Se descartan además las entradas que no tengan una mascota
+ * utilizable, para que un dato corrupto no rompa la pantalla entera.
+ */
+function normalizeSaved(raw: unknown): WebSavedPet[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const entry = item as Partial<WebSavedPet> & Partial<Pet>;
+    // Formato nuevo: { pet, savedAt }. Formato viejo: la mascota directa.
+    const pet = (entry.pet ?? entry) as Pet | undefined;
+    if (!pet?.id || !Array.isArray(pet.photos)) return [];
+    return [{ pet, savedAt: entry.savedAt ?? new Date().toISOString() }];
+  });
+}
+
 export type WebNotificationKind = 'request' | 'message' | 'appointment' | 'cancelled';
 export interface WebNotification {
   id: string;
@@ -92,7 +113,9 @@ const initialMessages: Record<string, WebMessage[]> = {
 
 interface WebAppValue {
   preferences: WebPreferences; resolvedTheme: 'dark' | 'light'; updatePreference: <K extends keyof WebPreferences>(key: K, value: WebPreferences[K]) => void;
-  profile: { name: string; email: string; avatar?: string }; updateProfile: (value: Partial<{ name: string; avatar: string }>) => void;
+  /** `zone` es el área aproximada que se muestra a otros: nunca el domicilio. */
+  profile: { name: string; email: string; avatar?: string; zone: string };
+  updateProfile: (value: Partial<{ name: string; avatar: string; zone: string }>) => void;
   discoveryPets: Pet[]; dismissPet: (id: string) => void; resetDiscovery: () => void;
   /** Devuelve una mascota descartada al frente de la pila (undo del swipe). */
   restorePet: (pet: Pet) => void;
@@ -126,7 +149,7 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
     try { return { ...defaultPreferences, ...JSON.parse(stored) }; } catch { return defaultPreferences; }
   });
   const [systemDark, setSystemDark] = useState(() => typeof window === 'undefined' || window.matchMedia('(prefers-color-scheme: dark)').matches);
-  const [profile, setProfile] = useState<{ name: string; email: string; avatar?: string }>({ name: 'Nico Eliceche', email: 'nico@tindog.app' });
+  const [profile, setProfile] = useState<{ name: string; email: string; avatar?: string; zone: string }>({ name: 'Nico Eliceche', email: 'nico@tindog.app', zone: 'Palermo, Buenos Aires' });
   const [discoveryPets, setDiscoveryPets] = useState(pets); const [requests, setRequests] = useState<WebConnectionRequest[]>([
     { id: 'req-1', direction: 'incoming', status: 'pending', ownerName: 'Laura Martínez', pet: pets[0], avatar: pets[0].photos[0], createdAt: '2026-08-11T14:20:00Z' },
     { id: 'req-2', direction: 'incoming', status: 'pending', ownerName: 'Diego Sosa', pet: pets[3], avatar: pets[3].photos[0], createdAt: '2026-07-04T10:05:00Z' },
@@ -142,7 +165,7 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)'); const sync = () => setSystemDark(media.matches); media.addEventListener('change', sync);
-    restoreAuthSession().then((auth) => { if (auth?.user) setProfile({ name: auth.user.name, email: auth.user.email, avatar: auth.user.avatar }); }).catch(() => undefined);
+    restoreAuthSession().then((auth) => { const user = auth?.user; if (user) setProfile((current) => ({ ...current, name: user.name, email: user.email, avatar: user.avatar })); }).catch(() => undefined);
     return () => media.removeEventListener('change', sync);
   }, []);
   const updatePreference = <K extends keyof WebPreferences>(key: K, value: WebPreferences[K]) => setPreferences((current) => { const next = { ...current, [key]: value }; window.localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(next)); return next; });
@@ -252,7 +275,7 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const rawSaved = window.localStorage.getItem('tindog.web.saved.v1');
-      if (rawSaved) setSavedPets(JSON.parse(rawSaved) as WebSavedPet[]);
+      if (rawSaved) setSavedPets(normalizeSaved(JSON.parse(rawSaved)));
       const rawBlocked = window.localStorage.getItem('tindog.web.blocked.v1');
       if (rawBlocked) setBlockedOwners(JSON.parse(rawBlocked) as string[]);
     } catch { /* almacenamiento no disponible o corrupto: se arranca vacío */ }
