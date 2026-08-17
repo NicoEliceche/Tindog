@@ -1,6 +1,7 @@
 // src/features/profile/screens/SettingsScreen.tsx
 'use client';
 
+import { requestAccountDeletion, type AccountDeletionResult } from '@core/data/services/authService';
 import { type WebThemeMode, useWebApp } from '@core/providers/WebAppProvider';
 import { Ban, Bell, CalendarDays, CheckCheck, ChevronRight, Download, Heart, MapPin, Megaphone, MessageCircle, Moon, PawPrint, Radio, ShieldCheck, Smartphone, Stethoscope, Sun, Trash2, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -9,6 +10,7 @@ import { WebContent, WebHeading, WebScreen, WebSubtitle } from '@shared/componen
 import { Toggle as ToggleControl } from '@shared/components/ui';
 import {
   BackButton, Layout, SectionNav, SectionNavLink, Content, Group, Row, Appearance, Distance, Action,
+  ConfirmBackdrop, ConfirmDialog, ConfirmActions, ConfirmError,
 } from './SettingsScreenStyled';
 
 const SECTIONS = [
@@ -21,6 +23,34 @@ const SECTIONS = [
 ];
 
 export function SettingsScreen() {
+  // Borrado de cuenta. Las tiendas exigen que se pueda hacer desde la app,
+  // y pedir que se escriba la palabra evita el toque accidental en algo
+  // que no tiene vuelta atrás.
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [deleteScheduled, setDeleteScheduled] = useState<AccountDeletionResult | null>(null);
+
+  const closeConfirm = () => {
+    setConfirmingDelete(false);
+    setConfirmText('');
+    setDeleteError('');
+  };
+
+  const confirmDelete = async () => {
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      setDeleteScheduled(await requestAccountDeletion());
+      setConfirmingDelete(false);
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'No pudimos programar la eliminación.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const router = useRouter();
   const { preferences, updatePreference } = useWebApp();
   const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
@@ -150,15 +180,57 @@ export function SettingsScreen() {
                   <div className="copy"><strong>Descargar mis datos</strong><small>Solicitá una copia portable</small></div>
                   <ChevronRight />
                 </Action>
-                <Action $danger onClick={() => alert('Requiere reautenticación y confirmación.')}>
+                <Action $danger onClick={() => setConfirmingDelete(true)}>
                   <Trash2 />
-                  <div className="copy"><strong>Eliminar cuenta</strong><small>Incluye un período de recuperación</small></div>
+                  <div className="copy">
+                    <strong>Eliminar cuenta</strong>
+                    <small>
+                      {deleteScheduled
+                        ? `Programada para el ${new Date(deleteScheduled.scheduledAt).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}`
+                        : 'Incluye un período de recuperación'}
+                    </small>
+                  </div>
                   <ChevronRight />
                 </Action>
               </div>
             </Group>
           </Content>
         </Layout>
+
+        {confirmingDelete ? (
+          <ConfirmBackdrop role="dialog" aria-modal="true" aria-labelledby="delete-title">
+            <ConfirmDialog>
+              <h2 id="delete-title">Eliminar tu cuenta</h2>
+              <p>Esta acción no se puede deshacer una vez cumplido el plazo. Antes de continuar:</p>
+              <ul>
+                <li>Se eliminan tu perfil, tus mascotas, tus conversaciones y tus citas.</li>
+                <li>Tenés un período de recuperación para arrepentirte: si volvés a entrar antes de que venza, la cuenta se restablece.</li>
+                <li>Se cierran todas tus otras sesiones ahora mismo.</li>
+                <li>Cierta información se conserva el tiempo que exige la ley, como los reportes de seguridad.</li>
+              </ul>
+              <p>Escribí <strong>ELIMINAR</strong> para confirmar.</p>
+              <input
+                value={confirmText}
+                onChange={(event) => setConfirmText(event.target.value)}
+                placeholder="ELIMINAR"
+                aria-label="Escribí ELIMINAR para confirmar"
+                autoComplete="off"
+              />
+              {deleteError ? <ConfirmError>{deleteError}</ConfirmError> : null}
+              <ConfirmActions>
+                <button type="button" onClick={closeConfirm} disabled={deleting}>Cancelar</button>
+                <button
+                  type="button"
+                  data-variant="danger"
+                  onClick={confirmDelete}
+                  disabled={confirmText.trim().toUpperCase() !== 'ELIMINAR' || deleting}
+                >
+                  {deleting ? 'Programando…' : 'Eliminar cuenta'}
+                </button>
+              </ConfirmActions>
+            </ConfirmDialog>
+          </ConfirmBackdrop>
+        ) : null}
       </WebContent>
     </WebScreen>
   );

@@ -247,3 +247,42 @@ export async function verifyEmailCode(email: string, code: string, expected: str
   if (code.trim() !== expected) throw new Error('El código no coincide. Revisalo e intentá de nuevo.');
   return openLocalSession({ name: email.split('@')[0], email });
 }
+
+/** Días de gracia para arrepentirse, según define el backend. */
+export interface AccountDeletionResult {
+  status: string;
+  scheduledAt: string;
+  recoveryDays: number;
+}
+
+/**
+ * Agenda el borrado de la cuenta.
+ *
+ * Apple lo exige desde 2022 y Google desde 2024: tiene que poder hacerse
+ * desde dentro de la aplicación, sin escribir a soporte. El backend no borra
+ * al instante, agenda con período de recuperación y cierra las otras
+ * sesiones.
+ */
+export async function requestAccountDeletion(reason?: string): Promise<AccountDeletionResult> {
+  const apiUrl = getApiBaseUrl();
+  const token = getStoredAuthToken();
+
+  const response = await fetch(`${apiUrl ?? ''}/api/account/delete`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    credentials: 'include',
+    cache: 'no-store',
+    body: JSON.stringify(reason ? { reason } : {}),
+  });
+
+  if (!response.ok) {
+    const detail = await response.json().catch(() => ({})) as { error?: string };
+    throw new Error(detail.error || 'No pudimos programar la eliminación. Intentá de nuevo.');
+  }
+
+  return await response.json() as AccountDeletionResult;
+}

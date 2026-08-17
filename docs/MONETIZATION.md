@@ -91,18 +91,80 @@ perros compatibles a diez cuadras.
 
 **Objetivo:** masa crítica en una zona. Todo gratis.
 
-### Fase 2 — Negocios locales
+### Fase 2 — Servicios y negocios locales
 
-El primer ingreso viene de la oferta, no de la demanda:
+El primer ingreso viene de la oferta, no de la demanda. Cobrarle a un
+comercio que consigue clientes es mucho más sostenible que cobrarle a
+alguien que quiere que su perro juegue.
 
-- **Perfil verificado para veterinarias, paseadores y guarderías.** Aparecen
-  en el mapa de lugares seguros, que ya está construido.
+#### El mercado
+
+| | |
+|---|---|
+| Tamaño global (2026) | **32.130 millones USD** |
+| Crecimiento anual | 8,2% — el paseo lidera con 9,2% |
+| Concentración | **ninguna empresa supera el 5%** |
+| Rover (líder) | comprado por Blackstone en 2.300 millones USD |
+
+Esa fragmentación es tentadora, pero conviene leerla bien: no significa que
+el mercado esté libre, significa que **es difícil de consolidar**.
+
+#### Directorio, no intermediario
+
+Hay dos formas de entrar y la diferencia está en quién maneja el dinero.
+
+**Como intermediario** (el modelo de Rover): la app cobra al dueño, retiene
+comisión, le paga al paseador y responde si algo sale mal. Rover se queda
+con ~31% y Wag hasta 40%.
+
+Parece un gran negocio, pero trae obligaciones enteras: cobros y repartos,
+seguros y responsabilidad si un perro se lastima, verificación de
+antecedentes, y atención al cliente para cuando algo falla —que en cuidado
+de animales pasa más seguido de lo que uno quisiera—. Es un producto
+completo, no una funcionalidad, y compite de frente con una empresa de
+Blackstone.
+
+Además, un intermediario necesita **liquidez en los dos lados a la vez**:
+sin paseadores no hay dueños y sin dueños no hay paseadores. Rover tardó
+años y cientos de millones en resolver ese problema, en un solo país.
+
+**Como directorio** (lo recomendado): la app conecta y se corre. El dueño y
+el profesional arreglan entre ellos. Se cobra por presencia y verificación,
+no por transacción.
+
+Con este modelo no hacen falta pagos ni repartos, no se asume
+responsabilidad por el servicio, y **casi todo está construido**: el mapa de
+lugares seguros, las reseñas, los perfiles verificados, el chat y la agenda
+de citas ya existen.
+
+#### La ventaja que Rover no tiene
+
+El **perfil del perro**. Un paseador que ve "Thor, husky siberiano, 27 kg,
+incansable, necesita correr todos los días" antes de aceptar sabe en qué se
+está metiendo. Rover muestra una foto y una descripción escrita por el
+dueño.
+
+Esa información ya está modelada en la aplicación. Es la diferencia entre
+listar profesionales y **emparejarlos con el perro adecuado**.
+
+#### Qué incluye la fase
+
+- **Perfil profesional verificado**: paseadores, cuidadores, entrenadores,
+  veterinarias y guarderías. Aparecen en el mapa que ya existe, con reseñas
+  de dueños que efectivamente usaron el servicio.
 - **Criadores verificados.** La sección de cría ya distingue mascotas con
   papeles; la verificación es un servicio pago natural.
 - **Eventos auspiciados.** Encuentros de razas, jornadas de adopción.
 
-Cobrar mensual a un comercio que consigue clientes es mucho más sostenible
-que cobrarle a un usuario particular.
+#### Cuándo
+
+**No antes de tener comunidad.** Agregar el lado de la oferta sin demanda es
+construir para nadie: un paseador que se registra y no recibe consultas no
+vuelve, y recuperarlo después cuesta más que sumarlo la primera vez.
+
+El orden es: comunidad en una ciudad → profesionales en esa misma ciudad →
+recién entonces, si los datos lo justifican, evaluar si vale la pena tomar
+el pago.
 
 ### Fase 3 — Suscripción, pero honesta
 
@@ -168,3 +230,6 @@ ninguna de las dos cosas.
 - [Monetization Strategies For Dating Apps — Appscrip](https://appscrip.com/blog/monetization-strategies-for-dating-apps/)
 - [Dating App Market Share & Size 2026 — Luminix](https://www.useluminix.com/reports/market-research/dating-app-market)
 - [The Great Deceleration: Why Dating Apps Are Losing Trust](https://befriend.cc/2025/12/29/great-deceleration-dating-apps-losing-trust/)
+- [Pet Service Market Analysis — Mordor Intelligence](https://www.mordorintelligence.com/industry-reports/pet-service-market)
+- [Rover vs Wag: comisiones y reparto — DogWalkJobs](https://dogwalkjobs.com/rover-vs-wag/)
+- [Wag trails Rover in dog-care sales — Bloomberg Second Measure](https://secondmeasure.com/datapoints/wag-rover-dog-walking-sales/)
