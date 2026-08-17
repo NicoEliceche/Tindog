@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isGitHubPagesStaticBuild } from '@core/deploy/staticExport';
 import { securityReadiness } from '@core/security/readiness';
 import { assertAdminNetworkAuthorization } from '@core/security/workerAuth';
 
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+// El export estático exige `force-static`, que congelaría la respuesta en el
+// momento del build y volvería inútil un diagnóstico. Como en un sitio sin
+// servidor esta ruta no tiene sentido, se declara estática para que el
+// export compile y devuelve un aviso en vez del estado real.
+export const dynamic = 'force-static';
 
 /**
  * Detalle de qué variables de entorno faltan para que el despliegue quede
@@ -17,6 +22,13 @@ export const dynamic = 'force-dynamic';
  *   curl -H "x-admin-access-key: <clave>" https://<host>/api/admin/readiness
  */
 export async function GET(request: NextRequest) {
+  if (isGitHubPagesStaticBuild()) {
+    return NextResponse.json(
+      { error: 'Este diagnóstico sólo funciona en el despliegue con servidor.' },
+      { status: 501 },
+    );
+  }
+
   try {
     assertAdminNetworkAuthorization(request);
   } catch {
