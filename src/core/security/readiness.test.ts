@@ -12,7 +12,6 @@ const CORE: Record<string, string> = {
   GOOGLE_WEB_CLIENT_ID: 'web.apps.googleusercontent.com',
   GOOGLE_ANDROID_CLIENT_ID: 'android.apps.googleusercontent.com',
   GOOGLE_IOS_CLIENT_ID: 'ios.apps.googleusercontent.com',
-  GOOGLE_PLACES_API_KEY: 'places',
   OBJECT_STORAGE_REGION: 'auto',
   OBJECT_STORAGE_ACCESS_KEY_ID: 'id',
   OBJECT_STORAGE_SECRET_ACCESS_KEY: 'secreto',
@@ -23,6 +22,7 @@ const CORE: Record<string, string> = {
 };
 
 const LAUNCH: Record<string, string> = {
+  GOOGLE_PLACES_API_KEY: 'places',
   MALWARE_SCANNER_URL: 'https://scanner.ejemplo.com',
   MALWARE_SCANNER_TOKEN: 'token',
   MODERATION_API_URL: 'https://moderacion.ejemplo.com',

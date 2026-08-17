@@ -13,7 +13,6 @@ const coreProductionVariables = [
   'GOOGLE_WEB_CLIENT_ID',
   'GOOGLE_ANDROID_CLIENT_ID',
   'GOOGLE_IOS_CLIENT_ID',
-  'GOOGLE_PLACES_API_KEY',
   'OBJECT_STORAGE_REGION',
   'OBJECT_STORAGE_ACCESS_KEY_ID',
   'OBJECT_STORAGE_SECRET_ACCESS_KEY',
@@ -33,6 +32,11 @@ const coreProductionVariables = [
  * que no se puede abrir al público por accidente sin estos servicios.
  */
 const publicLaunchVariables = [
+  // Places exige una cuenta de facturación en Google Cloud, y sólo la usa
+  // la búsqueda de lugares seguros. Pedir una tarjeta antes de que exista
+  // el primer usuario traba el despliegue por una pantalla que todavía no
+  // se usa.
+  'GOOGLE_PLACES_API_KEY',
   'MALWARE_SCANNER_URL',
   'MALWARE_SCANNER_TOKEN',
   'MODERATION_API_URL',

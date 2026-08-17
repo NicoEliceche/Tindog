@@ -2,16 +2,16 @@
 
 `src/core/security/readiness.ts` divide las variables en dos grupos.
 
-**Núcleo — 17 variables.** Lo que hace falta para que el servidor funcione
+**Núcleo — 16 variables.** Lo que hace falta para que el servidor funcione
 de forma segura, aun sin usuarios reales. Mientras falte una,
 `/api/health` responde `securityReady: false`.
 
-**Lanzamiento público — 9 variables más.** Análisis de archivos, moderación
+**Lanzamiento público — 10 variables más.** Análisis de archivos, moderación
 y circuito de incidentes. Se exigen recién cuando `TINDOG_PUBLIC_LAUNCH`
 vale `true`, porque antes de que haya gente subiendo contenido pedirlas
 traba el despliegue sin proteger a nadie.
 
-Cargar sólo las de Upstash no alcanza: son 2 de las 17 del núcleo.
+Cargar sólo las de Upstash no alcanza: son 2 de las 16 del núcleo.
 
 ## Ver qué falta exactamente
 
@@ -98,7 +98,10 @@ Tiene plan gratuito. **Estas son las que ya cargaste.**
 | `GOOGLE_WEB_CLIENT_ID` | Google Cloud Console → Credenciales → OAuth web |
 | `GOOGLE_ANDROID_CLIENT_ID` | Ídem, cliente Android |
 | `GOOGLE_IOS_CLIENT_ID` | Ídem, cliente iOS |
-| `GOOGLE_PLACES_API_KEY` | Ídem, clave de API con Places habilitado |
+
+`GOOGLE_PLACES_API_KEY` pasó al grupo de lanzamiento público: exige una
+cuenta de facturación en Google Cloud y sólo la usa la búsqueda de lugares
+seguros.
 
 ---
 
@@ -123,6 +126,12 @@ ser accesible hasta que pase el análisis.
 ---
 
 ## Grupo 5 — Servicios externos · SÓLO AL ABRIR AL PÚBLICO
+
+Incluye también `GOOGLE_PLACES_API_KEY`. Google eliminó el crédito universal
+de 200 USD en marzo de 2025; ahora cada API trae su propia cuota gratuita
+mensual (unas 10.000 peticiones para Places) pero **exige tarjeta asociada**
+igual. El cargo que aparece al habilitar facturación es una verificación que
+se reversa, no un cobro.
 
 **No hacen falta todavía.** Se exigen cuando cargues
 `TINDOG_PUBLIC_LAUNCH=true`, que es lo que marca que la app acepta usuarios
@@ -152,7 +161,7 @@ descuido.
 
 ## Antes de abrir al público
 
-Cuando la app vaya a recibir usuarios reales, cargá las nueve del grupo 5 y
+Cuando la app vaya a recibir usuarios reales, cargá las diez del grupo 5 y
 poné `TINDOG_PUBLIC_LAUNCH=true`. A partir de ahí el servidor vuelve a
 exigirlas todas.
 
