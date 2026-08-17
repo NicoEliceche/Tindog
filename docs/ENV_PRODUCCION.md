@@ -1,10 +1,17 @@
 # Variables de entorno en producción
 
-`src/core/security/readiness.ts` exige **26 variables** para dar el
-despliegue por listo. Mientras falte una sola, `/api/health` responde
-`securityReady: false`.
+`src/core/security/readiness.ts` divide las variables en dos grupos.
 
-Cargar sólo las de Upstash no alcanza: son 2 de esas 26.
+**Núcleo — 17 variables.** Lo que hace falta para que el servidor funcione
+de forma segura, aun sin usuarios reales. Mientras falte una,
+`/api/health` responde `securityReady: false`.
+
+**Lanzamiento público — 9 variables más.** Análisis de archivos, moderación
+y circuito de incidentes. Se exigen recién cuando `TINDOG_PUBLIC_LAUNCH`
+vale `true`, porque antes de que haya gente subiendo contenido pedirlas
+traba el despliegue sin proteger a nadie.
+
+Cargar sólo las de Upstash no alcanza: son 2 de las 17 del núcleo.
 
 ## Ver qué falta exactamente
 
@@ -21,7 +28,19 @@ exponerla.
 
 ---
 
-## Grupo 1 — Secretos propios (los generás vos)
+## Generarlos de una vez
+
+```bash
+node scripts/generar-secretos.mjs
+```
+
+Crea los cinco secretos propios con el formato correcto, en tu máquina. No
+guarda nada en disco: copiá el resultado a tu `.env` y al panel de Render.
+Con `--env` los imprime listos para pegar.
+
+---
+
+## Grupo 1 — Secretos propios (los generás vos) · NÚCLEO
 
 Cuatro claves que inventás vos. **Mínimo 32 bytes**, o la verificación las
 rechaza aunque estén presentes.
@@ -55,7 +74,7 @@ la marca como `MODERATION_EVIDENCE_KEY_INVALID`.
 
 ---
 
-## Grupo 2 — Límite de peticiones (Upstash)
+## Grupo 2 — Límite de peticiones (Upstash) · NÚCLEO
 
 | Variable | Dónde sale |
 |---|---|
@@ -66,7 +85,7 @@ Tiene plan gratuito. **Estas son las que ya cargaste.**
 
 ---
 
-## Grupo 3 — Google
+## Grupo 3 — Google · NÚCLEO
 
 | Variable | Dónde sale |
 |---|---|
@@ -77,7 +96,7 @@ Tiene plan gratuito. **Estas son las que ya cargaste.**
 
 ---
 
-## Grupo 4 — Almacenamiento de archivos
+## Grupo 4 — Almacenamiento de archivos · NÚCLEO
 
 Para las fotos de las mascotas. Sirve cualquier servicio compatible con S3:
 Cloudflare R2 (tiene capa gratuita), Backblaze B2 o AWS S3.
@@ -97,9 +116,13 @@ ser accesible hasta que pase el análisis.
 
 ---
 
-## Grupo 5 — Servicios externos
+## Grupo 5 — Servicios externos · SÓLO AL ABRIR AL PÚBLICO
 
-Acá está la parte más pesada, porque son servicios que hay que contratar.
+**No hacen falta todavía.** Se exigen cuando cargues
+`TINDOG_PUBLIC_LAUNCH=true`, que es lo que marca que la app acepta usuarios
+reales. Dejarlas para después no es un atajo: con la variable activa vuelven
+a ser obligatorias, así que no se puede abrir al público sin ellas por
+descuido.
 
 | Variable | Qué necesita |
 |---|---|
@@ -121,30 +144,13 @@ Acá está la parte más pesada, porque son servicios que hay que contratar.
 
 ---
 
-## Una decisión que conviene tomar
+## Antes de abrir al público
 
-Las 26 variables corresponden a una postura de seguridad completa, pensada
-para una app con usuarios reales, fotos y menores potencialmente expuestos.
-Está bien que sea exigente.
+Cuando la app vaya a recibir usuarios reales, cargá las nueve del grupo 5 y
+poné `TINDOG_PUBLIC_LAUNCH=true`. A partir de ahí el servidor vuelve a
+exigirlas todas.
 
-Pero **para levantar un entorno de prueba**, exigir moderación de imágenes y
-análisis de malware antes de que exista el primer usuario es un obstáculo
-sin beneficio.
-
-Dos caminos:
-
-**A. Completar las 26.** Correcto para producción real. Requiere contratar
-tres o cuatro servicios.
-
-**B. Separar lo imprescindible de lo que puede esperar.** Dividir la lista
-en un núcleo obligatorio (sesiones, auditoría, límite de peticiones, Google,
-almacenamiento) y un grupo que sólo se exige cuando la app acepta contenido
-de usuarios reales.
-
-Para el estado actual del proyecto —sin usuarios, con datos de prueba— la
-opción B destraba el trabajo antes. La A queda como requisito para el
-lanzamiento público.
-
-Si preferís la B, el cambio es en `readiness.ts` y lo puedo hacer: separar
-la lista en dos y que la segunda se exija sólo cuando una variable como
-`TINDOG_PUBLIC_LAUNCH` esté activa.
+Ese interruptor existe para que la decisión sea explícita: la moderación de
+contenido y el análisis de archivos no son opcionales cuando hay gente
+subiendo fotos, y conviene que abrir al público falle ruidosamente si
+faltan, en vez de pasar inadvertido.
