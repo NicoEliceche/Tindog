@@ -1,6 +1,29 @@
 // src/features/profile/screens/SettingsScreenStyled.ts
 import styled from 'styled-components';
 
+/**
+ * Envoltorio de la pantalla. En escritorio se ajusta al alto de la ventana
+ * para que el desborde se resuelva dentro de la columna de opciones y el
+ * encabezado con el índice de secciones no se mueva.
+ */
+export const Shell = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    /* Se ancla al alto de la ventana y descuenta el margen del contenedor,
+       para que la página en sí no scrollee y el desborde quede dentro de la
+       columna de opciones. */
+    position: sticky;
+    top: 0;
+    height: calc(100dvh - ${({ theme }) => theme.spacing[12]});
+    min-height: 0;
+    overflow: hidden;
+  }
+`;
+
+
 export const BackButton = styled.button`
   display: inline-flex;
   align-items: center;
@@ -26,6 +49,11 @@ export const Layout = styled.div`
     grid-template-columns: 14rem 1fr;
     align-items: start;
     gap: ${({ theme }) => theme.spacing[8]};
+    /* Sólo scrollea la columna de opciones: el índice de secciones queda
+       quieto, igual que en el alta de mascota. El alto lo fija el layout y
+       el desborde se resuelve adentro. */
+    flex: 1;
+    min-height: 0;
   }
 `;
 
@@ -60,6 +88,17 @@ export const Content = styled.div`
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing[5]};
   min-width: 0;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    /* El min-height en cero es necesario: sin él, un hijo de grid no se
+       encoge por debajo de su contenido y el overflow nunca se activa. */
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto;
+    padding-right: ${({ theme }) => theme.spacing[3]};
+    padding-bottom: ${({ theme }) => theme.spacing[6]};
+    overscroll-behavior: contain;
+  }
 `;
 
 export const Group = styled.section`

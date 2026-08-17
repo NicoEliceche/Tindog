@@ -10,7 +10,7 @@ import { WebContent, WebHeading, WebScreen, WebSubtitle } from '@shared/componen
 import { Toggle as ToggleControl, useToast } from '@shared/components/ui';
 import {
   BackButton, Layout, SectionNav, SectionNavLink, Content, Group, Row, Appearance, Distance, Action,
-  ConfirmBackdrop, ConfirmDialog, ConfirmActions, ConfirmError,
+  ConfirmBackdrop, ConfirmDialog, ConfirmActions, ConfirmError, Shell,
 } from './SettingsScreenStyled';
 
 const SECTIONS = [
@@ -80,6 +80,7 @@ export function SettingsScreen() {
   return (
     <WebScreen>
       <WebContent>
+        <Shell>
         <div>
           <BackButton onClick={() => router.back()}>← Volver</BackButton>
           <WebHeading>Configuración</WebHeading>
@@ -197,6 +198,7 @@ export function SettingsScreen() {
             </Group>
           </Content>
         </Layout>
+        </Shell>
 
         {confirmingDelete ? (
           <ConfirmBackdrop role="dialog" aria-modal="true" aria-labelledby="delete-title">
