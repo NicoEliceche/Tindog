@@ -7,9 +7,13 @@
  * viajan a ningún lado. Copiá el resultado a tu `.env` local y al panel de
  * Render.
  *
+ * Desde la raíz del repositorio:
+ *
  *   node scripts/generar-secretos.mjs           # imprime en pantalla
  *   node scripts/generar-secretos.mjs --env     # formato para pegar en .env
- *   node scripts/generar-secretos.mjs --render  # una por línea, para Render
+ *
+ * Desde la carpeta scripts/ es `node generar-secretos.mjs`, o directamente
+ * `npm run secretos` desde cualquier lado.
  *
  * No guarda nada en disco a propósito: un archivo con secretos es fácil de
  * commitear sin querer.
