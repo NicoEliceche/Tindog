@@ -2,7 +2,7 @@ import { SESSION_COOKIE_NAME, hashSessionToken, verifySessionToken } from '@core
 import prisma from '@core/data/client/PrismaClient';
 import type { AuthPlatform, AuthUser } from '@core/types/auth.types';
 import type { NextRequest } from 'next/server';
-import { getAllowedAuthOrigins } from '@/app/api/auth/cors';
+import { getAllowedAuthOrigins } from '@core/auth/allowedOrigins';
 
 export class ApiAuthError extends Error {
   constructor(public status: number, message: string) { super(message); }
