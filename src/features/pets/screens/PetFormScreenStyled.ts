@@ -18,7 +18,13 @@ export const FormWrapper = styled(motion.div)`
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     max-width: ${({ theme }) => theme.layout.shellMaxWidth};
     padding: ${({ theme }) => theme.spacing[10]} ${({ theme }) => theme.layout.contentGutter};
-    padding-bottom: 60px;
+    /* La pantalla se ajusta al alto de la ventana y el desborde se resuelve
+       adentro, en la columna del formulario: así la página no scrollea y el
+       índice de secciones se queda donde está. */
+    height: 100dvh;
+    min-height: 0;
+    padding-bottom: ${({ theme }) => theme.spacing[6]};
+    overflow: hidden;
   }
 `;
 
@@ -50,6 +56,12 @@ export const Layout = styled.div`
     grid-template-columns: ${({ theme }) => theme.layout.sidebarWidth} 1fr;
     align-items: start;
     gap: ${({ theme }) => theme.spacing[10]};
+    /* El índice de secciones queda quieto y sólo scrollea la columna del
+       formulario. Con sticky el índice igual se desplazaba hasta engancharse
+       en el borde; acá directamente no se mueve, porque la página no crece:
+       el alto lo fija el contenedor y el desborde vive dentro de la columna. */
+    flex: 1;
+    min-height: 0;
   }
 `;
 
@@ -60,8 +72,10 @@ export const SectionNav = styled.nav`
     display: flex;
     flex-direction: column;
     gap: 2px;
-    position: sticky;
-    top: ${({ theme }) => theme.spacing[8]};
+    /* Sin sticky: la columna ya no scrollea, así que no hay nada de lo que
+       despegarse. Si el índice creciera más que la pantalla, scrollea solo. */
+    max-height: 100%;
+    overflow-y: auto;
   }
 `;
 
@@ -84,6 +98,23 @@ export const FormColumn = styled.div`
   flex-direction: column;
   gap: 1.5rem;
   min-width: 0;
+  /* El botón Guardar cierra esta columna, así que la reserva para la barra
+     inferior tiene que estar acá y no en el contenedor de la pantalla. */
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    /* Única zona que scrollea en escritorio. El min-height en cero es
+       necesario: sin él, un hijo de grid no se encoge por debajo de su
+       contenido y el overflow nunca se activa. */
+    min-height: 0;
+    max-height: 100%;
+    overflow-y: auto;
+    /* Aire para que el último campo no quede pegado al borde inferior. En
+       escritorio no hay barra inferior que esquivar. */
+    padding-right: ${({ theme }) => theme.spacing[3]};
+    padding-bottom: ${({ theme }) => theme.spacing[6]};
+    overscroll-behavior: contain;
+  }
 `;
 
 /** Etiqueta que envuelve un input file oculto: el clic abre el selector. */
