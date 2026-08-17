@@ -37,5 +37,9 @@ export const StyledAvatar = styled.div<{ $size: AvatarSize; $ring: boolean }>`
     width: 100%;
     height: 100%;
     object-fit: cover;
+    /* Las fotos de perfil suelen tener la cara en el tercio superior: con
+       el centro geométrico, un retrato vertical se recorta por el mentón y
+       la cara queda desplazada hacia abajo. */
+    object-position: 50% 35%;
   }
 `;
