@@ -16,6 +16,12 @@ interface AppDataContextValue {
   myPets: Pet[];
   createPet: (draft: NewPetDraft) => Pet;
   adoptRemotePets: (pets: Pet[]) => void;
+  savedPets: SavedPet[];
+  savePet: (pet: Pet) => void;
+  unsavePet: (petId: string) => void;
+  blockedOwners: string[];
+  blockOwner: (name: string) => void;
+  unblockOwner: (name: string) => void;
   sendConnectionRequest: (pet: Pet) => ConnectionRequest;
   respondToRequest: (requestId: string, accept: boolean) => void;
   sendMessage: (conversationId: string, body: string) => void;
@@ -35,6 +41,12 @@ export type NewPetDraft = Omit<Pet, 'id' | 'owner_ids' | 'personality_traits'> &
   personality_traits?: string[];
 };
 
+/** Mascota apartada desde Inicio, con la fecha en que se guardo. */
+export interface SavedPet {
+  pet: Pet;
+  savedAt: string;
+}
+
 const AppDataContext = createContext<AppDataContextValue | null>(null);
 
 export function AppDataProvider({ user, children }: PropsWithChildren<{ user: AuthUser }>) {
@@ -45,6 +57,31 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
   const [appointments, setAppointments] = useState(initialAppointments);
   const [locations, setLocations] = useState(safeLocations);
   const [myPets, setMyPets] = useState<Pet[]>(seededPets);
+  const [savedPets, setSavedPets] = useState<SavedPet[]>([]);
+  const [blockedOwners, setBlockedOwners] = useState<string[]>([]);
+
+  /**
+   * Guardar una mascota para verla despues. El boton existia en Inicio y
+   * prometia poder volver a verla en favoritos, pero descartaba el perfil sin
+   * guardarlo en ningun lado.
+   */
+  const savePet = useCallback((pet: Pet) => {
+    setSavedPets((current) => current.some((item) => item.pet.id === pet.id)
+      ? current
+      : [{ pet, savedAt: new Date().toISOString() }, ...current]);
+  }, []);
+
+  const unsavePet = useCallback((petId: string) => {
+    setSavedPets((current) => current.filter((item) => item.pet.id !== petId));
+  }, []);
+
+  const blockOwner = useCallback((name: string) => {
+    setBlockedOwners((current) => current.includes(name) ? current : [name, ...current]);
+  }, []);
+
+  const unblockOwner = useCallback((name: string) => {
+    setBlockedOwners((current) => current.filter((item) => item !== name));
+  }, []);
 
   /**
    * Alta de mascota. Vive en el provider y no en la pantalla porque la lista
@@ -166,10 +203,12 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
   const value = useMemo<AppDataContextValue>(() => ({
     profile, requests, conversations, messages, appointments, locations, myPets,
     sendConnectionRequest, respondToRequest, sendMessage, scheduleAppointment, createPet, adoptRemotePets,
+    savedPets, savePet, unsavePet, blockedOwners, blockOwner, unblockOwner,
     updateAppointmentStatus, addLocationReview,
     updateProfileAvatar: (uri) => setProfile((current) => ({ ...current, avatar: uri })),
     updateProfile: (updates) => setProfile((current) => ({ ...current, ...updates })),
-  }), [adoptRemotePets, appointments, conversations, locations, messages, myPets, profile, requests]);
+  }), [adoptRemotePets, appointments, blockOwner, blockedOwners, conversations, locations, messages, myPets, profile,
+    requests, savePet, savedPets, unblockOwner, unsavePet]);
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
 }
