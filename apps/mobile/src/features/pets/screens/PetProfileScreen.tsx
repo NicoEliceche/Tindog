@@ -73,7 +73,7 @@ function DashboardCard({ theme, icon, title, value, detail, compact, bars }: { t
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    screen: { flex: 1, backgroundColor: theme.colors.background },
+    screen: { flex: 1, backgroundColor: 'transparent' },
     content: { flexGrow: 1, maxWidth: 520, width: '100%', alignSelf: 'center', padding: 16, gap: 14 },
     hero: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     petPhoto: { width: 76, height: 76, borderRadius: 24, borderWidth: 2, borderColor: theme.colors.primary },

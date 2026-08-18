@@ -63,7 +63,7 @@ export function PetsScreen() {
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    screen: { flex: 1, backgroundColor: theme.colors.background },
+    screen: { flex: 1, backgroundColor: 'transparent' },
     content: { paddingHorizontal: 16, paddingBottom: 28 },
     header: { marginBottom: 20 },
     title: { color: theme.colors.text, fontSize: 32, fontWeight: '900' },
