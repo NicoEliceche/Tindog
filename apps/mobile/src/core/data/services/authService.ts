@@ -4,6 +4,7 @@ import {
   getStoredAuthToken,
   storeAuthToken,
 } from './authTokenStorage';
+import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 const apiUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '');
@@ -187,4 +188,55 @@ export async function logoutCurrentAuthSession(): Promise<void> {
   }
 
   await clearStoredAuthToken();
+}
+
+/**
+ * Sesion local para los accesos que todavia no pasan por el backend: email
+ * con contrasena, codigo por email y telefono. Es la misma logica que usa la
+ * web, replicada aca para que las dos plataformas se comporten igual.
+ *
+ * Se guarda en SecureStore, como el token: son datos de sesion.
+ */
+const LOCAL_SESSION_KEY = 'tindog.auth.local.v1';
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+async function openLocalSession(user: { name: string; email: string }): Promise<AuthResponse> {
+  const session: AuthResponse = {
+    token: '',
+    user: { id: `local-${Date.now()}`, name: user.name, email: user.email },
+    platform: getAuthPlatform(),
+  };
+  await SecureStore.setItemAsync(LOCAL_SESSION_KEY, JSON.stringify(session));
+  return session;
+}
+
+export async function restoreLocalSession(): Promise<AuthResponse | null> {
+  try {
+    const raw = await SecureStore.getItemAsync(LOCAL_SESSION_KEY);
+    return raw ? (JSON.parse(raw) as AuthResponse) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function clearLocalSession(): Promise<void> {
+  await SecureStore.deleteItemAsync(LOCAL_SESSION_KEY).catch(() => undefined);
+}
+
+export async function loginWithEmailPassword(email: string, password: string): Promise<AuthResponse> {
+  if (!EMAIL_PATTERN.test(email)) throw new Error('Ingresá un email válido.');
+  if (password.length < 8) throw new Error('La contraseña debe tener al menos 8 caracteres.');
+  return openLocalSession({ name: email.split('@')[0], email });
+}
+
+/** Envia el codigo de un solo uso. Sin backend, se muestra en pantalla. */
+export async function requestEmailCode(email: string): Promise<string> {
+  if (!EMAIL_PATTERN.test(email)) throw new Error('Ingresá un email válido.');
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+export async function verifyEmailCode(email: string, code: string, expected: string): Promise<AuthResponse> {
+  if (code.trim() !== expected) throw new Error('El código no coincide. Revisalo e intentá de nuevo.');
+  return openLocalSession({ name: email.split('@')[0], email });
 }

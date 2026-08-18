@@ -110,6 +110,9 @@ export const LogoImage = styled.img`
   aspect-ratio: 1;
   object-fit: cover;
   border-radius: ${({ theme }) => theme.radius.full};
+  /* Un 5% de acercamiento recorta el borde en punta de abajo a la derecha
+     que traia la imagen y que se notaba contra el fondo. */
+  transform: scale(1.05);
 `;
 
 export const ContentBox = styled(motion.div)`

@@ -43,35 +43,19 @@ export const Hero = styled.div`
   gap: 7px;
   text-align: center;
 
+  /* El logo va suelto, sin marco ni fondo, como en la portada. */
   .logo {
     width: clamp(128px, 22dvh, 190px);
     aspect-ratio: 1;
     position: relative;
-    border-radius: 24%;
-    overflow: hidden;
-    border: 1px solid ${({ theme }) => theme.color.border};
-    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.45);
   }
 
   .logo img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-  }
-
-  .band {
-    position: absolute;
-    inset: auto 0 0;
-    min-height: 18%;
-    display: grid;
-    place-items: center;
-    color: ${({ theme }) => theme.color.primary};
-    background: rgba(5, 5, 5, 0.84);
-    border-top: 1px solid ${({ theme }) => theme.color.border};
-    border-bottom-right-radius: 50%;
-    font-size: 0.82rem;
-    font-weight: 900;
-    letter-spacing: 3px;
+    /* Recorta el borde en punta de abajo a la derecha de la imagen. */
+    transform: scale(1.05);
   }
 
   /* El texto flota sobre el fondo animado, sin panel detras. La sombra lo

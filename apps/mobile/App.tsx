@@ -11,6 +11,7 @@ import { AppPreferencesProvider, useAppTheme } from './src/core/providers/AppPre
 import { theme as brandTheme } from './src/core/theme/tokens';
 import type { AuthResponse } from './src/core/types/auth.types';
 import { LoginScreen, signOutFromGoogle } from './src/features/auth';
+import { LandingScreen } from './src/features/marketing';
 import { BootstrapScreen } from './src/features/bootstrap';
 import { AppNavigator } from './src/navigation/AppNavigator';
 
@@ -32,6 +33,7 @@ function AuthenticatedApp({ auth, onLogout }: { auth: AuthResponse; onLogout: ()
 export default function App() {
   const [auth, setAuth] = useState<AuthResponse | null>(null);
   const [isHydrating, setIsHydrating] = useState(true);
+  const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,7 +64,11 @@ export default function App() {
           ) : (
             <View style={[styles.app, { backgroundColor: brandTheme.colors.background }]}>
               <StatusBar style="light" />
-              <LoginScreen onAuthenticated={setAuth} />
+              {/* La aplicacion abre en la portada, como la web, y el boton
+                  dorado lleva al ingreso. */}
+              {showLogin
+                ? <LoginScreen onAuthenticated={setAuth} />
+                : <LandingScreen onStart={() => setShowLogin(true)} />}
             </View>
           )}
           </ToastProvider>

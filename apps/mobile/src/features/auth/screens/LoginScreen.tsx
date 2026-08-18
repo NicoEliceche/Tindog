@@ -1,17 +1,22 @@
 import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
   ActivityIndicator,
   Image,
   Pressable,
   ScrollView,
   Text,
+  TextInput,
   View,
   useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   GoogleAuthApiFailure,
+  loginWithEmailPassword,
   loginWithGoogleIdToken,
+  requestEmailCode,
+  verifyEmailCode,
 } from '../../../core/data/services/authService';
 import { theme } from '../../../core/theme/tokens';
 import type { AuthResponse } from '../../../core/types/auth.types';
@@ -41,6 +46,20 @@ interface AuthButtonProps {
   loading?: boolean;
   disabled?: boolean;
   onPress?: () => void;
+}
+
+/** Metodos alternativos a Google, en el orden en que se ofrecen. */
+type Method = 'none' | 'password' | 'code' | 'phone';
+
+function MethodButton({ icon, label, onPress }: {
+  icon: keyof typeof Ionicons.glyphMap; label: string; onPress: () => void;
+}) {
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.methodButton, pressed && styles.authButtonPressed]}>
+      <Ionicons name={icon} size={18} color={theme.colors.primary} />
+      <Text style={styles.methodText}>{label}</Text>
+    </Pressable>
+  );
 }
 
 function AuthButton({ label, iconSource, minHeight, loading = false, disabled = false, onPress }: AuthButtonProps) {
@@ -74,6 +93,47 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
   const { width, height } = useWindowDimensions();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  // Metodos alternativos a Google, en el mismo orden que en la web.
+  const [method, setMethod] = useState<Method>('none');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const [sentCode, setSentCode] = useState('');
+  const [phone, setPhone] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const resetMethod = () => {
+    setMethod('none');
+    setErrorMessage('');
+    setSentCode('');
+    setCode('');
+    setPassword('');
+  };
+
+  const submitPassword = async () => {
+    setErrorMessage('');
+    setBusy(true);
+    try {
+      onAuthenticated(await loginWithEmailPassword(email.trim(), password));
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'No pudimos iniciar sesión.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitCode = async () => {
+    setErrorMessage('');
+    setBusy(true);
+    try {
+      if (!sentCode) setSentCode(await requestEmailCode(email.trim()));
+      else onAuthenticated(await verifyEmailCode(email.trim(), code, sentCode));
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'No pudimos continuar.');
+    } finally {
+      setBusy(false);
+    }
+  };
   const googleConfigurationError = getGoogleSignInConfigurationError();
 
   const isShort = height < 720;
@@ -141,29 +201,15 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
       >
         <View style={[styles.layout, isLandscape && styles.layoutLandscape]}>
         <View style={[styles.hero, isLandscape && styles.heroLandscape, { gap: sectionGap }]}>
-          <View
-            style={[
-              styles.logoFrame,
-              {
-                width: logoSize,
-                height: logoSize,
-                borderRadius: Math.round(logoSize * 0.22),
-              },
-            ]}
-          >
-            <Image source={logoSource} resizeMode="contain" style={styles.logoImage} accessibilityLabel="Logo de Tindog" />
-            <View
-              style={[
-                styles.logoWordmarkBand,
-                {
-                  height: logoBandHeight,
-                  borderBottomRightRadius: Math.round(logoBandHeight / 2),
-                },
-              ]}
-            >
-              <Text style={[styles.logoWordmark, { fontSize: isShort ? 14 : 15 }]}>TINDOG</Text>
-            </View>
-          </View>
+          {/* El logo va suelto, sin marco ni fondo. El 5% de acercamiento
+              recorta el borde en punta de abajo a la derecha que traia la
+              imagen y que se notaba contra el fondo. */}
+          <Image
+            source={logoSource}
+            resizeMode="contain"
+            accessibilityLabel="Logo de Tindog"
+            style={{ width: logoSize, height: logoSize, transform: [{ scale: 1.05 }] }}
+          />
 
           <Text style={[styles.kicker, { fontSize: kickerSize }]}>Conectá, cruzá y encontrá su pareja ideal</Text>
           <Text style={[styles.title, { fontSize: titleSize, lineHeight: titleSize + 4 }]}>¡Bienvenido a Tindog!</Text>
@@ -182,28 +228,78 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
             </View>
           ) : null}
 
-          <AuthButton
-            label="Continuar con Google"
-            iconSource={googleIconSource}
-            minHeight={buttonMinHeight}
-            loading={isLoading}
-            disabled={isLoading || Boolean(googleConfigurationError)}
-            onPress={handleGoogleLogin}
-          />
+          {method === 'none' ? (
+            <>
+              <AuthButton
+                label="Continuar con Google"
+                iconSource={googleIconSource}
+                minHeight={buttonMinHeight}
+                loading={isLoading}
+                disabled={isLoading || Boolean(googleConfigurationError)}
+                onPress={handleGoogleLogin}
+              />
+              <View style={styles.newUserLine}>
+                <Text style={styles.newUserText}>Tu cuenta se crea automáticamente al continuar.</Text>
+              </View>
+            </>
+          ) : null}
 
-          <View style={styles.newUserLine}>
-            <Text style={styles.newUserText}>Tu cuenta se crea automáticamente al continuar.</Text>
-          </View>
+          {method === 'none' ? (
+            <View style={styles.dividerRow}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>O CONTINUÁ CON</Text>
+              <View style={styles.divider} />
+            </View>
+          ) : null}
+          {method === 'none' ? (
+            <View style={styles.methodList}>
+              <MethodButton icon="mail-outline" label="Continuar con email" onPress={() => { setMethod('code'); setErrorMessage(''); }} />
+              <MethodButton icon="key-outline" label="Email y contraseña" onPress={() => { setMethod('password'); setErrorMessage(''); }} />
+              <MethodButton icon="phone-portrait-outline" label="Continuar con teléfono" onPress={() => { setMethod('phone'); setErrorMessage(''); }} />
+            </View>
+          ) : null}
 
-          <View style={styles.dividerRow}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>O INICIÁ SESIÓN CON</Text>
-            <View style={styles.divider} />
-          </View>
-          <View style={styles.futureOptions} accessibilityLabel="Opciones de acceso disponibles próximamente">
-            <Text style={styles.futureOption}>Email</Text>
-            <Text style={styles.futureOption}>Teléfono</Text>
-          </View>
+          {method === 'password' ? (
+            <View style={styles.form}>
+              <Text style={styles.fieldLabel}>Email</Text>
+              <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="vos@ejemplo.com" placeholderTextColor={theme.colors.textMuted} keyboardType="email-address" autoCapitalize="none" autoComplete="email" />
+              <Text style={styles.fieldLabel}>Contraseña</Text>
+              <TextInput style={styles.input} value={password} onChangeText={setPassword} placeholder="Mínimo 8 caracteres" placeholderTextColor={theme.colors.textMuted} secureTextEntry autoComplete="current-password" />
+              <Pressable accessibilityRole="button" disabled={busy} onPress={submitPassword} style={[styles.submit, busy && styles.authButtonDisabled]}>
+                <Text style={styles.submitText}>{busy ? 'Ingresando…' : 'Iniciar sesión'}</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={resetMethod}><Text style={styles.backLink}>Volver a las otras opciones</Text></Pressable>
+            </View>
+          ) : null}
+
+          {method === 'code' ? (
+            <View style={styles.form}>
+              <Text style={styles.fieldLabel}>Email</Text>
+              <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="vos@ejemplo.com" placeholderTextColor={theme.colors.textMuted} keyboardType="email-address" autoCapitalize="none" autoComplete="email" editable={!sentCode} />
+              {sentCode ? (
+                <>
+                  <Text style={styles.codeHint}>Todavía no enviamos mails de verdad, así que tu código es {sentCode}.</Text>
+                  <Text style={styles.fieldLabel}>Código</Text>
+                  <TextInput style={styles.input} value={code} onChangeText={setCode} placeholder="6 dígitos" placeholderTextColor={theme.colors.textMuted} keyboardType="number-pad" />
+                </>
+              ) : null}
+              <Pressable accessibilityRole="button" disabled={busy} onPress={submitCode} style={[styles.submit, busy && styles.authButtonDisabled]}>
+                <Text style={styles.submitText}>{busy ? 'Un momento…' : sentCode ? 'Verificar código' : 'Enviarme un código'}</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={resetMethod}><Text style={styles.backLink}>Volver a las otras opciones</Text></Pressable>
+            </View>
+          ) : null}
+
+          {method === 'phone' ? (
+            <View style={styles.form}>
+              <Text style={styles.fieldLabel}>Teléfono</Text>
+              <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="+54 9 11 1234 5678" placeholderTextColor={theme.colors.textMuted} keyboardType="phone-pad" autoComplete="tel" />
+              <Pressable accessibilityRole="button" onPress={() => setErrorMessage('El acceso por teléfono necesita un proveedor de SMS todavía no conectado.')} style={styles.submit}>
+                <Text style={styles.submitText}>Enviarme un código</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={resetMethod}><Text style={styles.backLink}>Volver a las otras opciones</Text></Pressable>
+            </View>
+          ) : null}
         </View>
         </View>
         </View>

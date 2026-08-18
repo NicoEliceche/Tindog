@@ -198,6 +198,28 @@ export const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 0.5,
   },
+  methodList: { gap: 8 },
+  methodButton: {
+    minHeight: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9,
+    borderRadius: 25, backgroundColor: theme.colors.surface,
+    borderWidth: 1, borderColor: theme.colors.border,
+  },
+  methodText: { color: theme.colors.text, fontSize: 14, fontWeight: '800' },
+  form: { gap: 8 },
+  fieldLabel: { color: theme.colors.textSecondary, fontSize: 12, fontWeight: '800' },
+  input: {
+    minHeight: 48, paddingHorizontal: 13, borderRadius: 14,
+    color: theme.colors.text, fontSize: 15,
+    backgroundColor: theme.colors.backgroundAlt,
+    borderWidth: 1, borderColor: theme.colors.border,
+  },
+  codeHint: { color: theme.colors.textSecondary, fontSize: 12, lineHeight: 17 },
+  submit: {
+    minHeight: 50, alignItems: 'center', justifyContent: 'center',
+    borderRadius: 25, marginTop: 4, backgroundColor: theme.colors.primary,
+  },
+  submitText: { color: theme.colors.onPrimary, fontSize: 15, fontWeight: '900' },
+  backLink: { color: theme.colors.primary, fontSize: 12, fontWeight: '800', textAlign: 'center', marginTop: 6 },
   futureOptions: {
     flexDirection: 'row',
     justifyContent: 'center',
