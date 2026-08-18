@@ -17,8 +17,20 @@ export const WebContentWide = styled.div`
  * desincronicen entre si.
  */
 export const metalGoldText = css`
+  /* La caja tiene que ajustarse al texto. Ocupando toda la columna el
+     degradado se estira a ese ancho y las letras caen enteras dentro de la
+     primera parada oscura, sin llegar nunca al brillo del medio: por eso
+     "Perfil" -que es corto- se veia metalico y los demas planos.
+
+     Va fit-content y no inline-block porque el titulo tiene que seguir
+     siendo un bloque: como inline se sube a la misma linea que el boton de
+     volver. Y se suman align-self y justify-self porque dentro de un flex o
+     un grid el item se estira igual. */
+  width: fit-content;
+  align-self: flex-start;
+  justify-self: start;
   background: ${({ theme }) => theme.color.metalGold};
-  background-size: 200% auto;
+  background-size: 100% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
