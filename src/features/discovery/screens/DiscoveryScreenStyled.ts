@@ -5,6 +5,9 @@ import styled, { keyframes } from 'styled-components';
 export const Page = styled.section`
   min-height: 100dvh;
   width: 100%;
+  /* La tarjeta arrastrada se sale del borde: se recorta aca y no en el body,
+     porque un body recortado tambien recorta la barra inferior fija. */
+  overflow-x: clip;
   padding: max(12px, env(safe-area-inset-top)) 16px 84px;
   display: flex;
   justify-content: center;

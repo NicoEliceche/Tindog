@@ -7,7 +7,11 @@ export const GlobalStyles = createGlobalStyle`
      lateral: sube con la página. Se aplica sólo en body, con clip, que
      recorta sin volverlo contenedor de scroll. */
   html { width: 100%; min-height: 100%; }
-  body { width: 100%; min-height: 100%; max-width: 100vw; overflow-x: clip; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: ${({ theme }) => theme.color.background}; color: ${({ theme }) => theme.color.text}; }
+  /* Sin overflow-x en el body: aunque "clip" no crea contenedor de scroll,
+     si crea bloque contenedor para position:fixed, y la barra inferior
+     quedaba recortada junto con la tarjeta al arrastrarla fuera del borde.
+     El recorte horizontal lo hace ahora el contenedor de la tarjeta. */
+  body { width: 100%; min-height: 100%; max-width: 100vw; font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: ${({ theme }) => theme.color.background}; color: ${({ theme }) => theme.color.text}; }
   body { transition: background-color .2s ease, color .2s ease; }
   a { color: inherit; text-decoration: none; }
   button, input, textarea { font: inherit; }
