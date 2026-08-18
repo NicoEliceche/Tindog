@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToast } from '../../../shared/components/Toast';
 import { requestForegroundCoordinates } from '../../../core/data/services/foregroundLocation';
 import { useAppData } from '../../../core/providers/AppDataProvider';
+import { GoldHeading } from '../../../shared/components/GoldHeading';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { Coordinates, SafeLocation } from '../../../core/types/appointment.types';
@@ -43,7 +44,7 @@ export function SafeLocationsScreen({ route, navigation }: Props) {
       {mapsConfigured ? <SafeMap locations={locations} selectedId={selectedId} userCoordinates={coordinates} onSelect={setSelectedId} /> : <View style={styles.mapFallback}><Ionicons name="map" size={40} color={theme.colors.primary} /><Text style={styles.mapTitle}>Mapa listo para configurar</Text><Text style={styles.mapText}>La lista funciona ahora. Para ver Google Maps agregá las claves nativas restringidas y generá un nuevo development build.</Text></View>}
       <Pressable accessibilityRole="button" accessibilityLabel="Usar mi ubicación" disabled={locating} onPress={locate} style={styles.locate}><Ionicons name={locating ? 'hourglass-outline' : 'locate'} size={20} color={theme.colors.primary} /></Pressable>
     </View>
-    <View style={styles.header}><View style={{ flex: 1 }}><Text style={styles.title}>Puntos públicos recomendados</Text><Text style={styles.disclaimer}>La recomendación reduce riesgos, pero no garantiza seguridad.</Text></View></View>
+    <View style={styles.header}><View style={{ flex: 1 }}><GoldHeading style={styles.title}>Puntos públicos recomendados</GoldHeading><Text style={styles.disclaimer}>La recomendación reduce riesgos, pero no garantiza seguridad.</Text></View></View>
     <FlatList data={locations} keyExtractor={(item) => item.id} contentContainerStyle={styles.list} showsVerticalScrollIndicator={false} renderItem={({ item }) => <LocationCard item={item} selected={item.id === selectedId} theme={theme} onSelect={() => setSelectedId(item.id)} onReviews={() => navigation.navigate('LocationReviews', { locationId: item.id, appointmentId: appointment?.id })} />} ItemSeparatorComponent={() => <View style={{ height: 9 }} />} />
     <Modal transparent visible={confirmed} animationType="fade" onRequestClose={() => setConfirmed(false)}>
       <View style={styles.backdrop}>

@@ -3,8 +3,8 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMemo } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { myPets } from '../../../core/data/mock/pets';
 import { useAppData } from '../../../core/providers/AppDataProvider';
+import { GoldHeading } from '../../../shared/components/GoldHeading';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { RootStackParamList } from '../../../navigation/types';
@@ -16,7 +16,7 @@ export function PetProfileScreen({ route, navigation }: Props) {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
-  const { appointments } = useAppData();
+  const { appointments, myPets } = useAppData();
   const pet = myPets.find((item) => item.id === route.params.petId) ?? myPets[0];
   const compact = height < 740 || width < 360;
   const nextAppointment = appointments.find((item) => item.status === 'scheduled' && item.petNames.includes(pet.name));
@@ -33,11 +33,18 @@ export function PetProfileScreen({ route, navigation }: Props) {
           <Image source={{ uri: pet.photos[0] }} style={[styles.petPhoto, compact && styles.petPhotoCompact]} />
           <View style={styles.heroCopy}>
             <Text style={styles.eyebrow}>PANEL DE {pet.name.toUpperCase()}</Text>
-            <Text style={[styles.title, compact && { fontSize: 25 }]}>{pet.name}</Text>
+            <GoldHeading style={[styles.title, compact && { fontSize: 25 }]}>{pet.name}</GoldHeading>
             <Text style={styles.subtitle}>{pet.breed} · {pet.age} años · {pet.weight ?? '—'} kg</Text>
             <View style={styles.verified}><Ionicons name="shield-checkmark" size={14} color={theme.colors.success} /><Text style={styles.verifiedText}>Perfil y documentación verificados</Text></View>
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Editar mascota" style={styles.edit}><Ionicons name="create-outline" size={20} color={theme.colors.primary} /></Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Editar a ${pet.name}`}
+            onPress={() => navigation.navigate('Main', { screen: 'Pets', params: { screen: 'PetForm', params: { petId: pet.id } } })}
+            style={styles.edit}
+          >
+            <Ionicons name="create-outline" size={20} color={theme.colors.primary} />
+          </Pressable>
         </View>
 
         <View style={styles.grid}>

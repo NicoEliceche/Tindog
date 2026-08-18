@@ -4,13 +4,13 @@ export type MainTabParamList = {
   Home: undefined;
   Messages: undefined;
   Appointments: undefined;
-  Pets: undefined;
+  Pets: NavigatorScreenParams<PetsStackParamList> | undefined;
   Profile: undefined;
 };
 
 export type PetsStackParamList = {
   PetsList: undefined;
-  PetForm: undefined;
+  PetForm: { petId?: string } | undefined;
 };
 
 export type RootStackParamList = {

@@ -1,5 +1,6 @@
 // src/features/pets/screens/BreedingDashboardScreenStyled.ts
 import styled from 'styled-components';
+import { metalGoldText } from '@shared/components/layout/WebScreen';
 
 export const Page = styled.section`
   min-height: 100dvh;
@@ -31,6 +32,7 @@ export const Top = styled.header`
     text-align: center;
     font-size: 1rem;
     font-weight: 900;
+   ${metalGoldText}
   }
 
   button {
