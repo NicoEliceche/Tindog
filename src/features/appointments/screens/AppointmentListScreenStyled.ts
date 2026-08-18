@@ -182,3 +182,74 @@ export const ConfirmBody = styled.div`
     background: ${({ theme }) => theme.color.errorLight};
   }
 `;
+
+export const ReviewBody = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  p {
+    color: ${({ theme }) => theme.color.textSecondary};
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+
+  textarea {
+    min-height: 96px;
+    padding: 12px;
+    resize: vertical;
+    border-radius: 16px;
+    color: ${({ theme }) => theme.color.text};
+    background: ${({ theme }) => theme.color.surfaceRaised};
+    border: 1px solid ${({ theme }) => theme.color.border};
+    font: inherit;
+  }
+
+  textarea:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.color.borderFocus};
+    outline-offset: 2px;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+  }
+
+  .actions button {
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 999px;
+    font-weight: 900;
+    font-size: 0.82rem;
+    color: ${({ theme }) => theme.color.textSecondary};
+  }
+
+  .actions button.primary {
+    color: ${({ theme }) => theme.color.textInverse};
+    background: ${({ theme }) => theme.color.primary};
+  }
+`;
+
+/** Selector de puntaje. Cada estrella es un radio: se elige una, no varias. */
+export const Stars = styled.div`
+  display: flex;
+  gap: 4px;
+
+  button {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    color: ${({ theme }) => theme.color.textTertiary};
+  }
+
+  button.on {
+    color: ${({ theme }) => theme.color.primary};
+  }
+
+  button.on svg {
+    fill: currentColor;
+  }
+`;

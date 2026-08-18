@@ -131,6 +131,9 @@ export function AppNavigator({ onLogout }: { onLogout: () => Promise<void> }) {
           // El titulo de la barra se dibuja con el degradado dorado, igual
           // que los encabezados propios de cada pantalla.
           headerTitle: ({ children }) => <GoldHeading style={styles.stackTitle}>{children}</GoldHeading>,
+          // Al lado de la flecha y no centrado: en Android el titulo se centra
+          // por defecto, y en la web va pegado al breadcrumb de volver.
+          headerTitleAlign: 'left',
           // iOS muestra el titulo de la pantalla anterior junto a la flecha;
           // fijarlo en "Volver" iguala el texto con el de la web.
           headerBackTitle: 'Volver',

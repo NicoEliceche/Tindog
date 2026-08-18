@@ -6,7 +6,9 @@ export const Screen = styled.section`
   min-height: 100dvh;
   width: min(100%, 880px);
   margin: 0 auto;
-  padding-bottom: 18px;
+  /* Deja lugar para la barra inferior, que ahora tambien se ve aca: si no,
+     el ultimo bloque quedaba tapado. */
+  padding-bottom: calc(18px + 64px + env(safe-area-inset-bottom));
   background: ${({ theme }) => theme.color.background};
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
@@ -24,9 +26,16 @@ export const Header = styled.header`
   gap: 10px;
 
   h1 {
-    font-size: 1.1rem;
+    /* Mismo cuerpo que "Panel de mascota", acompanando al ancho para que
+       entre al lado de la flecha en los telefonos angostos. */
+    font-size: clamp(1.35rem, 6vw, 2.35rem);
     font-weight: 900;
+    line-height: 1.1;
+    white-space: nowrap;
    ${metalGoldText}
+    /* El helper alinea al inicio para que la caja se ajuste al texto; aca la
+       fila ya centra verticalmente, asi que se recupera ese centrado. */
+    align-self: center;
   }
 
   button {

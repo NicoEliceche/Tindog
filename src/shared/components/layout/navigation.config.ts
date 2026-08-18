@@ -43,19 +43,16 @@ export function isNavHidden(pathname: string): boolean {
 }
 
 /**
- * La barra inferior se oculta en las pantallas que ya usan todo el alto y
- * traen su propia navegación de retroceso: la conversación abierta, el mapa
- * y el detalle de una mascota.
+ * La barra inferior sólo se oculta en las rutas públicas y en el detalle de
+ * una mascota.
  *
- * Ajustes ya no está en la lista: se llega desde Perfil, que es una sección
- * de la barra, y perderla ahí obligaba a usar el gesto de atrás del sistema
- * para volver a cualquier otra parte.
+ * Ajustes, la conversación abierta y el mapa para agendar salieron de la
+ * lista: se llega a las tres desde secciones de la barra, y perderla obligaba
+ * a usar el gesto de atrás del sistema para ir a cualquier otra parte.
  */
 export function isBottomNavHidden(pathname: string): boolean {
   return (
     isPublicRoute(pathname) ||
-    /^\/chat\/[^/]+$/.test(pathname) ||
-    pathname === '/appointments/location' ||
     /^\/pets\/[^/]+\//.test(pathname)
   );
 }
