@@ -8,10 +8,9 @@ export const Screen = styled.section`
   display: grid;
   place-items: center;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 15% 10%, rgba(212, 175, 55, 0.13), transparent 28%),
-    radial-gradient(circle at 90% 92%, rgba(212, 175, 55, 0.08), transparent 28%),
-    ${({ theme }) => theme.color.background};
+  /* Sin fondo propio: el color opaco y los dos radiales dorados tapaban el
+     fondo animado que ya dibuja la app detras de todas las pantallas. */
+  background: transparent;
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     padding: ${({ theme }) => theme.spacing[8]};
@@ -75,6 +74,12 @@ export const Hero = styled.div`
     letter-spacing: 3px;
   }
 
+  /* El texto flota sobre el fondo animado, sin panel detras. La sombra lo
+     despega de las particulas en movimiento, que si no lo ensucian. */
+  .kicker, h1, p {
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.75);
+  }
+
   .kicker {
     color: ${({ theme }) => theme.color.primary};
     font-size: 0.78rem;
@@ -123,8 +128,12 @@ export const Card = styled.div`
   display: grid;
   gap: 13px;
   border-radius: 28px;
-  background: ${({ theme }) => theme.color.surface};
-  border: 1px solid ${({ theme }) => theme.color.border};
+  /* Traslucida y desenfocada: deja ver el fondo en movimiento por detras
+     pero mantiene el contraste del texto y los botones. */
+  background: ${({ theme }) => theme.color.surfaceGlass};
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid ${({ theme }) => theme.color.borderFocus};
   box-shadow: ${({ theme }) => theme.elevation.lg};
 
   h2 {
