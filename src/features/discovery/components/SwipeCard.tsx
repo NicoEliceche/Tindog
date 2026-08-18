@@ -3,7 +3,7 @@
 
 import React, { useCallback, useRef, useState } from 'react';
 import {
-  type PanInfo, useMotionValue, useReducedMotion, useSpring, useTransform,
+  type MotionValue, type PanInfo, useMotionValue, useReducedMotion, useSpring, useTransform,
 } from 'framer-motion';
 import type { Pet } from '@core/types/pet.types';
 import {
@@ -28,7 +28,16 @@ interface SwipeCardProps {
   pet: Pet;
   onSwipe: (direction: SwipeDirection, pet: Pet) => void;
   /** Progreso del arrastre (-1..1) para que el padre anime el stack. */
-  onDragProgress?: (progress: number) => void;
+  /**
+   * Progreso del arrastre, de -1 a 1, como MotionValue.
+   *
+   * No es una función que reciba el número: llamarla en cada frame obligaba
+   * a un cambio de estado de React por movimiento del puntero, y con eso se
+   * re-renderizaba la pantalla entera —fondo animado incluido— mientras la
+   * tarjeta trataba de seguir al mouse. El resultado se veía a los saltos.
+   * Un MotionValue lo actualiza fuera del ciclo de React.
+   */
+  dragProgress?: MotionValue<number>;
 }
 
 /**
@@ -42,7 +51,7 @@ interface SwipeCardProps {
  * - **Arrastre libre en X e Y**, con la Y amortiguada.
  * - **Rebote elástico** al soltar sin llegar al umbral.
  */
-export function SwipeCard({ pet, onSwipe, onDragProgress }: SwipeCardProps) {
+export function SwipeCard({ pet, onSwipe, dragProgress }: SwipeCardProps) {
   const reduceMotion = useReducedMotion();
   const cardRef = useRef<HTMLDivElement>(null);
   const [burst, setBurst] = useState(false);
@@ -58,6 +67,8 @@ export function SwipeCard({ pet, onSwipe, onDragProgress }: SwipeCardProps) {
 
   // Ancho real de la tarjeta: define el umbral y la escala de la rotación.
   const widthRef = useRef(320);
+  /** Mientras dura el arrastre se apagan los adornos que leen el layout. */
+  const draggingRef = useRef(false);
 
   const rotate = useTransform(x, (value) => {
     const span = widthRef.current * 1.6;
@@ -75,9 +86,26 @@ export function SwipeCard({ pet, onSwipe, onDragProgress }: SwipeCardProps) {
   const glareX = useTransform(x, [-320, 320], [130, -30]);
   const glareOpacity = useTransform(x, [-320, 0, 320], [0.55, 0.18, 0.55]);
 
-  const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+  /**
+   * Inclinación 3D según dónde está el puntero sobre la tarjeta.
+   *
+   * `getBoundingClientRect` obliga al navegador a recalcular el layout, y
+   * durante el arrastre eso ocurría en cada movimiento del mouse sobre un
+   * elemento que se está moviendo: el gesto se entrecortaba. Ahora la caja
+   * se mide una vez al entrar y el adorno se apaga mientras se arrastra,
+   * que es cuando la tarjeta ya tiene su propia rotación.
+   */
+  const boxRef = useRef<DOMRect | null>(null);
+
+  const handlePointerEnter = useCallback(() => {
     if (reduceMotion || !cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
+    boxRef.current = cardRef.current.getBoundingClientRect();
+  }, [reduceMotion]);
+
+  const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (reduceMotion || draggingRef.current) return;
+    const rect = boxRef.current;
+    if (!rect) return;
     const px = (event.clientX - rect.left) / rect.width - 0.5;
     const py = (event.clientY - rect.top) / rect.height - 0.5;
     tiltY.set(px * 12);
@@ -93,8 +121,12 @@ export function SwipeCard({ pet, onSwipe, onDragProgress }: SwipeCardProps) {
   const handleDragStart = useCallback((event: MouseEvent | TouchEvent | PointerEvent) => {
     const node = cardRef.current;
     if (!node) return;
+    draggingRef.current = true;
+    // Única lectura del layout en todo el gesto: de acá salen el ancho para
+    // el umbral y el punto donde se agarró la tarjeta.
     const rect = node.getBoundingClientRect();
     widthRef.current = rect.width;
+    boxRef.current = rect;
 
     const clientY = 'clientY' in event
       ? event.clientY
@@ -108,21 +140,22 @@ export function SwipeCard({ pet, onSwipe, onDragProgress }: SwipeCardProps) {
   }, [resetTilt]);
 
   const handleDrag = useCallback((_: unknown, info: PanInfo) => {
-    if (!onDragProgress) return;
+    if (!dragProgress) return;
     const threshold = widthRef.current * SWIPE_RATIO;
-    onDragProgress(Math.max(-1, Math.min(1, info.offset.x / threshold)));
-  }, [onDragProgress]);
+    dragProgress.set(Math.max(-1, Math.min(1, info.offset.x / threshold)));
+  }, [dragProgress]);
 
   const commit = useCallback((direction: SwipeDirection) => {
     setFlyOut(direction);
     if (direction === 'right' && !reduceMotion) setBurst(true);
-    onDragProgress?.(0);
+    dragProgress?.set(0);
     // Damos tiempo a la animación de salida antes de avisar al padre,
     // que es quien desmonta esta tarjeta y monta la siguiente.
     window.setTimeout(() => onSwipe(direction, pet), reduceMotion ? 0 : 280);
-  }, [onDragProgress, onSwipe, pet, reduceMotion]);
+  }, [dragProgress, onSwipe, pet, reduceMotion]);
 
   const handleDragEnd = useCallback((_: unknown, info: PanInfo) => {
+    draggingRef.current = false;
     resetTilt();
     const threshold = widthRef.current * SWIPE_RATIO;
     const passedDistance = Math.abs(info.offset.x) > threshold;
@@ -132,9 +165,9 @@ export function SwipeCard({ pet, onSwipe, onDragProgress }: SwipeCardProps) {
       commit(info.offset.x > 0 ? 'right' : 'left');
     } else {
       // No llegó: framer devuelve la tarjeta con el spring de dragTransition.
-      onDragProgress?.(0);
+      dragProgress?.set(0);
     }
-  }, [commit, onDragProgress, resetTilt]);
+  }, [commit, dragProgress, resetTilt]);
 
   const sparks = Array.from({ length: SPARK_COUNT }, (_, i) => {
     const angle = (i / SPARK_COUNT) * Math.PI * 2;
@@ -162,6 +195,7 @@ export function SwipeCard({ pet, onSwipe, onDragProgress }: SwipeCardProps) {
       onDragStart={handleDragStart}
       onDrag={handleDrag}
       onDragEnd={handleDragEnd}
+      onPointerEnter={handlePointerEnter}
       onPointerMove={handlePointerMove}
       onPointerLeave={resetTilt}
       whileTap={{ scale: reduceMotion ? 1 : 1.02 }}
@@ -175,6 +209,11 @@ export function SwipeCard({ pet, onSwipe, onDragProgress }: SwipeCardProps) {
         : undefined}
       // Rebote elástico al soltar sin confirmar.
       dragTransition={{ bounceStiffness: 320, bounceDamping: 22 }}
+      // `transition` sólo gobierna las animaciones declaradas en `animate`
+      // (la salida al confirmar). Durante el arrastre la tarjeta tiene que
+      // seguir al puntero sin intermediarios: con un resorte de por medio
+      // cada movimiento del mouse disparaba una animación hacia la posición
+      // nueva y el recorrido se veía a los saltos.
       transition={{ type: 'spring', stiffness: 380, damping: 30 }}
     >
       <CardShine />
