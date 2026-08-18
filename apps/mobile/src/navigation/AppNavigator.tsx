@@ -17,7 +17,7 @@ import { DiscoveryScreen } from '../features/discovery';
 import { AppointmentPlannerScreen, LocationReviewsScreen, SafeLocationsScreen } from '../features/meetups';
 import { PetFormScreen, PetProfileScreen, PetsScreen } from '../features/pets';
 import { ProfileScreen, SettingsScreen } from '../features/profile';
-import type { MainTabParamList, PetsStackParamList, RootStackParamList } from './types';
+import type { AppointmentsStackParamList, MainTabParamList, MessagesStackParamList, PetsStackParamList, RootStackParamList } from './types';
 
 const Tabs = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -72,13 +72,44 @@ function MainTabs({ onLogout }: { onLogout: () => Promise<void> }) {
       })}
     >
       <Tabs.Screen name="Home" component={DiscoveryScreen} />
-      <Tabs.Screen name="Messages" component={ChatListScreen} />
-      <Tabs.Screen name="Appointments" component={AppointmentsScreen} />
+      <Tabs.Screen name="Messages" component={MessagesStack} />
+      <Tabs.Screen name="Appointments" component={AppointmentsStack} />
       <Tabs.Screen name="Pets" component={PetsStack} />
       <Tabs.Screen name="Profile">
         {() => <ProfileScreen onLogout={onLogout} />}
       </Tabs.Screen>
     </Tabs.Navigator>
+  );
+}
+
+/**
+ * Cada pestana tiene su propia pila. Lo que se abre desde una seccion de la
+ * barra vive dentro de esa pila y no en la general, para que la barra
+ * inferior no desaparezca: en la web pasa lo mismo desde que salieron de la
+ * lista de rutas que la ocultan.
+ */
+const MessagesStackNav = createNativeStackNavigator<MessagesStackParamList>();
+
+function MessagesStack() {
+  return (
+    <MessagesStackNav.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}>
+      <MessagesStackNav.Screen name="ChatList" component={ChatListScreen} />
+      <MessagesStackNav.Screen name="ChatRoom" component={ChatRoomScreen} />
+      <MessagesStackNav.Screen name="AppointmentPlanner" component={AppointmentPlannerScreen} />
+      <MessagesStackNav.Screen name="SafeLocations" component={SafeLocationsScreen} />
+    </MessagesStackNav.Navigator>
+  );
+}
+
+const AppointmentsStackNav = createNativeStackNavigator<AppointmentsStackParamList>();
+
+function AppointmentsStack() {
+  return (
+    <AppointmentsStackNav.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}>
+      <AppointmentsStackNav.Screen name="AppointmentsList" component={AppointmentsScreen} />
+      <AppointmentsStackNav.Screen name="SafeLocations" component={SafeLocationsScreen} />
+      <AppointmentsStackNav.Screen name="LocationReviews" component={LocationReviewsScreen} />
+    </AppointmentsStackNav.Navigator>
   );
 }
 
@@ -150,10 +181,6 @@ export function AppNavigator({ onLogout }: { onLogout: () => Promise<void> }) {
         {/* El chat dibuja su propio encabezado (foto, nombre, mascota, escudo)
             en una sola barra, como en la web. La barra del stack quedaba
             encima repitiendo la flecha y el titulo. */}
-        <Stack.Screen name="ChatRoom" component={ChatRoomScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="AppointmentPlanner" component={AppointmentPlannerScreen} options={{ title: 'Agendar encuentro', presentation: 'modal' }} />
-        <Stack.Screen name="SafeLocations" component={SafeLocationsScreen} options={{ title: 'Puntos recomendados' }} />
-        <Stack.Screen name="LocationReviews" component={LocationReviewsScreen} options={{ title: 'Reseñas del punto' }} />
         <Stack.Screen name="Requests" component={RequestsScreen} options={{ title: 'Solicitudes' }} />
         <Stack.Screen name="Saved" component={SavedScreen} options={{ title: 'Guardados' }} />
         <Stack.Screen name="Safety" component={SafetyScreen} options={{ title: 'Seguridad' }} />

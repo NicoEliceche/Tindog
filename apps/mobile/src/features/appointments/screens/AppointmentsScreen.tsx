@@ -2,14 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useMemo, useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../../../core/providers/AppDataProvider';
 import { GoldHeading } from '../../../shared/components/GoldHeading';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import { appointmentStatusLabels, getEffectiveAppointmentStatus, type Appointment, type AppointmentStatus } from '../../../core/types/appointment.types';
-import type { RootStackParamList } from '../../../navigation/types';
+import type { AppointmentsStackParamList, RootStackParamList } from '../../../navigation/types';
 
 type Filter = 'upcoming' | 'history';
 
@@ -17,8 +17,8 @@ export function AppointmentsScreen() {
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { appointments, updateAppointmentStatus } = useAppData();
+  const navigation = useNavigation<NativeStackNavigationProp<AppointmentsStackParamList & RootStackParamList>>();
+  const { appointments, updateAppointmentStatus, addLocationReview, profile } = useAppData();
   const [filter, setFilter] = useState<Filter>('upcoming');
   const filtered = appointments.filter((item) => filter === 'upcoming' ? ['scheduled', 'in_progress'].includes(getEffectiveAppointmentStatus(item)) : ['completed', 'cancelled'].includes(item.status));
 
@@ -26,12 +26,66 @@ export function AppointmentsScreen() {
   // vea como el resto de la app y no como un dialogo de Android.
   const [pendingCancel, setPendingCancel] = useState<Appointment | null>(null);
 
+  // Resena en el lugar, como en la web: antes "Dejar reseña" abria otra
+  // pantalla, la misma a la que llevaba "Ver punto".
+  const [reviewing, setReviewing] = useState<Appointment | null>(null);
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState('');
+
+  const closeReview = () => { setReviewing(null); setRating(5); setComment(''); };
+
+  const submitReview = () => {
+    if (reviewing) {
+      addLocationReview(reviewing.location.id, {
+        authorName: profile.name.split(' ')[0],
+        rating,
+        comment: comment.trim(),
+      });
+    }
+    closeReview();
+  };
+
   const confirmCancel = () => {
     if (pendingCancel) updateAppointmentStatus(pendingCancel.id, 'cancelled');
     setPendingCancel(null);
   };
 
   return <View style={styles.screen}>
+    <Modal visible={!!reviewing} transparent animationType="fade" onRequestClose={closeReview}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Cerrar" style={styles.backdrop} onPress={closeReview}>
+        <Pressable style={styles.modal} onPress={(event) => event.stopPropagation()}>
+          <Text style={styles.modalTitle}>Dejar reseña</Text>
+          <Text style={styles.modalText}>Contá cómo fue el encuentro. Tu reseña ayuda a otros tutores a elegir el punto.</Text>
+          <View style={styles.stars}>
+            {[1, 2, 3, 4, 5].map((value) => (
+              <Pressable
+                key={value}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: rating === value }}
+                accessibilityLabel={`${value} ${value === 1 ? 'estrella' : 'estrellas'}`}
+                onPress={() => setRating(value)}
+                style={styles.star}
+              >
+                <Ionicons name={value <= rating ? 'star' : 'star-outline'} size={28} color={value <= rating ? theme.colors.primary : theme.colors.textMuted} />
+              </Pressable>
+            ))}
+          </View>
+          <TextInput
+            value={comment}
+            onChangeText={setComment}
+            placeholder="¿Cómo estuvo el lugar? ¿Lo recomendarías?"
+            placeholderTextColor={theme.colors.textMuted}
+            style={styles.reviewInput}
+            multiline
+            maxLength={400}
+          />
+          <View style={styles.modalActions}>
+            <Pressable accessibilityRole="button" onPress={closeReview} style={styles.modalSecondary}><Text style={styles.modalSecondaryText}>Cancelar</Text></Pressable>
+            <Pressable accessibilityRole="button" onPress={submitReview} style={styles.modalConfirm}><Text style={styles.modalConfirmText}>Confirmar</Text></Pressable>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
     <Modal visible={!!pendingCancel} transparent animationType="fade" onRequestClose={() => setPendingCancel(null)}>
       <Pressable accessibilityRole="button" accessibilityLabel="Cerrar" style={styles.backdrop} onPress={() => setPendingCancel(null)}>
         <Pressable style={styles.modal} onPress={(event) => event.stopPropagation()}>
@@ -60,7 +114,7 @@ export function AppointmentsScreen() {
           <Pressable accessibilityRole="button" onPress={() => navigation.navigate('SafeLocations', { appointmentId: item.id })} style={styles.secondaryButton}><Text style={styles.secondaryText}>Ver punto</Text></Pressable>
           {status === 'scheduled' ? <Pressable accessibilityRole="button" onPress={() => setPendingCancel(item)} style={styles.ghostDanger}><Text style={styles.dangerText}>Cancelar</Text></Pressable> : null}
           {status === 'in_progress' ? <Pressable accessibilityRole="button" onPress={() => updateAppointmentStatus(item.id, 'completed')} style={styles.primaryButton}><Text style={styles.primaryText}>Finalizar</Text></Pressable> : null}
-          {status === 'completed' && !item.reviewSubmitted ? <Pressable accessibilityRole="button" onPress={() => navigation.navigate('LocationReviews', { locationId: item.location.id, appointmentId: item.id })} style={styles.primaryButton}><Text style={styles.primaryText}>Dejar reseña</Text></Pressable> : null}
+          {status === 'completed' && !item.reviewSubmitted ? <Pressable accessibilityRole="button" onPress={() => setReviewing(item)} style={styles.primaryButton}><Text style={styles.primaryText}>Dejar reseña</Text></Pressable> : null}
         </View>
       </View>;
     }}
@@ -82,6 +136,11 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
   modalSecondaryText: { color: theme.colors.textSecondary, fontWeight: '900', fontSize: 13 },
   modalDanger: { minHeight: 44, paddingHorizontal: 18, justifyContent: 'center', borderRadius: 22, backgroundColor: theme.colors.dangerFaded, borderWidth: 1, borderColor: theme.colors.dangerBorder },
   modalDangerText: { color: theme.colors.danger, fontWeight: '900', fontSize: 13 },
+  stars: { flexDirection: 'row', gap: 4 },
+  star: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  reviewInput: { minHeight: 92, padding: 12, textAlignVertical: 'top', borderRadius: 16, color: theme.colors.text, backgroundColor: theme.colors.backgroundAlt, borderWidth: 1, borderColor: theme.colors.border },
+  modalConfirm: { minHeight: 44, paddingHorizontal: 18, justifyContent: 'center', borderRadius: 22, backgroundColor: theme.colors.primary },
+  modalConfirmText: { color: theme.colors.onPrimary, fontWeight: '900', fontSize: 13 },
   screen: { flex: 1, backgroundColor: 'transparent' }, content: { paddingHorizontal: 16, paddingBottom: 28 }, title: { color: theme.colors.heading, fontSize: 32, fontWeight: '900' }, subtitle: { color: theme.colors.textSecondary, fontSize: 14, marginTop: 5 }, segment: { minHeight: 46, flexDirection: 'row', gap: 4, marginTop: 18, padding: 3, borderRadius: 22, backgroundColor: theme.colors.surface },
   card: { padding: 15, gap: 13, borderRadius: 24, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border }, cardTop: { flexDirection: 'row', alignItems: 'center', gap: 10 }, iconBox: { width: 44, height: 44, borderRadius: 15, alignItems: 'center', justifyContent: 'center' }, petNames: { color: theme.colors.text, fontSize: 16, fontWeight: '900' }, owner: { color: theme.colors.textSecondary, fontSize: 12, marginTop: 2 }, details: { gap: 7, padding: 11, borderRadius: 15, backgroundColor: theme.colors.backgroundAlt }, actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }, secondaryButton: { minHeight: 40, paddingHorizontal: 14, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: theme.colors.borderStrong }, secondaryText: { color: theme.colors.primary, fontSize: 12, fontWeight: '900' }, ghostDanger: { minHeight: 40, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' }, dangerText: { color: theme.colors.danger, fontSize: 12, fontWeight: '900' }, primaryButton: { minHeight: 40, paddingHorizontal: 14, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.primary }, primaryText: { color: theme.colors.onPrimary, fontSize: 12, fontWeight: '900' }, empty: { alignItems: 'center', paddingVertical: 55, gap: 9 }, emptyTitle: { color: theme.colors.text, fontSize: 18, fontWeight: '900' }, emptyText: { color: theme.colors.textSecondary, textAlign: 'center', fontSize: 13 },
 }); }

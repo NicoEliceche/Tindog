@@ -7,9 +7,9 @@ import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { ChatMessage } from '../../../core/types/social.types';
-import type { RootStackParamList } from '../../../navigation/types';
+import type { MessagesStackParamList } from '../../../navigation/types';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'ChatRoom'>;
+type Props = NativeStackScreenProps<MessagesStackParamList, 'ChatRoom'>;
 
 export function ChatRoomScreen({ route, navigation }: Props) {
   const theme = useAppTheme();

@@ -11,10 +11,19 @@ import { GoldHeading } from '../../../shared/components/GoldHeading';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { Coordinates, SafeLocation } from '../../../core/types/appointment.types';
-import type { RootStackParamList } from '../../../navigation/types';
+import type {
+  AppointmentsStackParamList, MessagesStackParamList, RootStackParamList,
+} from '../../../navigation/types';
 import { SafeMap } from '../components/SafeMap';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'SafeLocations'>;
+/**
+ * La pantalla se abre desde dos pestanas -Mensajes y Citas- y ademas puede
+ * saltar a la de Citas, asi que ve las tres pilas.
+ */
+type Props = NativeStackScreenProps<
+  MessagesStackParamList & AppointmentsStackParamList & RootStackParamList,
+  'SafeLocations'
+>;
 
 export function SafeLocationsScreen({ route, navigation }: Props) {
   const theme = useAppTheme(); const styles = useMemo(() => createStyles(theme), [theme]);

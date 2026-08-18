@@ -6,9 +6,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
-import type { RootStackParamList } from '../../../navigation/types';
+import type { MessagesStackParamList } from '../../../navigation/types';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'AppointmentPlanner'>;
+type Props = NativeStackScreenProps<MessagesStackParamList, 'AppointmentPlanner'>;
 
 function buildSlots() {
   const now = new Date();

@@ -61,7 +61,7 @@ export function PetProfileScreen({ route, navigation }: Props) {
             <Text style={styles.nextTitle} numberOfLines={1}>{nextAppointment ? `${nextAppointment.petNames.join(' + ')} · ${new Date(nextAppointment.startAt).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}` : 'Completá el control veterinario'}</Text>
             {!compact ? <Text style={styles.nextDetail} numberOfLines={1}>{nextAppointment ? nextAppointment.location.name : 'Mantener los estudios al día mejora conexiones responsables.'}</Text> : null}
           </View>
-          {nextAppointment ? <Pressable accessibilityRole="button" onPress={() => navigation.navigate('SafeLocations', { appointmentId: nextAppointment.id })}><Ionicons name="chevron-forward" size={24} color={theme.colors.primary} /></Pressable> : null}
+          {nextAppointment ? <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Main', { screen: 'Appointments', params: { screen: 'SafeLocations', params: { appointmentId: nextAppointment.id } } })}><Ionicons name="chevron-forward" size={24} color={theme.colors.primary} /></Pressable> : null}
         </View>
 
         {!compact ? <View style={styles.tip}><Ionicons name="bulb-outline" size={21} color={theme.colors.primary} /><Text style={styles.tipText}><Text style={{ fontWeight: '900' }}>Consejo Tindog: </Text>compartí estudios de salud antes de coordinar una cruza.</Text></View> : null}

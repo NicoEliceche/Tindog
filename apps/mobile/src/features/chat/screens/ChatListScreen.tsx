@@ -9,13 +9,13 @@ import { GoldHeading } from '../../../shared/components/GoldHeading';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { Conversation } from '../../../core/types/social.types';
-import type { RootStackParamList } from '../../../navigation/types';
+import type { MessagesStackParamList, RootStackParamList } from '../../../navigation/types';
 
 export function ChatListScreen() {
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<MessagesStackParamList & RootStackParamList>>();
   const { conversations, requests, respondToRequest } = useAppData();
   const [query, setQuery] = useState('');
   const pendingIncoming = requests.filter((item) => item.direction === 'incoming' && item.status === 'pending');
