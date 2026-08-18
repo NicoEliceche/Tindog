@@ -1,9 +1,12 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import { useWebApp } from '@core/providers/WebAppProvider';
 import { ShieldCheck, UserX } from 'lucide-react';
 import { useState } from 'react';
 import {
+  BackButton,
   Page, Shell, Header, Section, SectionTitle, Grid, Card, Thumb, Copy, Row, Action, Empty, Notice,
 } from './HubStyled';
 
@@ -16,6 +19,7 @@ import {
  * no existían en la interfaz.
  */
 export function SafetyScreen() {
+  const router = useRouter();
   const { conversations, blockedOwners, blockOwner, unblockOwner } = useWebApp();
   const [justBlocked, setJustBlocked] = useState('');
 
@@ -27,6 +31,7 @@ export function SafetyScreen() {
   return (
     <Page>
       <Shell>
+        <BackButton onClick={() => router.back()}>← Volver</BackButton>
         <Header>
           <h1>Seguridad</h1>
           <p>Controlá con quién podés cruzarte y repasá las pautas antes de cada encuentro.</p>

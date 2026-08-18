@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import { useWebApp, type WebConnectionRequest } from '@core/providers/WebAppProvider';
 import { Inbox, Send, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -8,6 +10,7 @@ import {
 } from '../components/FilterBar';
 import { MonthHeading } from '../components/FilterBarStyled';
 import {
+  BackButton,
   Page, Shell, Header, Section, SectionTitle, List, Card, Thumb, Copy, Row, Action, IconAction, Empty,
 } from './HubStyled';
 
@@ -26,6 +29,7 @@ const STATUS_LABEL: Record<WebConnectionRequest['status'], string> = {
  * decisión distinta de conversar, así que tiene su propio lugar.
  */
 export function RequestsScreen() {
+  const router = useRouter();
   const { requests, respondRequest, cancelRequest } = useWebApp();
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
 
@@ -64,6 +68,7 @@ export function RequestsScreen() {
   return (
     <Page>
       <Shell>
+        <BackButton onClick={() => router.back()}>← Volver</BackButton>
         <Header>
           <h1>Solicitudes</h1>
           <p>Acá decidís con quién se abre un chat. Nadie puede escribirte hasta que aceptes su solicitud.</p>

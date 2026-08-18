@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 import { useWebApp, type WebSavedPet } from '@core/providers/WebAppProvider';
 import { BookmarkX } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -8,6 +10,7 @@ import {
 } from '../components/FilterBar';
 import { MonthHeading } from '../components/FilterBarStyled';
 import {
+  BackButton,
   Page, Shell, Header, Section, Grid, Card, Thumb, Copy, Row, Action, Empty,
 } from './HubStyled';
 
@@ -19,6 +22,7 @@ import {
  * guardarla en ningún lado. Esta pantalla es el destino que faltaba.
  */
 export function SavedScreen() {
+  const router = useRouter();
   const { savedPets, unsavePet, sendRequest, restorePet } = useWebApp();
   const [sent, setSent] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
@@ -55,6 +59,7 @@ export function SavedScreen() {
   return (
     <Page>
       <Shell>
+        <BackButton onClick={() => router.back()}>← Volver</BackButton>
         <Header>
           <h1>Guardados</h1>
           <p>Los perfiles que apartaste para decidir con calma. Podés enviarles una solicitud o devolverlos al mazo.</p>

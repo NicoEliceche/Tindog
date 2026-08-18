@@ -145,7 +145,7 @@ export function PetFormScreen() {
           ni indice de secciones (la web tampoco lo muestra en el telefono). */}
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 10) }]}>
         <Pressable accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={styles.back}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.heading} />
         </Pressable>
         <Text style={styles.headerTitle}>Nueva Mascota</Text>
       </View>

@@ -124,8 +124,13 @@ export function AppNavigator({ onLogout }: { onLogout: () => Promise<void> }) {
           // El fondo animado igual se ve, porque el header usa un color
           // traslúcido en vez de tapar.
           headerStyle: { backgroundColor: theme.colors.surface },
-          headerTintColor: theme.colors.text,
+          // La flecha de volver acompana al titulo en dorado, como el
+          // "Volver" de la web.
+          headerTintColor: theme.colors.heading,
           headerTitleStyle: { fontWeight: '900', color: theme.colors.heading },
+          // iOS muestra el titulo de la pantalla anterior junto a la flecha;
+          // fijarlo en "Volver" iguala el texto con el de la web.
+          headerBackTitle: 'Volver',
           headerShadowVisible: false,
           // Transparente para que el fondo se vea a través de las pantallas.
           contentStyle: { backgroundColor: 'transparent' },
