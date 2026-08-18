@@ -7,9 +7,9 @@ import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { SafeLocationReview } from '../../../core/types/appointment.types';
-import type { RootStackParamList } from '../../../navigation/types';
+import type { AppointmentsStackParamList } from '../../../navigation/types';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'LocationReviews'>;
+type Props = NativeStackScreenProps<AppointmentsStackParamList, 'LocationReviews'>;
 
 export function LocationReviewsScreen({ route }: Props) {
   const theme = useAppTheme(); const styles = useMemo(() => createStyles(theme), [theme]);

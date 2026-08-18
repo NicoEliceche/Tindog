@@ -39,7 +39,7 @@ export function NotificationBell() {
   const go = (item: AppNotification) => {
     close();
     if (item.target === 'Messages' && item.conversationId) {
-      navigation.navigate('ChatRoom', { conversationId: item.conversationId });
+      navigation.navigate('Main', { screen: 'Messages', params: { screen: 'ChatRoom', params: { conversationId: item.conversationId } } });
       return;
     }
     if (item.target === 'Requests') {
