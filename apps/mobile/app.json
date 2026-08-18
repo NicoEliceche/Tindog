@@ -60,9 +60,11 @@
       ]
     ],
     "extra": {
+      "googleMapsConfigured": false,
       "eas": {
-        "projectId": "9ed5167c-cb63-4b26-893f-6854dc776c16"
+        "projectId": "b6c5b5d7-04d6-40a1-85be-687b57f4d80e"
       }
-    }
+    },
+    "owner": "nicoelicecheadm"
   }
 }
