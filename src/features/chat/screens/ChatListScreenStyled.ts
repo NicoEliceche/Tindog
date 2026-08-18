@@ -86,8 +86,10 @@ export const Chat = styled.button<{ $active?: boolean }>`
   gap: 12px;
   text-align: left;
   border-radius: ${({ theme }) => theme.radius.lg};
-  border-bottom: 1px solid ${({ theme, $active }) => ($active ? 'transparent' : theme.color.border)};
-  background: ${({ theme, $active }) => ($active ? theme.color.primaryFaded : 'transparent')};
+  /* Las filas inactivas tambien llevan fondo propio: sin el, el texto quedaba
+     sobre el fondo animado y se mezclaba con las particulas en movimiento. */
+  border: 1px solid ${({ theme }) => theme.color.border};
+  background: ${({ theme, $active }) => ($active ? theme.color.primaryFaded : theme.color.surface)};
   box-shadow: ${({ theme, $active }) => ($active ? theme.glow.subtle : 'none')};
   transition: background 0.2s ease, box-shadow 0.2s ease;
 

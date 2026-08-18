@@ -22,12 +22,31 @@ export function ChatRoomScreen({ route, navigation }: Props) {
   const [draft, setDraft] = useState('');
   const activeAppointment = appointments.find((item) => item.conversationId === route.params.conversationId && ['scheduled', 'in_progress'].includes(item.status));
 
-  if (!conversation) return <View style={styles.center}><Text style={styles.title}>Conversación no disponible</Text></View>;
+  if (!conversation) return (
+    <View style={[styles.center, { paddingTop: insets.top }]}>
+      <Text style={styles.title}>Conversación no disponible</Text>
+      <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} style={styles.back}>
+        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+      </Pressable>
+    </View>
+  );
   const submit = () => { sendMessage(conversation.id, draft); setDraft(''); setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50); };
 
   return (
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
-      <View style={styles.contact}><Image source={{ uri: conversation.avatar }} style={styles.avatar} /><View style={{ flex: 1 }}><Text style={styles.name}>{conversation.ownerName}</Text><Text style={styles.meta}>{conversation.petName} · conexión aceptada</Text></View><Ionicons name="shield-checkmark" size={22} color={theme.colors.success} /></View>
+      {/* Encabezado unico: flecha, foto, nombre, mascota y escudo en una sola
+          barra, igual que en la web. */}
+      <View style={[styles.contact, { paddingTop: Math.max(insets.top, 8) }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={styles.back}>
+          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+        </Pressable>
+        <Image source={{ uri: conversation.avatar }} style={styles.avatar} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.name} numberOfLines={1}>{conversation.ownerName}</Text>
+          <Text style={styles.meta} numberOfLines={1}>{conversation.petName} · conexión aceptada</Text>
+        </View>
+        <Ionicons name="shield-checkmark" size={22} color={theme.colors.success} />
+      </View>
       <View style={styles.safety}><Ionicons name="shield-outline" size={18} color={theme.colors.primary} /><Text style={styles.safetyText}>Mantené la conversación en Tindog y coordiná el primer encuentro en un lugar público.</Text></View>
       {activeAppointment ? <Pressable accessibilityRole="button" onPress={() => navigation.navigate('SafeLocations', { appointmentId: activeAppointment.id })} style={styles.appointmentBanner}><Ionicons name="calendar" size={19} color={theme.colors.onPrimary} /><Text style={styles.appointmentText} numberOfLines={1}>{new Date(activeAppointment.startAt).toLocaleString('es-AR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · {activeAppointment.location.name}</Text><Ionicons name="chevron-forward" size={18} color={theme.colors.onPrimary} /></Pressable> : null}
       <FlatList ref={listRef} data={data} keyExtractor={(item) => item.id} renderItem={({ item }) => <MessageBubble item={item} theme={theme} />} contentContainerStyle={styles.messages} showsVerticalScrollIndicator={false} onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })} />
@@ -47,7 +66,7 @@ function MessageBubble({ item, theme }: { item: ChatMessage; theme: AppTheme }) 
 
 function createStyles(theme: AppTheme) { return StyleSheet.create({
   screen: { flex: 1, backgroundColor: 'transparent' }, center: { flex: 1, alignItems: 'center', justifyContent: 'center' }, title: { color: theme.colors.text, fontSize: 20, fontWeight: '900' },
-  contact: { minHeight: 68, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.border }, avatar: { width: 44, height: 44, borderRadius: 15 }, name: { color: theme.colors.text, fontSize: 16, fontWeight: '900' }, meta: { color: theme.colors.textSecondary, fontSize: 11, marginTop: 2 },
+  contact: { minHeight: 68, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 10, paddingBottom: 8, backgroundColor: theme.colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.border }, back: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' }, avatar: { width: 44, height: 44, borderRadius: 15 }, name: { color: theme.colors.text, fontSize: 16, fontWeight: '900' }, meta: { color: theme.colors.textSecondary, fontSize: 11, marginTop: 2 },
   safety: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: theme.colors.primaryFaded }, safetyText: { flex: 1, color: theme.colors.textSecondary, fontSize: 10, lineHeight: 14 },
   appointmentBanner: { minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, backgroundColor: theme.colors.primary }, appointmentText: { flex: 1, color: theme.colors.onPrimary, fontSize: 11, fontWeight: '900' },
   messages: { flexGrow: 1, justifyContent: 'flex-end', gap: 9, padding: 14 }, composerArea: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 10, paddingTop: 8, backgroundColor: theme.colors.surface, borderTopWidth: 1, borderTopColor: theme.colors.border }, calendar: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.primaryFaded },

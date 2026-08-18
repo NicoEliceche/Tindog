@@ -22,6 +22,9 @@ interface AppDataContextValue {
   blockedOwners: string[];
   blockOwner: (name: string) => void;
   unblockOwner: (name: string) => void;
+  notifications: AppNotification[];
+  unreadNotifications: number;
+  markNotificationsRead: () => void;
   sendConnectionRequest: (pet: Pet) => ConnectionRequest;
   respondToRequest: (requestId: string, accept: boolean) => void;
   sendMessage: (conversationId: string, body: string) => void;
@@ -41,6 +44,21 @@ export type NewPetDraft = Omit<Pet, 'id' | 'owner_ids' | 'personality_traits'> &
   personality_traits?: string[];
 };
 
+export type NotificationKind = 'request' | 'message' | 'appointment';
+
+export interface AppNotification {
+  id: string;
+  kind: NotificationKind;
+  title: string;
+  body: string;
+  avatar?: string;
+  /** Pantalla a la que lleva el toque sobre la notificacion. */
+  target: 'Requests' | 'Messages' | 'Appointments';
+  /** Conversacion a abrir, cuando el aviso viene de un mensaje. */
+  conversationId?: string;
+  read: boolean;
+}
+
 /** Mascota apartada desde Inicio, con la fecha en que se guardo. */
 export interface SavedPet {
   pet: Pet;
@@ -58,6 +76,10 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
   const [locations, setLocations] = useState(safeLocations);
   const [myPets, setMyPets] = useState<Pet[]>(seededPets);
   const [savedPets, setSavedPets] = useState<SavedPet[]>([]);
+  // Los avisos no son un estado aparte: se derivan de lo que ya paso en la
+  // app, asi no pueden quedar desincronizados con la realidad. Solo se guarda
+  // cuales fueron leidos.
+  const [readNotifications, setReadNotifications] = useState<string[]>([]);
   const [blockedOwners, setBlockedOwners] = useState<string[]>([]);
 
   /**
@@ -200,15 +222,69 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
     setAppointments((current) => current.map((item) => item.location.id === locationId && item.status === 'completed' ? { ...item, reviewSubmitted: true } : item));
   };
 
+  const notifications = useMemo<AppNotification[]>(() => {
+    const items: Omit<AppNotification, 'read'>[] = [];
+
+    for (const request of requests) {
+      if (request.direction !== 'incoming' || request.status !== 'pending') continue;
+      items.push({
+        id: `notif-req-${request.id}`,
+        kind: 'request',
+        title: 'Nueva solicitud de conexion',
+        body: `${request.ownerName} quiere conectar a ${request.pet.name} con Firulais.`,
+        avatar: request.ownerAvatar,
+        target: 'Requests',
+      });
+    }
+
+    for (const chat of conversations) {
+      if (!chat.unread) continue;
+      items.push({
+        id: `notif-msg-${chat.id}`,
+        kind: 'message',
+        title: `Mensaje de ${chat.ownerName}`,
+        body: chat.lastMessage,
+        avatar: chat.avatar,
+        target: 'Messages',
+        conversationId: chat.id,
+      });
+    }
+
+    const now = Date.now();
+    for (const appointment of appointments) {
+      if (appointment.status !== 'scheduled') continue;
+      const hours = (new Date(appointment.startAt).getTime() - now) / 3_600_000;
+      // Solo avisamos de lo que esta por venir, no de lo que ya paso.
+      if (hours < 0 || hours > 72) continue;
+      items.push({
+        id: `notif-appt-${appointment.id}`,
+        kind: 'appointment',
+        title: 'Cita proxima',
+        body: `Paseo con ${appointment.ownerName} en ${appointment.location.name}.`,
+        target: 'Appointments',
+      });
+    }
+
+    return items.map((item) => ({ ...item, read: readNotifications.includes(item.id) }));
+  }, [appointments, conversations, readNotifications, requests]);
+
+  const unreadNotifications = notifications.filter((item) => !item.read).length;
+
+  const markNotificationsRead = useCallback(() => {
+    setReadNotifications((current) => Array.from(new Set([...current, ...notifications.map((item) => item.id)])));
+  }, [notifications]);
+
   const value = useMemo<AppDataContextValue>(() => ({
     profile, requests, conversations, messages, appointments, locations, myPets,
     sendConnectionRequest, respondToRequest, sendMessage, scheduleAppointment, createPet, adoptRemotePets,
     savedPets, savePet, unsavePet, blockedOwners, blockOwner, unblockOwner,
+    notifications, unreadNotifications, markNotificationsRead,
     updateAppointmentStatus, addLocationReview,
     updateProfileAvatar: (uri) => setProfile((current) => ({ ...current, avatar: uri })),
     updateProfile: (updates) => setProfile((current) => ({ ...current, ...updates })),
-  }), [adoptRemotePets, appointments, blockOwner, blockedOwners, conversations, locations, messages, myPets, profile,
-    requests, savePet, savedPets, unblockOwner, unsavePet]);
+  }), [adoptRemotePets, appointments, blockOwner, blockedOwners, conversations, locations, markNotificationsRead,
+    messages, myPets, notifications, profile, requests, savePet, savedPets, unblockOwner, unreadNotifications,
+    unsavePet]);
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
 }

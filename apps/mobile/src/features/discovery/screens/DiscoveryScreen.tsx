@@ -8,6 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchDiscoveryPets } from '../../../core/data/services/petService';
+import { NotificationBell } from '../../../shared/components/NotificationBell';
 import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
@@ -180,14 +181,19 @@ export function DiscoveryScreen() {
     <View style={styles.screen}>
       <View style={[styles.safeArea, { paddingTop: Math.max(insets.top + 6, 10) }]}>
         <View style={styles.header}>
-          <View style={styles.headerSpacer} />
-          <View style={styles.brand}>
+          {/* La marca se centra sobre el ancho completo del encabezado, con la
+              campana y la foto encima. Repartir el ancho en columnas dejaba a
+              la marca sin lugar y el subtitulo volvia a envolver. */}
+          <View pointerEvents="none" style={styles.brand}>
             <Text style={[styles.brandName, !compact && styles.brandNameLarge]}>TINDOG</Text>
             <Text style={styles.tagline} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>ENCONTRÁ SU PAREJA IDEAL</Text>
           </View>
-          <View style={styles.profileChip}>
-            {profile.avatar ? <Image source={{ uri: profile.avatar }} style={styles.avatar} /> : <Text style={styles.initial}>{firstName[0]?.toUpperCase()}</Text>}
-            <Text style={styles.profileName} numberOfLines={1}>{firstName}</Text>
+          <View style={styles.headerActions}>
+            <NotificationBell />
+            <View style={styles.profileChip}>
+              {profile.avatar ? <Image source={{ uri: profile.avatar }} style={styles.avatar} /> : <Text style={styles.initial}>{firstName[0]?.toUpperCase()}</Text>}
+              <Text style={styles.profileName} numberOfLines={1}>{firstName}</Text>
+            </View>
           </View>
         </View>
 
@@ -288,9 +294,9 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: 'transparent' },
     safeArea: { flex: 1, width: '100%', maxWidth: theme.layout.maxPhoneWidth, alignSelf: 'center', paddingHorizontal: theme.spacing.lg },
-    header: { minHeight: 78, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.sm },
-    headerSpacer: { width: 58 },
-    brand: { flex: 1, alignItems: 'center' },
+    header: { minHeight: 78, justifyContent: 'center', marginBottom: theme.spacing.sm },
+    headerActions: { position: 'absolute', right: 0, flexDirection: 'row', alignItems: 'center' },
+    brand: { alignItems: 'center' },
     brandName: { color: theme.colors.primary, fontWeight: '900', fontSize: 34, letterSpacing: 3 },
     brandNameLarge: { fontSize: 42, letterSpacing: 4 },
     // A 16 el subtitulo necesitaba unos 267px y en el header solo quedan

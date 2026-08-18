@@ -65,14 +65,14 @@ export function ChatListScreen() {
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: 'transparent' }, content: { paddingHorizontal: 16, paddingBottom: 28 },
-    title: { color: theme.colors.text, fontSize: 32, fontWeight: '900' }, subtitle: { color: theme.colors.textSecondary, fontSize: 14, lineHeight: 21, marginTop: 5 },
+    title: { color: theme.colors.primary, fontSize: 32, fontWeight: '900' }, subtitle: { color: theme.colors.textSecondary, fontSize: 14, lineHeight: 21, marginTop: 5 },
     search: { minHeight: 50, flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 16, paddingHorizontal: 14, borderRadius: 99, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border },
     input: { flex: 1, color: theme.colors.text, fontSize: 15 }, requests: { gap: 9, marginBottom: 18 }, sectionTitle: { color: theme.colors.text, fontSize: 16, fontWeight: '900', marginVertical: 8 },
     requestCard: { minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 9, padding: 10, borderRadius: 20, backgroundColor: theme.colors.primaryFaded, borderWidth: 1, borderColor: theme.colors.primaryBorder },
     requestPhoto: { width: 48, height: 48, borderRadius: 16 }, requestTitle: { color: theme.colors.text, fontSize: 14, fontWeight: '900' }, requestMeta: { color: theme.colors.textSecondary, fontSize: 11, marginTop: 2 },
     roundSecondary: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surface }, roundPrimary: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.primary },
-    row: { minHeight: 86, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 }, avatar: { width: 58, height: 58, borderRadius: 20, backgroundColor: theme.colors.surfaceAlt }, body: { flex: 1, gap: 2 },
+    row: { minHeight: 86, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 20, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border }, avatar: { width: 58, height: 58, borderRadius: 20, backgroundColor: theme.colors.surfaceAlt }, body: { flex: 1, gap: 2 },
     topRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 }, name: { flex: 1, color: theme.colors.text, fontSize: 16, fontWeight: '900' }, time: { color: theme.colors.textMuted, fontSize: 11 }, pet: { color: theme.colors.primary, fontSize: 11, fontWeight: '900' }, message: { color: theme.colors.textSecondary, fontSize: 13 },
-    unread: { width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.primary }, divider: { height: StyleSheet.hairlineWidth, marginLeft: 70, backgroundColor: theme.colors.border }, empty: { paddingVertical: 44, alignItems: 'center', gap: 10 }, emptyTitle: { color: theme.colors.text, fontSize: 17, fontWeight: '900' },
+    unread: { width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.primary }, divider: { height: 9 }, empty: { paddingVertical: 44, alignItems: 'center', gap: 10 }, emptyTitle: { color: theme.colors.text, fontSize: 17, fontWeight: '900' },
   });
 }

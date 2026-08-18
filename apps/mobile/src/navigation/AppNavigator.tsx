@@ -121,7 +121,10 @@ export function AppNavigator({ onLogout }: { onLogout: () => Promise<void> }) {
           {() => <MainTabs onLogout={onLogout} />}
         </Stack.Screen>
         <Stack.Screen name="PetProfile" component={PetProfileScreen} options={{ title: 'Panel de mascota' }} />
-        <Stack.Screen name="ChatRoom" component={ChatRoomScreen} options={{ title: 'Conversación' }} />
+        {/* El chat dibuja su propio encabezado (foto, nombre, mascota, escudo)
+            en una sola barra, como en la web. La barra del stack quedaba
+            encima repitiendo la flecha y el titulo. */}
+        <Stack.Screen name="ChatRoom" component={ChatRoomScreen} options={{ headerShown: false }} />
         <Stack.Screen name="AppointmentPlanner" component={AppointmentPlannerScreen} options={{ title: 'Agendar encuentro', presentation: 'modal' }} />
         <Stack.Screen name="SafeLocations" component={SafeLocationsScreen} options={{ title: 'Puntos recomendados' }} />
         <Stack.Screen name="LocationReviews" component={LocationReviewsScreen} options={{ title: 'Reseñas del punto' }} />
