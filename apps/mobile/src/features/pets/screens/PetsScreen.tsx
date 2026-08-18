@@ -4,29 +4,30 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useToast } from '../../../shared/components/Toast';
 import { fetchMyPets } from '../../../core/data/services/petService';
+import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
-import type { Pet } from '../../../core/types/pet.types';
 import type { RootStackParamList } from '../../../navigation/types';
 import { BreederBadge } from '../components/BreederBadge';
 
 export function PetsScreen() {
-  const toast = useToast();
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const [pets, setPets] = useState<Pet[]>([]);
+  const { myPets, adoptRemotePets } = useAppData();
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { fetchMyPets().then(setPets).finally(() => setLoading(false)); }, []);
+  // El servicio sigue siendo la fuente cuando hay backend, pero la lista se
+  // lee del provider: es lo que permite que una mascota recien creada aparezca
+  // sin volver a pedirla.
+  useEffect(() => { fetchMyPets().then(adoptRemotePets).finally(() => setLoading(false)); }, [adoptRemotePets]);
 
   return (
     <View style={styles.screen}>
       <FlatList
-        data={pets}
+        data={myPets}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 16, 24) }]}
@@ -47,14 +48,9 @@ export function PetsScreen() {
         ListEmptyComponent={loading ? <ActivityIndicator size="large" color={theme.colors.primary} /> : <Text style={styles.subtitle}>Todavía no cargaste mascotas.</Text>}
         ListFooterComponent={<Pressable
           accessibilityRole="button"
+          accessibilityLabel="Agregar mascota"
           style={styles.addButton}
-          // El alta de mascotas todavía sólo existe en la web. Sin onPress el
-          // botón no hacía nada y parecía roto; avisar es más honesto que
-          // simular una acción que no ocurre.
-          onPress={() => toast({
-            title: 'Disponible en la web',
-            body: 'Por ahora las mascotas se agregan desde el navegador. Estamos trabajando en traerlo a la aplicación.',
-          })}
+          onPress={() => navigation.navigate('PetForm')}
         ><Ionicons name="add" size={22} color={theme.colors.onPrimary} /><Text style={styles.addText}>Agregar mascota</Text></Pressable>}
       />
     </View>

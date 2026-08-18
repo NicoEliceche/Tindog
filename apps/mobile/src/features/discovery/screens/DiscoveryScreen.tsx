@@ -176,7 +176,7 @@ export function DiscoveryScreen() {
           <View style={styles.headerSpacer} />
           <View style={styles.brand}>
             <Text style={[styles.brandName, !compact && styles.brandNameLarge]}>TINDOG</Text>
-            <Text style={styles.tagline}>ENCONTRÁ SU PAREJA IDEAL</Text>
+            <Text style={styles.tagline} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>ENCONTRÁ SU PAREJA IDEAL</Text>
           </View>
           <View style={styles.profileChip}>
             {profile.avatar ? <Image source={{ uri: profile.avatar }} style={styles.avatar} /> : <Text style={styles.initial}>{firstName[0]?.toUpperCase()}</Text>}
@@ -286,7 +286,11 @@ function createStyles(theme: AppTheme) {
     brand: { flex: 1, alignItems: 'center' },
     brandName: { color: theme.colors.primary, fontWeight: '900', fontSize: 34, letterSpacing: 3 },
     brandNameLarge: { fontSize: 42, letterSpacing: 4 },
-    tagline: { color: theme.colors.textMuted, fontSize: 16, fontWeight: '900', letterSpacing: 1.2 },
+    // A 16 el subtitulo necesitaba unos 267px y en el header solo quedan
+    // entre 212 y 264 segun el telefono: por eso envolvia. A 12 entra en todos
+    // con margen, y numberOfLines mas el autoajuste lo garantizan tambien con
+    // el tamano de fuente del sistema agrandado.
+    tagline: { color: theme.colors.textMuted, fontSize: 12, fontWeight: '900', letterSpacing: 0.8 },
     profileChip: { width: 58, alignItems: 'center', gap: 2 },
     avatar: { width: 38, height: 38, borderRadius: 19 },
     initial: { width: 38, height: 38, borderRadius: 19, textAlign: 'center', textAlignVertical: 'center', color: theme.colors.primary, backgroundColor: theme.colors.primaryFaded, fontWeight: '900' },

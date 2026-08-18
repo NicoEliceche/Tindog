@@ -1,4 +1,5 @@
-import { createContext, useContext, useMemo, useState, type PropsWithChildren } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type PropsWithChildren } from 'react';
+import { myPets as seededPets } from '../data/mock/pets';
 import { connectionRequests as seededRequests, initialAppointments, initialConversations, initialMessages, safeLocations } from '../data/mock/social';
 import type { Appointment, AppointmentStatus, SafeLocationReview } from '../types/appointment.types';
 import type { AuthUser } from '../types/auth.types';
@@ -12,6 +13,9 @@ interface AppDataContextValue {
   messages: Record<string, ChatMessage[]>;
   appointments: Appointment[];
   locations: typeof safeLocations;
+  myPets: Pet[];
+  createPet: (draft: NewPetDraft) => Pet;
+  adoptRemotePets: (pets: Pet[]) => void;
   sendConnectionRequest: (pet: Pet) => ConnectionRequest;
   respondToRequest: (requestId: string, accept: boolean) => void;
   sendMessage: (conversationId: string, body: string) => void;
@@ -22,6 +26,15 @@ interface AppDataContextValue {
   updateProfile: (updates: Partial<Pick<AuthUser, 'name' | 'avatar'>>) => void;
 }
 
+/**
+ * Lo que el formulario de alta puede completar. El resto de campos de `Pet`
+ * los deriva `createPet`, para que la pantalla no tenga que inventar un id ni
+ * saber a quien pertenece la mascota.
+ */
+export type NewPetDraft = Omit<Pet, 'id' | 'owner_ids' | 'personality_traits'> & {
+  personality_traits?: string[];
+};
+
 const AppDataContext = createContext<AppDataContextValue | null>(null);
 
 export function AppDataProvider({ user, children }: PropsWithChildren<{ user: AuthUser }>) {
@@ -31,6 +44,36 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
   const [messages, setMessages] = useState(initialMessages);
   const [appointments, setAppointments] = useState(initialAppointments);
   const [locations, setLocations] = useState(safeLocations);
+  const [myPets, setMyPets] = useState<Pet[]>(seededPets);
+
+  /**
+   * Alta de mascota. Vive en el provider y no en la pantalla porque la lista
+   * de "Mis perros" tiene que ver la nueva mascota apenas se guarda, sin
+   * volver a pedirla al servicio.
+   */
+  const createPet = (draft: NewPetDraft): Pet => {
+    const pet: Pet = {
+      ...draft,
+      id: `pet-${Date.now()}`,
+      owner_ids: ['me'],
+      personality_traits: draft.personality_traits ?? [],
+    };
+    setMyPets((current) => [pet, ...current]);
+    return pet;
+  };
+
+  /**
+   * Reemplaza la lista con lo que devolvio el servicio, conservando las altas
+   * hechas en esta sesion: el servicio todavia responde con datos de prueba y
+   * pisaria la mascota recien creada.
+   */
+  const adoptRemotePets = useCallback((pets: Pet[]) => {
+    setMyPets((current) => {
+      const locals = current.filter((pet) => pet.id.startsWith('pet-'));
+      const remoteIds = new Set(pets.map((pet) => pet.id));
+      return [...locals.filter((pet) => !remoteIds.has(pet.id)), ...pets];
+    });
+  }, []);
 
   const sendConnectionRequest = (pet: Pet) => {
     const existing = requests.find((request) => request.pet.id === pet.id && request.direction === 'outgoing' && request.status === 'pending');
@@ -121,12 +164,12 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
   };
 
   const value = useMemo<AppDataContextValue>(() => ({
-    profile, requests, conversations, messages, appointments, locations,
-    sendConnectionRequest, respondToRequest, sendMessage, scheduleAppointment,
+    profile, requests, conversations, messages, appointments, locations, myPets,
+    sendConnectionRequest, respondToRequest, sendMessage, scheduleAppointment, createPet, adoptRemotePets,
     updateAppointmentStatus, addLocationReview,
     updateProfileAvatar: (uri) => setProfile((current) => ({ ...current, avatar: uri })),
     updateProfile: (updates) => setProfile((current) => ({ ...current, ...updates })),
-  }), [appointments, conversations, locations, messages, profile, requests]);
+  }), [adoptRemotePets, appointments, conversations, locations, messages, myPets, profile, requests]);
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
 }
