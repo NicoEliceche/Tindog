@@ -66,8 +66,11 @@ export const Brand = styled.div`
 
   small {
     color: ${({ theme }) => theme.color.textTertiary};
-    font-size: 0.96rem;
-    letter-spacing: 1.2px;
+    /* Más chico y en una sola línea: a 0.96rem envolvía en pantallas
+       angostas y chocaba con la campana y el avatar. */
+    font-size: 0.72rem;
+    letter-spacing: 0.6px;
+    white-space: nowrap;
   }
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {

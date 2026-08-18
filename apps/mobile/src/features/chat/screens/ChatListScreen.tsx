@@ -64,7 +64,7 @@ export function ChatListScreen() {
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    screen: { flex: 1, backgroundColor: theme.colors.background }, content: { paddingHorizontal: 16, paddingBottom: 28 },
+    screen: { flex: 1, backgroundColor: 'transparent' }, content: { paddingHorizontal: 16, paddingBottom: 28 },
     title: { color: theme.colors.text, fontSize: 32, fontWeight: '900' }, subtitle: { color: theme.colors.textSecondary, fontSize: 14, lineHeight: 21, marginTop: 5 },
     search: { minHeight: 50, flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 16, paddingHorizontal: 14, borderRadius: 99, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border },
     input: { flex: 1, color: theme.colors.text, fontSize: 15 }, requests: { gap: 9, marginBottom: 18 }, sectionTitle: { color: theme.colors.text, fontSize: 16, fontWeight: '900', marginVertical: 8 },

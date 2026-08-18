@@ -45,6 +45,9 @@ function MainTabs({ onLogout }: { onLogout: () => Promise<void> }) {
   return (
     <Tabs.Navigator
       screenOptions={({ route }) => ({
+        // Sin esto, el contenedor de las pantallas pinta su propio fondo y
+        // tapa el canvas animado que vive detrás del navegador.
+        sceneStyle: { backgroundColor: 'transparent' },
         headerShown: false,
         tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: theme.colors.primary,
@@ -99,8 +102,11 @@ export function AppNavigator({ onLogout }: { onLogout: () => Promise<void> }) {
       <AuroraBackground theme={theme} />
       <Stack.Navigator
         screenOptions={{
-          headerStyle: { backgroundColor: 'transparent' },
-          headerTransparent: true,
+          // Sin `headerTransparent`: con él, el contenido arranca debajo de
+          // la barra y el título se superpone con lo primero de la pantalla.
+          // El fondo animado igual se ve, porque el header usa un color
+          // traslúcido en vez de tapar.
+          headerStyle: { backgroundColor: theme.colors.surface },
           headerTintColor: theme.colors.text,
           headerTitleStyle: { fontWeight: '900' },
           headerShadowVisible: false,

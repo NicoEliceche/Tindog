@@ -46,7 +46,9 @@ export function DiscoveryScreen() {
   const cardWidth = Math.min(width - theme.spacing.lg * 2, 430);
   const available = height - insets.top - insets.bottom - (compact ? 132 : 148);
   const cardHeight = Math.min(Math.max(Math.round(available * 0.72), compact ? 330 : 400), compact ? 440 : 540);
-  const imageHeight = Math.round(cardHeight * 0.67);
+  // La foto cede alto al texto: con 67% el nombre, la raza y la biografía no
+  // entraban en el resto de la tarjeta y se salían del marco.
+  const imageHeight = Math.round(cardHeight * 0.58);
   const firstName = profile.name.trim().split(/\s+/)[0] || 'Perfil';
 
   const translateX = useSharedValue(0);
@@ -277,14 +279,14 @@ function Action({ icon, label, primary, disabled, theme, onPress }: { icon: keyo
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    screen: { flex: 1, backgroundColor: theme.colors.background },
+    screen: { flex: 1, backgroundColor: 'transparent' },
     safeArea: { flex: 1, width: '100%', maxWidth: theme.layout.maxPhoneWidth, alignSelf: 'center', paddingHorizontal: theme.spacing.lg },
     header: { minHeight: 78, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.sm },
     headerSpacer: { width: 58 },
     brand: { flex: 1, alignItems: 'center' },
-    brandName: { color: theme.colors.primary, fontWeight: '900', fontSize: 17, letterSpacing: 2 },
-    brandNameLarge: { fontSize: 21, letterSpacing: 2.6 },
-    tagline: { color: theme.colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 0.8 },
+    brandName: { color: theme.colors.primary, fontWeight: '900', fontSize: 34, letterSpacing: 3 },
+    brandNameLarge: { fontSize: 42, letterSpacing: 4 },
+    tagline: { color: theme.colors.textMuted, fontSize: 16, fontWeight: '900', letterSpacing: 1.2 },
     profileChip: { width: 58, alignItems: 'center', gap: 2 },
     avatar: { width: 38, height: 38, borderRadius: 19 },
     initial: { width: 38, height: 38, borderRadius: 19, textAlign: 'center', textAlignVertical: 'center', color: theme.colors.primary, backgroundColor: theme.colors.primaryFaded, fontWeight: '900' },
@@ -312,12 +314,12 @@ function createStyles(theme: AppTheme) {
     nopeLabel: { right: 20 },
     swipeLabelText: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 10, borderWidth: 3, fontSize: 20, fontWeight: '900', letterSpacing: 1.5, textTransform: 'uppercase' },
     petImage: { width: '100%', backgroundColor: theme.colors.surfaceAlt },
-    cardBody: { flex: 1, padding: theme.spacing.lg, gap: 4 },
+    cardBody: { flex: 1, paddingHorizontal: theme.spacing.lg, paddingTop: theme.spacing.sm, paddingBottom: theme.spacing.md, gap: 2, justifyContent: 'flex-start' },
     titleRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
-    petName: { color: theme.colors.primary, fontSize: 28, fontWeight: '900' },
-    age: { color: theme.colors.text, fontSize: 22, fontWeight: '700' },
+    petName: { color: theme.colors.primary, fontSize: 25, fontWeight: '900' },
+    age: { color: theme.colors.text, fontSize: 20, fontWeight: '700' },
     meta: { color: theme.colors.textSecondary, fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
-    bio: { color: theme.colors.text, fontSize: 15, lineHeight: 21, marginTop: 4 },
+    bio: { color: theme.colors.text, fontSize: 14, lineHeight: 19, marginTop: 3 },
     actions: { width: '100%', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-around', paddingTop: theme.spacing.md },
     muted: { color: theme.colors.textSecondary, fontSize: 15, lineHeight: 22, textAlign: 'center' },
     emptyTitle: { color: theme.colors.text, fontSize: 24, fontWeight: '900', textAlign: 'center' },

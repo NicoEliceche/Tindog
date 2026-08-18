@@ -4,7 +4,7 @@
 import { logoutCurrentAuthSession } from '@core/data/services/authService';
 import { useWebApp } from '@core/providers/WebAppProvider';
 import { withPublicBasePath } from '@core/routing/publicPath';
-import { Camera, ChevronRight, Edit3, Lock, LogOut, Mail, MapPin, Settings, ShieldCheck, User } from 'lucide-react';
+import { Bookmark, Camera, ChevronRight, Edit3, Lock, LogOut, Mail, MapPin, Settings, ShieldCheck, User, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ChangeEvent, useRef, useState } from 'react';
 import { WebContent, WebHeading, WebScreen } from '@shared/components/layout/WebScreen';
@@ -98,6 +98,24 @@ export function ProfileScreen() {
             </Row>
 
             <Section>Cuenta</Section>
+            {/* En el teléfono la barra inferior llega a cinco destinos y estas
+                secciones no entran ahí, así que se alcanzan desde acá. En
+                escritorio además están en la barra lateral. */}
+            <Row onClick={() => router.push('/requests')}>
+              <UserPlus />
+              <div><strong>Solicitudes</strong><small>Conexiones recibidas y enviadas</small></div>
+              <ChevronRight size={18} />
+            </Row>
+            <Row onClick={() => router.push('/saved')}>
+              <Bookmark />
+              <div><strong>Guardados</strong><small>Perfiles que apartaste para después</small></div>
+              <ChevronRight size={18} />
+            </Row>
+            <Row onClick={() => router.push('/safety')}>
+              <ShieldCheck />
+              <div><strong>Seguridad</strong><small>Bloqueos y pautas para los encuentros</small></div>
+              <ChevronRight size={18} />
+            </Row>
             <Row onClick={() => router.push('/settings')}>
               <Settings />
               <div><strong>Privacidad y configuración</strong><small>Apariencia, avisos, descubrimiento y seguridad</small></div>
