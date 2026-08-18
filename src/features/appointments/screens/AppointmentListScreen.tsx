@@ -5,7 +5,8 @@ import { CalendarDays, Check, Clock, MapPin, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { WebContent, WebHeading, WebScreen, WebSubtitle } from '@shared/components/layout/WebScreen';
-import { Actions, Card, CardTop, Details, Empty, Grid, Pill, Segment } from './AppointmentListScreenStyled';
+import { Modal } from '@shared/components/ui';
+import { Actions, Card, CardTop, ConfirmBody, Details, Empty, Grid, Pill, Segment } from './AppointmentListScreenStyled';
 
 const labels: Record<WebAppointmentStatus, string> = { scheduled: 'Agendada', in_progress: 'En progreso', completed: 'Finalizada', cancelled: 'Cancelada' };
 
@@ -13,6 +14,9 @@ export function AppointmentListScreen() {
   const router = useRouter();
   const { appointments, setAppointmentStatus } = useWebApp();
   const [tab, setTab] = useState<'upcoming' | 'history'>('upcoming');
+  // Cancelar es irreversible, asi que se confirma antes. Antes bastaba un
+  // clic para deshacer una cita ya coordinada con otra persona.
+  const [pendingCancel, setPendingCancel] = useState<string | null>(null);
   const visible = appointments.filter((item) => (tab === 'upcoming' ? ['scheduled', 'in_progress'].includes(effectiveStatus(item)) : ['completed', 'cancelled'].includes(item.status)));
 
   return (
@@ -47,7 +51,7 @@ export function AppointmentListScreen() {
                 </Details>
                 <Actions>
                   <button onClick={() => router.push(`/appointments/location?appointment=${item.id}`)}>Ver punto</button>
-                  {status === 'scheduled' ? <button className="danger" onClick={() => setAppointmentStatus(item.id, 'cancelled')}>Cancelar</button> : null}
+                  {status === 'scheduled' ? <button className="danger" onClick={() => setPendingCancel(item.id)}>Cancelar</button> : null}
                   {status === 'in_progress' ? <button className="primary" onClick={() => setAppointmentStatus(item.id, 'completed')}>Finalizar</button> : null}
                   {status === 'completed' && !item.reviewSubmitted ? <button className="primary" onClick={() => router.push(`/appointments/location?appointment=${item.id}&review=1`)}>Dejar reseña</button> : null}
                 </Actions>
@@ -64,6 +68,24 @@ export function AppointmentListScreen() {
           ) : null}
         </Grid>
       </WebContent>
+
+      <Modal open={!!pendingCancel} onClose={() => setPendingCancel(null)} title="Cancelar cita">
+        <ConfirmBody>
+          <p>La cita quedará visible en el historial como cancelada.</p>
+          <div className="actions">
+            <button onClick={() => setPendingCancel(null)}>Volver</button>
+            <button
+              className="danger"
+              onClick={() => {
+                if (pendingCancel) setAppointmentStatus(pendingCancel, 'cancelled');
+                setPendingCancel(null);
+              }}
+            >
+              Cancelar cita
+            </button>
+          </div>
+        </ConfirmBody>
+      </Modal>
     </WebScreen>
   );
 }

@@ -8,14 +8,16 @@ import { fetchMyPets } from '../../../core/data/services/petService';
 import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
-import type { RootStackParamList } from '../../../navigation/types';
+import type { PetsStackParamList, RootStackParamList } from '../../../navigation/types';
 import { BreederBadge } from '../components/BreederBadge';
 
 export function PetsScreen() {
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  // Dos pilas: la de la pestana (alta de mascota, conserva la barra inferior)
+  // y la general (panel de una mascota).
+  const navigation = useNavigation<NativeStackNavigationProp<PetsStackParamList & RootStackParamList>>();
   const { myPets, adoptRemotePets } = useAppData();
   const [loading, setLoading] = useState(true);
 
@@ -51,7 +53,7 @@ export function PetsScreen() {
           accessibilityLabel="Agregar mascota"
           style={styles.addButton}
           onPress={() => navigation.navigate('PetForm')}
-        ><Ionicons name="add" size={22} color={theme.colors.onPrimary} /><Text style={styles.addText}>Agregar mascota</Text></Pressable>}
+        ><Ionicons name="add" size={20} color={theme.colors.primary} /><Text style={styles.addText}>Agregar mascota</Text></Pressable>}
       />
     </View>
   );
@@ -62,7 +64,7 @@ function createStyles(theme: AppTheme) {
     screen: { flex: 1, backgroundColor: 'transparent' },
     content: { paddingHorizontal: 16, paddingBottom: 28 },
     header: { marginBottom: 20 },
-    title: { color: theme.colors.text, fontSize: 32, fontWeight: '900' },
+    title: { color: theme.colors.heading, fontSize: 32, fontWeight: '900' },
     subtitle: { color: theme.colors.textSecondary, fontSize: 15, lineHeight: 22, marginTop: 6 },
     card: { minHeight: 126, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: theme.colors.surface, borderRadius: 24, borderWidth: 1, borderColor: theme.colors.border },
     avatar: { width: 88, height: 102, borderRadius: 18, backgroundColor: theme.colors.surfaceAlt },
@@ -74,7 +76,9 @@ function createStyles(theme: AppTheme) {
     chip: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 99, backgroundColor: theme.colors.surfaceAlt },
     chipText: { color: theme.colors.textSecondary, fontSize: 10, fontWeight: '800' },
     status: { color: theme.colors.primary, fontSize: 11, fontWeight: '900', marginTop: 8 },
-    addButton: { minHeight: 50, marginTop: 18, borderRadius: 99, backgroundColor: theme.colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-    addText: { color: theme.colors.onPrimary, fontSize: 15, fontWeight: '900' },
+    // Misma tarjeta punteada que en la web: alta, con dorado tenue de fondo
+    // y borde discontinuo, en vez de la pastilla dorada solida que era.
+    addButton: { minHeight: 128, marginTop: 12, borderRadius: 24, backgroundColor: theme.colors.primaryFaded, borderWidth: 1, borderStyle: 'dashed', borderColor: theme.colors.primaryBorderStrong, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+    addText: { color: theme.colors.primary, fontSize: 15, fontWeight: '900' },
   });
 }

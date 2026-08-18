@@ -3,7 +3,6 @@ import { useNavigation } from '@react-navigation/native';
 import { useMemo, useRef, useState } from 'react';
 import {
   Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, Text, TextInput, View,
-  type LayoutChangeEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { pickProfilePhoto } from '../../../core/data/services/profilePhotoPicker';
@@ -12,18 +11,6 @@ import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import { useToast } from '../../../shared/components/Toast';
 import type { Competition, Gender, HealthRecord } from '../../../core/types/pet.types';
 import { createStyles } from './PetFormScreen.styles';
-
-/** Mismas secciones y en el mismo orden que el formulario de la web. */
-const SECTIONS = [
-  { id: 'basic', label: 'Datos básicos' },
-  { id: 'health', label: 'Salud' },
-  { id: 'breeding', label: 'Cría' },
-  { id: 'papers', label: 'Documentación' },
-  { id: 'competitions', label: 'Competencias' },
-  { id: 'lineage', label: 'Linaje' },
-] as const;
-
-type SectionId = (typeof SECTIONS)[number]['id'];
 
 const PAPER_OPTIONS = ['Vacunación', 'Microchip', 'Pedigrí', 'Pasaporte'];
 
@@ -39,11 +26,6 @@ export function PetFormScreen() {
   const { createPet } = useAppData();
 
   const scrollRef = useRef<ScrollView>(null);
-  // Donde arranca cada sección dentro del scroll, medido en el onLayout. Es lo
-  // que permite que el índice de arriba salte a la sección: en la web eso lo
-  // resuelve el navegador con anchors, acá hay que medirlo a mano.
-  const sectionOffsets = useRef<Record<string, number>>({});
-  const [activeSection, setActiveSection] = useState<SectionId>('basic');
 
   const [name, setName] = useState('');
   const [breed, setBreed] = useState('');
@@ -109,30 +91,19 @@ export function PetFormScreen() {
     }));
   };
 
-  const goToSection = (id: SectionId) => {
-    setActiveSection(id);
-    const offset = sectionOffsets.current[id];
-    if (offset !== undefined) scrollRef.current?.scrollTo({ y: Math.max(offset - 12, 0), animated: true });
-  };
-
-  /** Registra dónde arranca cada sección para que el índice pueda saltar ahí. */
-  const measure = (id: SectionId) => (event: LayoutChangeEvent) => {
-    sectionOffsets.current[id] = event.nativeEvent.layout.y;
-  };
-
   const handleSubmit = () => {
     // Nombre, raza y edad son los tres campos que la web marca como
     // obligatorios; sin ellos la tarjeta queda incompleta en la lista.
     if (!name.trim() || !breed.trim() || !age.trim()) {
       setError('Completá nombre, raza y edad para guardar el perfil.');
-      goToSection('basic');
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
       return;
     }
 
     const parsedAge = Number.parseInt(age, 10);
     if (Number.isNaN(parsedAge)) {
       setError('La edad tiene que ser un número.');
-      goToSection('basic');
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
       return;
     }
 
@@ -170,22 +141,13 @@ export function PetFormScreen() {
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.sectionNav}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionNavContent}>
-          {SECTIONS.map((section) => (
-            <Pressable
-              key={section.id}
-              accessibilityRole="button"
-              accessibilityState={{ selected: activeSection === section.id }}
-              onPress={() => goToSection(section.id)}
-              style={[styles.sectionChip, activeSection === section.id && styles.sectionChipActive]}
-            >
-              <Text style={[styles.sectionChipText, activeSection === section.id && styles.sectionChipTextActive]}>
-                {section.label}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
+      {/* Mismo encabezado que la web: flecha y titulo en linea, sin barra
+          ni indice de secciones (la web tampoco lo muestra en el telefono). */}
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 10) }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={styles.back}>
+          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+        </Pressable>
+        <Text style={styles.headerTitle}>Nueva Mascota</Text>
       </View>
 
       <ScrollView
@@ -211,7 +173,7 @@ export function PetFormScreen() {
           {photo ? 'Tocá la foto para cambiarla.' : 'JPG o PNG, hasta 5 MB.'}
         </Text>
 
-        <View onLayout={measure('basic')} style={styles.group}>
+        <View style={styles.group}>
           <Text style={styles.label}>Nombre del Perro</Text>
           <TextInput
             style={styles.input}
@@ -283,7 +245,7 @@ export function PetFormScreen() {
 
         <View style={styles.divider} />
 
-        <View onLayout={measure('health')} style={styles.group}>
+        <View style={styles.group}>
           <Text style={styles.sectionTitle}>Salud y Genética</Text>
           {healthRecords.map((record, index) => (
             <View key={index} style={styles.card}>
@@ -323,7 +285,7 @@ export function PetFormScreen() {
 
         <View style={styles.divider} />
 
-        <View onLayout={measure('breeding')} style={styles.group}>
+        <View style={styles.group}>
           <Text style={styles.sectionTitle}>Citas y Cruza</Text>
           <View style={styles.switchRow}>
             <Text style={styles.switchLabel}>¿Busca pareja para cría?</Text>
@@ -364,7 +326,7 @@ export function PetFormScreen() {
 
         <View style={styles.divider} />
 
-        <View onLayout={measure('papers')} style={styles.group}>
+        <View style={styles.group}>
           <Text style={styles.sectionTitle}>Documentación</Text>
           <View style={styles.switchRow}>
             <Text style={styles.switchLabel}>¿Tiene papeles/certificados?</Text>
@@ -396,7 +358,7 @@ export function PetFormScreen() {
 
         <View style={styles.divider} />
 
-        <View onLayout={measure('competitions')} style={styles.group}>
+        <View style={styles.group}>
           <Text style={styles.sectionTitle}>Trayectoria</Text>
           <View style={styles.switchRow}>
             <Text style={styles.switchLabel}>¿Participa en concursos?</Text>
@@ -452,7 +414,7 @@ export function PetFormScreen() {
 
         <View style={styles.divider} />
 
-        <View onLayout={measure('lineage')} style={styles.group}>
+        <View style={styles.group}>
           <Text style={styles.sectionTitle}>Linaje y Árbol Genealógico</Text>
           <TextInput
             style={styles.input}

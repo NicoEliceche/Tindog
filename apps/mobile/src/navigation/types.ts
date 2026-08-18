@@ -8,6 +8,11 @@ export type MainTabParamList = {
   Profile: undefined;
 };
 
+export type PetsStackParamList = {
+  PetsList: undefined;
+  PetForm: undefined;
+};
+
 export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   PetProfile: { petId: string };
@@ -15,7 +20,6 @@ export type RootStackParamList = {
   AppointmentPlanner: { conversationId: string };
   SafeLocations: { conversationId?: string; appointmentId?: string; startAt?: string } | undefined;
   LocationReviews: { locationId: string; appointmentId?: string };
-  PetForm: undefined;
   Requests: undefined;
   Saved: undefined;
   Safety: undefined;
