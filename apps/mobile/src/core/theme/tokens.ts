@@ -126,6 +126,8 @@ export interface AppTheme {
     metalGold: readonly [string, string, string, string];
     /** Variante suave para superficies grandes. */
     metalGoldSoft: readonly [string, string, string];
+    /** Dorado de los titulos de pantalla. */
+    metalGoldHeading: readonly [string, string, string, string];
   };
   spacing: typeof spacing;
   radius: typeof radius;
@@ -145,12 +147,20 @@ function createTheme(mode: ResolvedThemeMode): AppTheme {
           home: ['#262624', '#2E2E2B', '#332F26'],
           metalGold: ['#B8860B', '#E8C252', '#FFF4C2', '#C9A227'],
           metalGoldSoft: ['#C9A227', '#E8C252', '#FFE9A0'],
+          // Sobre el fondo oscuro el dorado de acentos ya es legible: la
+          // parada mas floja da 4.66:1.
+          metalGoldHeading: ['#B8860B', '#E8C252', '#FFF4C2', '#C9A227'],
         }
       : {
           app: ['#FDFBF7', '#FFFFFF', '#F7F0DF', '#FDFBF7'],
           home: ['#FDFBF7', '#FFFFFF', '#F7F0DF'],
           metalGold: ['#9A7B14', '#C9A227', '#F0D98A', '#A8850F'],
           metalGoldSoft: ['#A8850F', '#C9A227', '#E8C252'],
+          // El dorado de acentos sobre marfil baja hasta 1.35:1 en su parada
+          // mas clara: el brillo del metal se volvia ilegible. Estas cuatro
+          // conservan el rango metalico (3.4x entre extremos) y ninguna baja
+          // del minimo de 3:1 para texto grande.
+          metalGoldHeading: ['#5E4A0E', '#8A6E12', '#A8850F', '#6B5410'],
         },
     spacing,
     radius,

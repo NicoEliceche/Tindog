@@ -6,6 +6,7 @@ import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, Text, View }
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchMyPets } from '../../../core/data/services/petService';
 import { useAppData } from '../../../core/providers/AppDataProvider';
+import { GoldHeading } from '../../../shared/components/GoldHeading';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { PetsStackParamList, RootStackParamList } from '../../../navigation/types';
@@ -34,7 +35,7 @@ export function PetsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 16, 24) }]}
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-        ListHeaderComponent={<View style={styles.header}><Text style={styles.title}>Mis perros</Text><Text style={styles.subtitle}>Salud, compatibilidad, documentos y actividad en un solo panel.</Text></View>}
+        ListHeaderComponent={<View style={styles.header}><GoldHeading style={styles.title}>Mis perros</GoldHeading><Text style={styles.subtitle}>Salud, compatibilidad, documentos y actividad en un solo panel.</Text></View>}
         renderItem={({ item }) => (
           <Pressable accessibilityRole="button" accessibilityLabel={`Abrir panel de ${item.name}`} onPress={() => navigation.navigate('PetProfile', { petId: item.id })} style={({ pressed }) => [styles.card, pressed && { opacity: 0.72 }]}>
             <Image source={{ uri: item.photos[0] }} style={styles.avatar} />

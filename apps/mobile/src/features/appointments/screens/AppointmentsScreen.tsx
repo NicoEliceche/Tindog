@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../../../core/providers/AppDataProvider';
+import { GoldHeading } from '../../../shared/components/GoldHeading';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import { appointmentStatusLabels, getEffectiveAppointmentStatus, type Appointment, type AppointmentStatus } from '../../../core/types/appointment.types';
@@ -49,7 +50,7 @@ export function AppointmentsScreen() {
     contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 16, 24) }]}
     showsVerticalScrollIndicator={false}
     ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
-    ListHeaderComponent={<View style={{ marginBottom: 14 }}><Text style={styles.title}>Citas</Text><Text style={styles.subtitle}>Encuentros agendados, en curso y anteriores.</Text><View style={styles.segment}><Segment label="Próximas" active={filter === 'upcoming'} theme={theme} onPress={() => setFilter('upcoming')} /><Segment label="Historial" active={filter === 'history'} theme={theme} onPress={() => setFilter('history')} /></View></View>}
+    ListHeaderComponent={<View style={{ marginBottom: 14 }}><GoldHeading style={styles.title}>Citas</GoldHeading><Text style={styles.subtitle}>Encuentros agendados, en curso y anteriores.</Text><View style={styles.segment}><Segment label="Próximas" active={filter === 'upcoming'} theme={theme} onPress={() => setFilter('upcoming')} /><Segment label="Historial" active={filter === 'history'} theme={theme} onPress={() => setFilter('history')} /></View></View>}
     renderItem={({ item }) => {
       const status = getEffectiveAppointmentStatus(item);
       return <View style={styles.card}>

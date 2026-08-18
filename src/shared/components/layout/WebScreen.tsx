@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
 export const WebScreen = styled.section`
   width: 100%; min-height: 100dvh; padding: 24px 16px 88px; position: relative;
@@ -11,11 +11,22 @@ export const WebContent = styled.div`
 export const WebContentWide = styled.div`
   width: 100%; max-width: ${({ theme }) => theme.layout.shellMaxWidth}; margin: 0 auto; display: flex; flex-direction: column; gap: 24px;
 `;
-export const WebHeading = styled.h1`
-  font-size: clamp(1.8rem, 5vw, 2.35rem); font-weight: 900; line-height: 1.1;
+/**
+ * Relleno dorado metalizado de los encabezados. Se comparte para que todas
+ * las pantallas usen el mismo degradado y no queden copias que se
+ * desincronicen entre si.
+ */
+export const metalGoldText = css`
   background: ${({ theme }) => theme.color.metalGold};
   background-size: 200% auto;
-  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+`;
+
+export const WebHeading = styled.h1`
+  font-size: clamp(1.8rem, 5vw, 2.35rem); font-weight: 900; line-height: 1.1;
+  ${metalGoldText}
 `;
 export const WebSubtitle = styled.p`
   color: ${({ theme }) => theme.color.textSecondary}; font-size: .92rem; line-height: 1.5;

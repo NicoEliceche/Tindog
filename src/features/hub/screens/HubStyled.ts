@@ -3,6 +3,7 @@
 // y seguridad): las tres son la misma forma —encabezado, secciones y una
 // lista de tarjetas— así que comparten la base en vez de triplicarla.
 import styled from 'styled-components';
+import { metalGoldText } from '@shared/components/layout/WebScreen';
 
 export const Page = styled.section`
   min-height: 100dvh;
@@ -39,11 +40,7 @@ export const Header = styled.header`
     font-size: 1.6rem;
     font-weight: ${({ theme }) => theme.typography.weight.extrabold};
     letter-spacing: -0.01em;
-    background: ${({ theme }) => theme.color.metalGold};
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    ${metalGoldText}
   }
 
   p {

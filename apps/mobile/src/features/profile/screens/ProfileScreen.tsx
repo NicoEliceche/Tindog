@@ -6,6 +6,7 @@ import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleShe
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { pickProfilePhoto } from '../../../core/data/services/profilePhotoPicker';
 import { useAppData } from '../../../core/providers/AppDataProvider';
+import { GoldHeading } from '../../../shared/components/GoldHeading';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { RootStackParamList } from '../../../navigation/types';
@@ -21,7 +22,7 @@ export function ProfileScreen({ onLogout }: { onLogout: () => Promise<void> }) {
   const saveName = () => { const name = draftName.trim(); if (name.length >= 2) { updateProfile({ name }); setEditing(false); } };
 
   return <View style={styles.screen}><ScrollView contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 16, 24) }]} showsVerticalScrollIndicator={false}>
-    <View style={styles.header}><Text style={styles.title}>Perfil</Text><Pressable accessibilityRole="button" accessibilityLabel="Abrir configuración" onPress={() => navigation.navigate('Settings')} style={styles.settings}><Ionicons name="settings-outline" size={23} color={theme.colors.primary} /></Pressable></View>
+    <View style={styles.header}><GoldHeading style={styles.title}>Perfil</GoldHeading><Pressable accessibilityRole="button" accessibilityLabel="Abrir configuración" onPress={() => navigation.navigate('Settings')} style={styles.settings}><Ionicons name="settings-outline" size={23} color={theme.colors.primary} /></Pressable></View>
     <View style={styles.ownerCard}>
       <Pressable accessibilityRole="button" accessibilityLabel="Cambiar foto de perfil" onPress={changePhoto} style={styles.avatarWrap}>{profile.avatar ? <Image source={{ uri: profile.avatar }} style={styles.avatar} /> : <View style={styles.avatarFallback}><Text style={styles.initials}>{profile.name.slice(0, 2).toUpperCase()}</Text></View>}<View style={styles.camera}><Ionicons name="camera" size={16} color={theme.colors.onPrimary} /></View></Pressable>
       <Text style={styles.name}>{profile.name}</Text><Text style={styles.email}>{profile.email}</Text><View style={styles.verified}><Ionicons name="checkmark-circle" size={15} color={theme.colors.success} /><Text style={styles.verifiedText}>Cuenta Google verificada</Text></View>

@@ -1,6 +1,7 @@
 // src/features/pets/screens/PetFormScreenStyled.ts
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
+import { metalGoldText } from '@shared/components/layout/WebScreen';
 
 export const FormWrapper = styled(motion.div)`
   display: flex;
@@ -37,6 +38,7 @@ export const Header = styled.div`
 export const HeaderTitle = styled.h1`
   font-size: 1.8rem;
   font-weight: 800;
+  ${metalGoldText}
 `;
 
 export const BackButton = styled.button`

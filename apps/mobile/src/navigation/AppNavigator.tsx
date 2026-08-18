@@ -7,7 +7,8 @@ import { RequestsScreen } from '../features/hub/screens/RequestsScreen';
 import { SafetyScreen } from '../features/hub/screens/SafetyScreen';
 import { SavedScreen } from '../features/hub/screens/SavedScreen';
 import { AuroraBackground } from '../shared/components/AuroraBackground';
-import { Platform } from 'react-native';
+import { GoldHeading } from '../shared/components/GoldHeading';
+import { Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '../core/providers/AppPreferencesProvider';
 import { AppointmentsScreen } from '../features/appointments';
@@ -127,7 +128,9 @@ export function AppNavigator({ onLogout }: { onLogout: () => Promise<void> }) {
           // La flecha de volver acompana al titulo en dorado, como el
           // "Volver" de la web.
           headerTintColor: theme.colors.heading,
-          headerTitleStyle: { fontWeight: '900', color: theme.colors.heading },
+          // El titulo de la barra se dibuja con el degradado dorado, igual
+          // que los encabezados propios de cada pantalla.
+          headerTitle: ({ children }) => <GoldHeading style={styles.stackTitle}>{children}</GoldHeading>,
           // iOS muestra el titulo de la pantalla anterior junto a la flecha;
           // fijarlo en "Volver" iguala el texto con el de la web.
           headerBackTitle: 'Volver',
@@ -156,3 +159,7 @@ export function AppNavigator({ onLogout }: { onLogout: () => Promise<void> }) {
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  stackTitle: { fontSize: 17, fontWeight: '900' },
+});

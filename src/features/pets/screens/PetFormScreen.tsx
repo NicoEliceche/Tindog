@@ -156,7 +156,7 @@ export function PetFormScreen() {
         <BackButton onClick={() => router.back()}>
           <ArrowLeft size={24} />
         </BackButton>
-        <HeaderTitle>Nueva Mascota</HeaderTitle>
+        <HeaderTitle>Nueva mascota</HeaderTitle>
       </Header>
 
       <Layout>
@@ -454,7 +454,7 @@ export function PetFormScreen() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <Check size={20} /> Guardar Perfil
+              <Check size={20} /> Guardar perfil
             </SubmitButton>
           </Form>
         </FormColumn>

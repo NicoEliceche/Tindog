@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { useMemo, useRef, useState } from 'react';
 import {
   Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, Text, TextInput, View,
@@ -8,8 +8,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { pickProfilePhoto } from '../../../core/data/services/profilePhotoPicker';
 import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
+import { GoldHeading } from '../../../shared/components/GoldHeading';
 import { useToast } from '../../../shared/components/Toast';
 import type { Competition, Gender, HealthRecord } from '../../../core/types/pet.types';
+import type { PetsStackParamList } from '../../../navigation/types';
 import { createStyles } from './PetFormScreen.styles';
 
 const PAPER_OPTIONS = ['Vacunación', 'Microchip', 'Pedigrí', 'Pasaporte'];
@@ -23,34 +25,38 @@ export function PetFormScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const toast = useToast();
-  const { createPet } = useAppData();
+  const { createPet, updatePet, myPets } = useAppData();
+  const route = useRoute<RouteProp<PetsStackParamList, 'PetForm'>>();
+  // Con petId la pantalla edita una mascota existente; sin el, da de alta una
+  // nueva. Es la misma pantalla porque los campos son exactamente los mismos.
+  const editing = myPets.find((pet) => pet.id === route.params?.petId);
 
   const scrollRef = useRef<ScrollView>(null);
 
-  const [name, setName] = useState('');
-  const [breed, setBreed] = useState('');
-  const [age, setAge] = useState('');
-  const [weight, setWeight] = useState('');
-  const [gender, setGender] = useState<Gender>('Macho');
-  const [bio, setBio] = useState('');
+  const [name, setName] = useState(editing?.name ?? '');
+  const [breed, setBreed] = useState(editing?.breed ?? '');
+  const [age, setAge] = useState(editing ? String(editing.age) : '');
+  const [weight, setWeight] = useState(editing?.weight != null ? String(editing.weight) : '');
+  const [gender, setGender] = useState<Gender>(editing?.gender ?? 'Macho');
+  const [bio, setBio] = useState(editing?.bio ?? '');
 
-  const [healthRecords, setHealthRecords] = useState<HealthRecord[]>([]);
+  const [healthRecords, setHealthRecords] = useState<HealthRecord[]>(editing?.health_records ?? []);
 
-  const [lookingForPair, setLookingForPair] = useState(false);
-  const [terms, setTerms] = useState('');
-  const [lastHeatCycle, setLastHeatCycle] = useState('');
+  const [lookingForPair, setLookingForPair] = useState(editing?.breeding_preferences?.looking_for_pair ?? false);
+  const [terms, setTerms] = useState(editing?.breeding_preferences?.terms ?? '');
+  const [lastHeatCycle, setLastHeatCycle] = useState(editing?.breeding_preferences?.last_heat_cycle ?? '');
 
-  const [hasPapers, setHasPapers] = useState(false);
-  const [paperTypes, setPaperTypes] = useState<string[]>([]);
+  const [hasPapers, setHasPapers] = useState(editing?.has_papers ?? false);
+  const [paperTypes, setPaperTypes] = useState<string[]>(editing?.paper_types ?? []);
 
-  const [isCompetitor, setIsCompetitor] = useState(false);
-  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [isCompetitor, setIsCompetitor] = useState(editing?.is_competitor ?? false);
+  const [competitions, setCompetitions] = useState<Competition[]>(editing?.competitions ?? []);
 
   const [father, setFather] = useState('');
   const [mother, setMother] = useState('');
-  const [coi, setCoi] = useState('0');
+  const [coi, setCoi] = useState(String(editing?.coi_percentage ?? 0));
 
-  const [photo, setPhoto] = useState('');
+  const [photo, setPhoto] = useState(editing?.photos[0] ?? '');
   const [error, setError] = useState('');
 
   const changePhoto = async () => {
@@ -108,7 +114,7 @@ export function PetFormScreen() {
     }
 
     setError('');
-    createPet({
+    const draft = {
       name: name.trim(),
       breed: breed.trim(),
       age: parsedAge,
@@ -127,10 +133,16 @@ export function PetFormScreen() {
         last_heat_cycle: lastHeatCycle.trim(),
       },
       coi_percentage: Number.parseFloat(coi) || 0,
-      is_verified_breeder_pet: false,
-    });
+      is_verified_breeder_pet: editing?.is_verified_breeder_pet ?? false,
+    };
 
-    toast({ title: 'Perfil guardado', body: `${name.trim()} ya aparece en tus perros.` });
+    if (editing) {
+      updatePet(editing.id, draft);
+      toast({ title: 'Perfil actualizado', body: `Guardamos los cambios de ${name.trim()}.` });
+    } else {
+      createPet(draft);
+      toast({ title: 'Perfil guardado', body: `${name.trim()} ya aparece en tus perros.` });
+    }
     navigation.goBack();
   };
 
@@ -147,7 +159,7 @@ export function PetFormScreen() {
         <Pressable accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={styles.back}>
           <Ionicons name="arrow-back" size={24} color={theme.colors.heading} />
         </Pressable>
-        <Text style={styles.headerTitle}>Nueva Mascota</Text>
+        <GoldHeading style={styles.headerTitle}>{editing ? 'Editar mascota' : 'Nueva mascota'}</GoldHeading>
       </View>
 
       <ScrollView
@@ -449,7 +461,7 @@ export function PetFormScreen() {
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <Pressable accessibilityRole="button" onPress={handleSubmit} style={styles.submit}>
           <Ionicons name="checkmark" size={20} color={theme.colors.onPrimary} />
-          <Text style={styles.submitText}>Guardar Perfil</Text>
+          <Text style={styles.submitText}>{editing ? 'Actualizar perfil' : 'Guardar perfil'}</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>

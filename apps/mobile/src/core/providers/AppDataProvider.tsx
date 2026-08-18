@@ -15,6 +15,7 @@ interface AppDataContextValue {
   locations: typeof safeLocations;
   myPets: Pet[];
   createPet: (draft: NewPetDraft) => Pet;
+  updatePet: (petId: string, draft: NewPetDraft) => void;
   adoptRemotePets: (pets: Pet[]) => void;
   savedPets: SavedPet[];
   savePet: (pet: Pet) => void;
@@ -120,6 +121,13 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
     setMyPets((current) => [pet, ...current]);
     return pet;
   };
+
+  /** Guarda los cambios de una mascota ya existente. */
+  const updatePet = useCallback((petId: string, draft: NewPetDraft) => {
+    setMyPets((current) => current.map((pet) => pet.id === petId
+      ? { ...pet, ...draft, id: pet.id, owner_ids: pet.owner_ids, personality_traits: draft.personality_traits ?? pet.personality_traits }
+      : pet));
+  }, []);
 
   /**
    * Reemplaza la lista con lo que devolvio el servicio, conservando las altas
@@ -276,7 +284,7 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
 
   const value = useMemo<AppDataContextValue>(() => ({
     profile, requests, conversations, messages, appointments, locations, myPets,
-    sendConnectionRequest, respondToRequest, sendMessage, scheduleAppointment, createPet, adoptRemotePets,
+    sendConnectionRequest, respondToRequest, sendMessage, scheduleAppointment, createPet, updatePet, adoptRemotePets,
     savedPets, savePet, unsavePet, blockedOwners, blockOwner, unblockOwner,
     notifications, unreadNotifications, markNotificationsRead,
     updateAppointmentStatus, addLocationReview,
@@ -284,7 +292,7 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
     updateProfile: (updates) => setProfile((current) => ({ ...current, ...updates })),
   }), [adoptRemotePets, appointments, blockOwner, blockedOwners, conversations, locations, markNotificationsRead,
     messages, myPets, notifications, profile, requests, savePet, savedPets, unblockOwner, unreadNotifications,
-    unsavePet]);
+    unsavePet, updatePet]);
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
 }

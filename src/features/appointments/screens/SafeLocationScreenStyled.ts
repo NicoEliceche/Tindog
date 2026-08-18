@@ -1,5 +1,6 @@
 // src/features/appointments/screens/SafeLocationScreenStyled.ts
 import styled from 'styled-components';
+import { metalGoldText } from '@shared/components/layout/WebScreen';
 
 export const Screen = styled.section`
   min-height: 100dvh;
@@ -25,6 +26,7 @@ export const Header = styled.header`
   h1 {
     font-size: 1.1rem;
     font-weight: 900;
+   ${metalGoldText}
   }
 
   button {

@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../../../core/providers/AppDataProvider';
+import { GoldHeading } from '../../../shared/components/GoldHeading';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { Conversation } from '../../../core/types/social.types';
@@ -42,7 +43,7 @@ export function ChatListScreen() {
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={styles.divider} />}
         ListHeaderComponent={<>
-          <Text style={styles.title}>Mensajes</Text>
+          <GoldHeading style={styles.title}>Mensajes</GoldHeading>
           <Text style={styles.subtitle}>El chat se habilita después de aceptar una solicitud.</Text>
           <View style={styles.search}><Ionicons name="search" size={20} color={theme.colors.textMuted} /><TextInput value={query} onChangeText={setQuery} placeholder="Buscar conversaciones" placeholderTextColor={theme.colors.textMuted} style={styles.input} /></View>
           {pendingIncoming.length ? <View style={styles.requests}>
