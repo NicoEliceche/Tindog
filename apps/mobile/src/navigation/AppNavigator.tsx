@@ -4,6 +4,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useMemo } from 'react';
 import { RequestsScreen } from '../features/hub/screens/RequestsScreen';
+import { SafetyScreen } from '../features/hub/screens/SafetyScreen';
+import { SavedScreen } from '../features/hub/screens/SavedScreen';
 import { AuroraBackground } from '../shared/components/AuroraBackground';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -125,6 +127,8 @@ export function AppNavigator({ onLogout }: { onLogout: () => Promise<void> }) {
         <Stack.Screen name="LocationReviews" component={LocationReviewsScreen} options={{ title: 'Reseñas del punto' }} />
         <Stack.Screen name="PetForm" component={PetFormScreen} options={{ title: 'Nueva mascota' }} />
         <Stack.Screen name="Requests" component={RequestsScreen} options={{ title: 'Solicitudes' }} />
+        <Stack.Screen name="Saved" component={SavedScreen} options={{ title: 'Guardados' }} />
+        <Stack.Screen name="Safety" component={SafetyScreen} options={{ title: 'Seguridad' }} />
         <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Configuración' }} />
       </Stack.Navigator>
     </NavigationContainer>

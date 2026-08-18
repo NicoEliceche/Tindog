@@ -28,7 +28,7 @@ export function DiscoveryScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
-  const { profile, sendConnectionRequest, requests } = useAppData();
+  const { profile, sendConnectionRequest, requests, savePet, blockedOwners } = useAppData();
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<{ title: string; body: string } | null>(null);
@@ -41,7 +41,14 @@ export function DiscoveryScreen() {
     return () => { mounted = false; };
   }, []);
 
-  const currentPet = pets[0];
+  // Los tutores bloqueados no vuelven a aparecer en el mazo; sin esto,
+  // bloquear a alguien desde Seguridad no tenia ningun efecto visible.
+  const visiblePets = useMemo(
+    () => pets.filter((item) => !blockedOwners.includes(`Tutor de ${item.name}`)),
+    [blockedOwners, pets],
+  );
+  const currentPet = visiblePets[0];
+  const nextPet = visiblePets[1];
   const pendingPetIds = requests.filter((item) => item.direction === 'outgoing' && item.status === 'pending').map((item) => item.pet.id);
   const cardWidth = Math.min(width - theme.spacing.lg * 2, 430);
   const available = height - insets.top - insets.bottom - (compact ? 132 : 148);
@@ -97,10 +104,10 @@ export function DiscoveryScreen() {
   // contra el backend real. Con el mock local vuelve el mismo set, así que
   // el recorrido no se corta nunca ni queda una pantalla muerta.
   useEffect(() => {
-    if (loading || pets.length > 0) return;
+    if (loading || visiblePets.length > 0) return;
     const timer = setTimeout(() => { void reload(); }, 650);
     return () => clearTimeout(timer);
-  }, [loading, pets.length, reload]);
+  }, [loading, reload, visiblePets.length]);
 
   const handleSwiped = useCallback((direction: 'left' | 'right') => {
     if (direction === 'right') connect();
@@ -190,10 +197,10 @@ export function DiscoveryScreen() {
           ) : currentPet ? (
             <>
               <View style={[styles.cardStack, { width: cardWidth, height: cardHeight }]}>
-                {pets[1] ? (
+                {nextPet ? (
                   <Animated.View style={[styles.backdropCard, StyleSheet.absoluteFill, backdropStyle]}>
                     <Image
-                      source={{ uri: pets[1].photos[0] ?? fallbackPetPhoto }}
+                      source={{ uri: nextPet.photos[0] ?? fallbackPetPhoto }}
                       style={[styles.backdropImage, { height: imageHeight }]}
                       resizeMode="cover"
                     />
@@ -227,7 +234,7 @@ export function DiscoveryScreen() {
               <View style={styles.actions}>
                 <Action icon="close" label="Pasar" theme={theme} onPress={pass} />
                 <Action icon="chatbubble-ellipses" label="Conectar" theme={theme} primary disabled={pendingPetIds.includes(currentPet.id)} onPress={connect} />
-                <Action icon="bookmark" label="Guardar" theme={theme} onPress={() => { setNotice({ title: 'Perfil guardado', body: `Podrás volver a ver a ${currentPet.name} desde tus favoritos.` }); pass(); }} />
+                <Action icon="bookmark" label="Guardar" theme={theme} onPress={() => { savePet(currentPet); setNotice({ title: 'Perfil guardado', body: `${currentPet.name} quedó en Guardados, dentro de Perfil.` }); pass(); }} />
               </View>
               <Pressable
                 accessibilityRole="button"

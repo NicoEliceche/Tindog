@@ -17,5 +17,7 @@ export type RootStackParamList = {
   LocationReviews: { locationId: string; appointmentId?: string };
   PetForm: undefined;
   Requests: undefined;
+  Saved: undefined;
+  Safety: undefined;
   Settings: undefined;
 };
