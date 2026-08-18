@@ -262,9 +262,12 @@ export const BackButton = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  align-self: flex-start;
   color: ${({ theme }) => theme.color.primary};
   font-weight: 900;
-  margin-bottom: 8px;
+  /* El Header apila con gap 6, pensado para el titulo y su bajada. Restarlo
+     deja los mismos 8px que hay en configuracion. */
+  margin-bottom: 2px;
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     display: none;

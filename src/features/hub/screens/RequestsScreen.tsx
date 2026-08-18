@@ -68,8 +68,8 @@ export function RequestsScreen() {
   return (
     <Page>
       <Shell>
-        <BackButton onClick={() => router.back()}>← Volver</BackButton>
         <Header>
+          <BackButton onClick={() => router.back()}>← Volver</BackButton>
           <h1>Solicitudes</h1>
           <p>Acá decidís con quién se abre un chat. Nadie puede escribirte hasta que aceptes su solicitud.</p>
         </Header>

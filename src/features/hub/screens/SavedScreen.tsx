@@ -59,8 +59,8 @@ export function SavedScreen() {
   return (
     <Page>
       <Shell>
-        <BackButton onClick={() => router.back()}>← Volver</BackButton>
         <Header>
+          <BackButton onClick={() => router.back()}>← Volver</BackButton>
           <h1>Guardados</h1>
           <p>Los perfiles que apartaste para decidir con calma. Podés enviarles una solicitud o devolverlos al mazo.</p>
         </Header>
