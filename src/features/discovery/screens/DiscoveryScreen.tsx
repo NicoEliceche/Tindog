@@ -1,6 +1,7 @@
 'use client';
 
 import { useWebApp } from '@core/providers/WebAppProvider';
+import { useMotionValue, useTransform } from 'framer-motion';
 import { NotificationBell } from '@shared/components/notifications/NotificationBell';
 import { Bookmark, Loader2, MessageCircle, Undo2, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -16,8 +17,14 @@ export function DiscoveryScreen() {
   const { profile, discoveryPets, dismissPet, resetDiscovery, restorePet, sendRequest, savePet, blockedOwners } = useWebApp();
   const [notice, setNotice] = useState<{ title: string; body: string } | null>(null);
   const [lastDismissed, setLastDismissed] = useState<Pet | null>(null);
-  // Progreso del arrastre (-1..1): alimenta la animación de la carta de atrás.
-  const [dragProgress, setDragProgress] = useState(0);
+  // Progreso del arrastre (-1..1) como MotionValue: alimenta la animación de
+  // la carta de atrás sin provocar un render por frame. Con estado de React,
+  // cada movimiento del puntero re-renderizaba la pantalla entera y el
+  // arrastre se veía a los saltos.
+  const dragProgress = useMotionValue(0);
+  const stackScale = useTransform(dragProgress, (value) => 0.94 + Math.min(1, Math.abs(value)) * 0.06);
+  const stackY = useTransform(dragProgress, (value) => 10 - Math.min(1, Math.abs(value)) * 10);
+  const stackOpacity = useTransform(dragProgress, (value) => 0.6 + Math.min(1, Math.abs(value)) * 0.4);
 
   // Los tutores bloqueados no vuelven a aparecer en el mazo.
   const visiblePets = discoveryPets.filter((item) => !blockedOwners.includes(`Tutor de ${item.name}`));
@@ -40,10 +47,10 @@ export function DiscoveryScreen() {
   }, [dismissPet]);
 
   const handleSwipe = useCallback((direction: SwipeDirection, target: Pet) => {
-    setDragProgress(0);
+    dragProgress.set(0);
     if (direction === 'right') connect(target);
     else pass(target);
-  }, [connect, pass]);
+  }, [connect, dragProgress, pass]);
 
   const undo = useCallback(() => {
     if (!lastDismissed) return;
@@ -66,9 +73,6 @@ export function DiscoveryScreen() {
     }, 650);
     return () => window.clearTimeout(timer);
   }, [discoveryPets.length, resetDiscovery]);
-
-  // La carta de atrás se acerca a medida que la de adelante se aleja.
-  const stackProgress = Math.min(1, Math.abs(dragProgress));
 
   return (
     <Page>
@@ -104,12 +108,7 @@ export function DiscoveryScreen() {
                     <BackdropCard
                       // Se acerca y se aclara conforme la carta de adelante
                       // se va: es lo que da la sensación de pila real.
-                      animate={{
-                        scale: 0.94 + stackProgress * 0.06,
-                        y: 10 - stackProgress * 10,
-                        opacity: 0.6 + stackProgress * 0.4,
-                      }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                      style={{ scale: stackScale, y: stackY, opacity: stackOpacity }}
                     >
                       <img src={nextPet.photos[0]} alt="" />
                     </BackdropCard>
@@ -118,7 +117,7 @@ export function DiscoveryScreen() {
                     key={pet.id}
                     pet={pet}
                     onSwipe={handleSwipe}
-                    onDragProgress={setDragProgress}
+                    dragProgress={dragProgress}
                   />
                 </CardStack>
                 <Actions>
