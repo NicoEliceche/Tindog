@@ -34,7 +34,7 @@ export const lightTheme = {
     // fondo (1.32) iguala el que ya funciona bien en modo oscuro entre
     // surfaceAlt y background, para que las burbujas de chat se lean como
     // burbujas y no como texto suelto.
-    background: '#FDFBF7', surface: '#FFFFFF', surfaceRaised: '#E7DCBF',
+    background: '#FDFBF7', surface: '#FFFFFF', surfaceRaised: '#E7DCBF', surfaceGlass: 'rgba(255, 255, 255, 0.86)',
     overlay: 'rgba(38, 30, 12, 0.5)', border: 'rgba(154, 123, 20, 0.2)', borderSubtle: '#EDE7D8', borderFocus: '#C9A227',
     gradientStart: '#FDFBF7', gradientMid: '#FFFFFF', gradientEnd: '#F7F0DF',
     metalGold:     'linear-gradient(135deg, #9A7B14 0%, #C9A227 30%, #F0D98A 50%, #C9A227 70%, #A8850F 100%)',
