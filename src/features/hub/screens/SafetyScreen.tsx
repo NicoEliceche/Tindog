@@ -31,8 +31,8 @@ export function SafetyScreen() {
   return (
     <Page>
       <Shell>
-        <BackButton onClick={() => router.back()}>← Volver</BackButton>
         <Header>
+          <BackButton onClick={() => router.back()}>← Volver</BackButton>
           <h1>Seguridad</h1>
           <p>Controlá con quién podés cruzarte y repasá las pautas antes de cada encuentro.</p>
         </Header>
