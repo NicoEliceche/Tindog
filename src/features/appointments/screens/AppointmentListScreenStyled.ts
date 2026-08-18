@@ -150,3 +150,35 @@ export const Empty = styled.div`
     font-size: 0.8rem;
   }
 `;
+
+export const ConfirmBody = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  p {
+    color: ${({ theme }) => theme.color.textSecondary};
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+  }
+
+  button {
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 999px;
+    font-weight: 900;
+    font-size: 0.82rem;
+    color: ${({ theme }) => theme.color.textSecondary};
+  }
+
+  button.danger {
+    color: ${({ theme }) => theme.color.error};
+    background: ${({ theme }) => theme.color.errorLight};
+  }
+`;

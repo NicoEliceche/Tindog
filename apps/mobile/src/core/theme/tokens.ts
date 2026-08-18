@@ -65,6 +65,8 @@ const darkColors = {
   shadow: '#000000',
   glow: 'rgba(232, 194, 82, 0.16)',
   glowSoft: 'rgba(232, 194, 82, 0.09)',
+  /** Dorado de los titulos de pantalla. Sobre el fondo oscuro da 8.9:1. */
+  heading: '#E8C252',
 } as const;
 
 // Modo claro: marfil cálido + dorado luminoso. El blanco puro apaga los
@@ -105,6 +107,9 @@ const lightColors: Record<keyof typeof darkColors, string> = {
   shadow: '#4A3A10',
   glow: 'rgba(201, 162, 39, 0.18)',
   glowSoft: 'rgba(201, 162, 39, 0.1)',
+  // El dorado normal sobre marfil da 2.34:1, por debajo del minimo; el tono
+  // oscuro sigue leyendose dorado y llega a 3.89:1.
+  heading: '#9A7B14',
 };
 
 export type ResolvedThemeMode = 'dark' | 'light';

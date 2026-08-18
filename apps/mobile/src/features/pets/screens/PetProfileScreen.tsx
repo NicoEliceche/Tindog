@@ -80,7 +80,7 @@ function createStyles(theme: AppTheme) {
     petPhotoCompact: { width: 62, height: 62, borderRadius: 20 },
     heroCopy: { flex: 1 },
     eyebrow: { color: theme.colors.primary, fontSize: 10, fontWeight: '900', letterSpacing: 1.1 },
-    title: { color: theme.colors.text, fontSize: 30, fontWeight: '900', lineHeight: 34 },
+    title: { color: theme.colors.heading, fontSize: 30, fontWeight: '900', lineHeight: 34 },
     subtitle: { color: theme.colors.textSecondary, fontSize: 12, fontWeight: '700' },
     verified: { flexDirection: 'row', gap: 4, alignItems: 'center', marginTop: 5 },
     verifiedText: { color: theme.colors.success, fontSize: 10, fontWeight: '800' },

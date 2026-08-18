@@ -5,30 +5,10 @@ export function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: 'transparent' },
 
-    // El indice de secciones queda fijo arriba del scroll, igual que la
-    // columna sticky de la web: en el telefono no hay lugar para una columna,
-    // asi que se resuelve como una fila de chips que se desplaza sola.
-    sectionNav: {
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-      backgroundColor: theme.colors.surfaceOverlay,
-    },
-    sectionNavContent: { paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
-    sectionChip: {
-      minHeight: 34,
-      paddingHorizontal: 14,
-      justifyContent: 'center',
-      borderRadius: 99,
-      backgroundColor: theme.colors.surfaceAlt,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-    },
-    sectionChipActive: {
-      backgroundColor: theme.colors.primaryFaded,
-      borderColor: theme.colors.primaryBorderStrong,
-    },
-    sectionChipText: { color: theme.colors.textSecondary, fontSize: 12, fontWeight: '800' },
-    sectionChipTextActive: { color: theme.colors.primary },
+    // Encabezado como el de la web: flecha y titulo en linea, sin barra.
+    header: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingBottom: 10 },
+    back: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
+    headerTitle: { color: theme.colors.heading, fontSize: 26, fontWeight: '800' },
 
     content: { paddingHorizontal: 16, paddingTop: 18 },
 
