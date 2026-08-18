@@ -26,7 +26,7 @@ export function ChatRoomScreen({ route, navigation }: Props) {
     <View style={[styles.center, { paddingTop: insets.top }]}>
       <Text style={styles.title}>Conversación no disponible</Text>
       <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} style={styles.back}>
-        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+        <Ionicons name="arrow-back" size={24} color={theme.colors.heading} />
       </Pressable>
     </View>
   );
@@ -38,7 +38,7 @@ export function ChatRoomScreen({ route, navigation }: Props) {
           barra, igual que en la web. */}
       <View style={[styles.contact, { paddingTop: Math.max(insets.top, 8) }]}>
         <Pressable accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={styles.back}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+          <Ionicons name="arrow-back" size={24} color={theme.colors.heading} />
         </Pressable>
         <Image source={{ uri: conversation.avatar }} style={styles.avatar} />
         <View style={{ flex: 1 }}>

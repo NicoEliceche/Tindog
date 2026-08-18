@@ -35,10 +35,15 @@ export const Header = styled.header`
   gap: 6px;
 
   h1 {
-    color: ${({ theme }) => theme.color.text};
+    /* Mismo dorado metalizado que el resto de los encabezados. */
     font-size: 1.6rem;
     font-weight: ${({ theme }) => theme.typography.weight.extrabold};
     letter-spacing: -0.01em;
+    background: ${({ theme }) => theme.color.metalGold};
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   p {
@@ -246,5 +251,22 @@ export const IconAction = styled.button`
   &:focus-visible {
     outline: 2px solid ${({ theme }) => theme.color.primary};
     outline-offset: 2px;
+  }
+`;
+
+/**
+ * Volver al perfil. Se oculta en escritorio porque ahi la barra lateral ya
+ * ofrece el mismo camino, igual que en configuracion.
+ */
+export const BackButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: ${({ theme }) => theme.color.primary};
+  font-weight: 900;
+  margin-bottom: 8px;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    display: none;
   }
 `;
