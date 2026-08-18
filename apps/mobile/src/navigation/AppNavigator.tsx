@@ -12,7 +12,7 @@ import { AppointmentsScreen } from '../features/appointments';
 import { ChatListScreen, ChatRoomScreen } from '../features/chat';
 import { DiscoveryScreen } from '../features/discovery';
 import { AppointmentPlannerScreen, LocationReviewsScreen, SafeLocationsScreen } from '../features/meetups';
-import { PetProfileScreen, PetsScreen } from '../features/pets';
+import { PetFormScreen, PetProfileScreen, PetsScreen } from '../features/pets';
 import { ProfileScreen, SettingsScreen } from '../features/profile';
 import type { MainTabParamList, RootStackParamList } from './types';
 
@@ -123,6 +123,7 @@ export function AppNavigator({ onLogout }: { onLogout: () => Promise<void> }) {
         <Stack.Screen name="AppointmentPlanner" component={AppointmentPlannerScreen} options={{ title: 'Agendar encuentro', presentation: 'modal' }} />
         <Stack.Screen name="SafeLocations" component={SafeLocationsScreen} options={{ title: 'Puntos recomendados' }} />
         <Stack.Screen name="LocationReviews" component={LocationReviewsScreen} options={{ title: 'Reseñas del punto' }} />
+        <Stack.Screen name="PetForm" component={PetFormScreen} options={{ title: 'Nueva mascota' }} />
         <Stack.Screen name="Requests" component={RequestsScreen} options={{ title: 'Solicitudes' }} />
         <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Configuración' }} />
       </Stack.Navigator>

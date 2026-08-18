@@ -15,6 +15,7 @@ export type RootStackParamList = {
   AppointmentPlanner: { conversationId: string };
   SafeLocations: { conversationId?: string; appointmentId?: string; startAt?: string } | undefined;
   LocationReviews: { locationId: string; appointmentId?: string };
+  PetForm: undefined;
   Requests: undefined;
   Settings: undefined;
 };
