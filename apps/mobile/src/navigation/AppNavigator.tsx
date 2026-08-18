@@ -3,6 +3,7 @@ import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useMemo } from 'react';
+import { RequestsScreen } from '../features/hub/screens/RequestsScreen';
 import { AuroraBackground } from '../shared/components/AuroraBackground';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -116,6 +117,7 @@ export function AppNavigator({ onLogout }: { onLogout: () => Promise<void> }) {
         <Stack.Screen name="AppointmentPlanner" component={AppointmentPlannerScreen} options={{ title: 'Agendar encuentro', presentation: 'modal' }} />
         <Stack.Screen name="SafeLocations" component={SafeLocationsScreen} options={{ title: 'Puntos recomendados' }} />
         <Stack.Screen name="LocationReviews" component={LocationReviewsScreen} options={{ title: 'Reseñas del punto' }} />
+        <Stack.Screen name="Requests" component={RequestsScreen} options={{ title: 'Solicitudes' }} />
         <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Configuración' }} />
       </Stack.Navigator>
     </NavigationContainer>

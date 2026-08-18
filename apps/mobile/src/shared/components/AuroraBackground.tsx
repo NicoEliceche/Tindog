@@ -40,7 +40,10 @@ interface NodeSpec {
   pathY: number[];
   duration: number;
   rotation: number;
-  spinTurns: number;
+  /** 1 o -1: sentido de giro. */
+  spinDirection: number;
+  /** Milisegundos por vuelta completa. Fija la velocidad, que no cambia. */
+  spinDuration: number;
 }
 
 interface PawSpec {
@@ -53,8 +56,10 @@ interface PawSpec {
   pathY: number[];
   duration: number;
   rotation: number;
-  /** Vueltas completas por ciclo largo; el giro nunca cambia de sentido. */
-  spinTurns: number;
+  /** 1 o -1: sentido de giro. */
+  spinDirection: number;
+  /** Milisegundos por vuelta completa. Fija la velocidad, que no cambia. */
+  spinDuration: number;
   opacity: number;
 }
 
@@ -127,8 +132,12 @@ function FloatingNode({ spec, color, disabled }: { spec: NodeSpec; color: string
     const leg = (v: number) => withTiming(v, { duration: spec.duration, easing: Easing.inOut(Easing.sin) });
     tx.value = withRepeat(withSequence(...spec.pathX.map(leg)), -1, false);
     ty.value = withRepeat(withSequence(...spec.pathY.map(leg)), -1, false);
+    // Una vuelta exacta por ciclo. El signo decide el sentido y la duración
+    // la velocidad, que queda fija: con un destino de varias vueltas, cada
+    // repetición reiniciaba desde cero hacia un ángulo mayor y el giro se
+    // veía cada vez más rápido cuanto más tiempo llevaba la app abierta.
     spin.value = withRepeat(
-      withTiming(spec.spinTurns * 360, { duration: spec.duration * 4, easing: Easing.linear }),
+      withTiming(spec.spinDirection * 360, { duration: spec.spinDuration, easing: Easing.linear }),
       -1,
       false,
     );
@@ -186,9 +195,10 @@ function FloatingPaw({ spec, color, disabled }: { spec: PawSpec; color: string; 
       -1,
       false,
     );
-    // La rotación no rebota: gira siempre en el mismo sentido.
+    // Una vuelta exacta por ciclo, siempre en el mismo sentido y a
+    // velocidad constante (ver nota en FloatingNode).
     spin.value = withRepeat(
-      withTiming(spec.spinTurns * 360, { duration: spec.duration * 6, easing: Easing.linear }),
+      withTiming(spec.spinDirection * 360, { duration: spec.spinDuration, easing: Easing.linear }),
       -1,
       false,
     );
@@ -275,9 +285,11 @@ export function AuroraBackground({ theme }: { theme: AppTheme }) {
       startY,
       pathX,
       pathY,
+      // El doble de rápido que antes, y fijo: menos milisegundos por vuelta.
       duration: rand(4200, 9000),
       rotation: rand(0, 360),
-      spinTurns: signed(0.6, 1.8),
+      spinDirection: Math.random() < 0.5 ? -1 : 1,
+      spinDuration: rand(9000, 18000),
       opacity: rand(0.14, 0.28),
     };
   }), [width, height]);
@@ -298,7 +310,8 @@ export function AuroraBackground({ theme }: { theme: AppTheme }) {
       id: i, size, startX, startY, pathX, pathY,
       duration: rand(5000, 11000),
       rotation: rand(0, 360),
-      spinTurns: signed(0.8, 2.2),
+      spinDirection: Math.random() < 0.5 ? -1 : 1,
+      spinDuration: rand(6000, 13000),
     };
   }), [width, height]);
 

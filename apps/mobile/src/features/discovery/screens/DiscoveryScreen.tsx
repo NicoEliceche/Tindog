@@ -158,8 +158,12 @@ export function DiscoveryScreen() {
 
   // Glare metálico: un reflejo que barre la tarjeta según se arrastra,
   // igual que la luz sobre una superficie pulida.
+  //
+  // Arranca en cero: con un valor de reposo, la banda quedaba visible como
+  // un rectángulo claro fijo sobre la foto, sin que nadie estuviera
+  // arrastrando nada. El reflejo sólo tiene sentido durante el gesto.
   const glareStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(Math.abs(translateX.value), [0, 160], [0.12, 0.5], 'clamp'),
+    opacity: interpolate(Math.abs(translateX.value), [0, 30, 160], [0, 0.12, 0.5], 'clamp'),
     transform: [{ translateX: interpolate(translateX.value, [-300, 300], [cardWidth * 0.7, -cardWidth * 0.35]) }],
   }));
 
