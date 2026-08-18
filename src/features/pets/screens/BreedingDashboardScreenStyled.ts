@@ -29,10 +29,12 @@ export const Top = styled.header`
   align-items: center;
 
   h1 {
-    text-align: center;
     font-size: 1rem;
     font-weight: 900;
    ${metalGoldText}
+    /* El titulo va centrado en su columna; el helper lo alinea al inicio
+       para que la caja se ajuste al texto, asi que se recentra aca. */
+    justify-self: center;
   }
 
   button {
@@ -40,8 +42,8 @@ export const Top = styled.header`
     height: 42px;
     display: grid;
     place-items: center;
-    border-radius: 50%;
-    background: ${({ theme }) => theme.color.surface};
+    /* Sin pastilla gris: la misma flecha limpia que en "Nueva mascota". */
+    color: ${({ theme }) => theme.color.text};
   }
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
