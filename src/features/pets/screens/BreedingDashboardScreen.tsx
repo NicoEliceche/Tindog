@@ -1,6 +1,6 @@
 'use client';
 
-import { useWebApp, webMyPets } from '@core/providers/WebAppProvider';
+import { useWebApp } from '@core/providers/WebAppProvider';
 import { ArrowLeft, BarChart3, CalendarDays, Dumbbell, Edit3, Heart, Lightbulb, ShieldCheck, Stethoscope } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
@@ -9,8 +9,8 @@ import {
 
 export function BreedingDashboardScreen({ petId }: { petId: string }) {
   const router = useRouter();
-  const { appointments } = useWebApp();
-  const pet = webMyPets.find((item) => item.id === petId) ?? webMyPets[0];
+  const { appointments, myPets } = useWebApp();
+  const pet = myPets.find((item) => item.id === petId) ?? myPets[0];
   const next = appointments.find((item) => item.status === 'scheduled' && item.petNames.includes(pet.name));
   const docs = (pet.paper_types?.length ?? 0) + (pet.health_records?.length ?? 0);
 
@@ -19,7 +19,7 @@ export function BreedingDashboardScreen({ petId }: { petId: string }) {
       <Top>
         <button onClick={() => router.back()} aria-label="Volver"><ArrowLeft /></button>
         <h1>Panel de mascota</h1>
-        <button aria-label="Editar mascota"><Edit3 size={19} /></button>
+        <button aria-label={`Editar a ${pet.name}`} onClick={() => router.push(`/pets/add?petId=${pet.id}`)}><Edit3 size={19} /></button>
       </Top>
 
       <Hero>

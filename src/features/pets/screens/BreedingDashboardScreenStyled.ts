@@ -23,18 +23,23 @@ export const Page = styled.section`
 `;
 
 export const Top = styled.header`
-  min-height: 46px;
   display: grid;
   grid-template-columns: 44px 1fr 44px;
   align-items: center;
+  gap: 8px;
 
   h1 {
-    font-size: 1rem;
+    /* Al lado de la flecha quedan unos 224px en los telefonos mas angostos,
+       asi que el cuerpo acompana al ancho: a 2.35rem fijos no entraba y
+       partia en dos lineas. */
+    font-size: clamp(1.35rem, 6vw, 2.35rem);
     font-weight: 900;
+    line-height: 1.1;
+    white-space: nowrap;
    ${metalGoldText}
-    /* El titulo va centrado en su columna; el helper lo alinea al inicio
-       para que la caja se ajuste al texto, asi que se recentra aca. */
-    justify-self: center;
+    /* La fila ya centra verticalmente; el helper alinea al inicio para
+       ajustar la caja al texto, asi que se recupera el centrado. */
+    align-self: center;
   }
 
   button {
@@ -49,11 +54,9 @@ export const Top = styled.header`
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     grid-template-columns: auto 1fr auto;
     justify-items: start;
+    gap: ${({ theme }) => theme.spacing[3]};
 
-    h1 {
-      text-align: left;
-      font-size: ${({ theme }) => theme.typography.size.xl};
-    }
+    h1 { text-align: left; }
   }
 `;
 

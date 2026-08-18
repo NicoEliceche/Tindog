@@ -3,8 +3,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Camera, Check } from 'lucide-react';
-import { createPet } from '@core/data/services/petService';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useWebApp } from '@core/providers/WebAppProvider';
 import { motion } from 'framer-motion';
 import { Toggle } from '@shared/components/ui';
 import {
@@ -26,25 +26,30 @@ const SECTIONS = [
 
 export function PetFormScreen() {
   const router = useRouter();
+  const params = useSearchParams();
+  const { myPets, createPet, updatePet } = useWebApp();
+  // Con ?petId la pantalla edita una mascota existente; sin el, da de alta
+  // una nueva. Es el mismo formulario porque los campos son identicos.
+  const editing = myPets.find((pet) => pet.id === params.get('petId'));
   const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const [formData, setFormData] = useState({
-    name: '',
-    breed: '',
-    age: '',
-    gender: 'Macho' as 'Macho' | 'Hembra',
-    weight: '',
-    bio: '',
-    has_papers: false,
-    paper_types: [] as string[],
-    is_competitor: false,
-    competitions: [] as { name: string, year: number, award?: string }[],
-    health_records: [] as { test_name: string, result: string, date: string }[],
+    name: editing?.name ?? '',
+    breed: editing?.breed ?? '',
+    age: editing ? String(editing.age) : '',
+    gender: (editing?.gender ?? 'Macho') as 'Macho' | 'Hembra',
+    weight: editing?.weight != null ? String(editing.weight) : '',
+    bio: editing?.bio ?? '',
+    has_papers: editing?.has_papers ?? false,
+    paper_types: (editing?.paper_types ?? []) as string[],
+    is_competitor: editing?.is_competitor ?? false,
+    competitions: (editing?.competitions ?? []) as { name: string, year: number, award?: string }[],
+    health_records: (editing?.health_records ?? []) as { test_name: string, result: string, date: string }[],
     breeding_preferences: {
-      looking_for_pair: false,
-      terms: '',
-      last_heat_cycle: '',
+      looking_for_pair: editing?.breeding_preferences?.looking_for_pair ?? false,
+      terms: editing?.breeding_preferences?.terms ?? '',
+      last_heat_cycle: editing?.breeding_preferences?.last_heat_cycle ?? '',
     },
     lineage: {
       father: '',
@@ -54,8 +59,8 @@ export function PetFormScreen() {
       m_grandfather: '',
       m_grandmother: '',
     },
-    coi_percentage: 0,
-    is_verified_breeder_pet: false
+    coi_percentage: editing?.coi_percentage ?? 0,
+    is_verified_breeder_pet: editing?.is_verified_breeder_pet ?? false
   });
 
   const PAPER_OPTIONS = ['Vacunación', 'Microchip', 'Pedigrí', 'Pasaporte'];
@@ -99,7 +104,7 @@ export function PetFormScreen() {
    * Foto de la mascota. Se guarda como data URL en el mock; con backend
    * real acá iría la subida al almacenamiento y se guardaría la URL.
    */
-  const [photo, setPhoto] = useState('');
+  const [photo, setPhoto] = useState(editing?.photos[0] ?? '');
   const [photoError, setPhotoError] = useState('');
   const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
@@ -121,16 +126,18 @@ export function PetFormScreen() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    await createPet({
+    const draft = {
       ...formData,
       age: parseInt(formData.age),
       weight: formData.weight ? parseFloat(formData.weight) : undefined,
       // Sin foto elegida se usa una de reserva para que la tarjeta no quede
       // vacía en la lista.
       photos: [photo || 'https://images.unsplash.com/photo-1517849845537-4d257902454a?q=80&w=500'],
-    });
+    };
+    if (editing) updatePet(editing.id, draft);
+    else createPet(draft);
     router.push('/pets');
   };
 
@@ -156,7 +163,7 @@ export function PetFormScreen() {
         <BackButton onClick={() => router.back()}>
           <ArrowLeft size={24} />
         </BackButton>
-        <HeaderTitle>Nueva mascota</HeaderTitle>
+        <HeaderTitle>{editing ? 'Editar mascota' : 'Nueva mascota'}</HeaderTitle>
       </Header>
 
       <Layout>
@@ -454,7 +461,7 @@ export function PetFormScreen() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <Check size={20} /> Guardar perfil
+              <Check size={20} /> {editing ? 'Actualizar perfil' : 'Guardar perfil'}
             </SubmitButton>
           </Form>
         </FormColumn>

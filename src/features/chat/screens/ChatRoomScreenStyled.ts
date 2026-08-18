@@ -2,12 +2,19 @@
 import styled, { css } from 'styled-components';
 
 export const Screen = styled.section<{ $panelMode?: boolean }>`
-  height: 100dvh;
+  /* Descuenta la barra inferior, que ahora tambien se ve dentro de una
+     conversacion: con 100dvh el campo de escritura quedaba justo debajo. */
+  height: calc(100dvh - 64px - env(safe-area-inset-bottom));
   width: min(100%, 760px);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   background: ${({ theme }) => theme.color.background};
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    /* En escritorio manda la barra lateral, no la inferior. */
+    height: 100dvh;
+  }
 
   ${({ $panelMode }) => $panelMode && css`
     width: 100%;

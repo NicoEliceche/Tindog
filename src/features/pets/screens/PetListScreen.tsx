@@ -1,6 +1,6 @@
 'use client';
 
-import { webMyPets } from '@core/providers/WebAppProvider';
+import { useWebApp } from '@core/providers/WebAppProvider';
 import { Plus, ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { WebContent, WebHeading, WebScreen, WebSubtitle } from '@shared/components/layout/WebScreen';
@@ -9,6 +9,7 @@ import { AddPetCard, Grid, PetCardBody, Verified } from './PetListScreenStyled';
 
 export function PetListScreen() {
   const router = useRouter();
+  const { myPets } = useWebApp();
 
   return (
     <WebScreen>
@@ -19,7 +20,7 @@ export function PetListScreen() {
         </div>
 
         <Grid>
-          {webMyPets.map((pet) => (
+          {myPets.map((pet) => (
             <Card key={pet.id} padding="12px" interactive onClick={() => router.push(`/pets/${pet.id}/breeding`)}>
               <PetCardBody>
                 <img src={pet.photos[0]} alt={pet.name} />

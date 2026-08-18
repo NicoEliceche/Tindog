@@ -62,6 +62,11 @@ function normalizeSaved(raw: unknown): WebSavedPet[] {
   });
 }
 
+/** Lo que el formulario puede completar; el resto lo deriva el provider. */
+export type NewPetDraft = Omit<Pet, 'id' | 'owner_ids' | 'personality_traits'> & {
+  personality_traits?: string[];
+};
+
 export type WebNotificationKind = 'request' | 'message' | 'appointment' | 'cancelled';
 export interface WebNotification {
   id: string;
@@ -128,6 +133,9 @@ interface WebAppValue {
   notifications: WebNotification[]; unreadNotifications: number; markNotificationsRead: () => void;
   /** Perfiles guardados desde Discovery para revisarlos después. */
   savedPets: WebSavedPet[]; savePet: (pet: Pet) => void; unsavePet: (id: string) => void; isSaved: (id: string) => boolean;
+  myPets: Pet[];
+  createPet: (draft: NewPetDraft) => Pet;
+  updatePet: (petId: string, draft: NewPetDraft) => void;
   /** Usuarios bloqueados: dejan de aparecer en Discovery. */
   blockedOwners: string[]; blockOwner: (name: string) => void; unblockOwner: (name: string) => void;
 }
@@ -270,6 +278,9 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
   // Favoritos y bloqueos. Persisten en el navegador para que sobrevivan a
   // una recarga, como haría el backend real.
   const [savedPets, setSavedPets] = useState<WebSavedPet[]>([]);
+  // Las mascotas viven en el provider y no como constante del modulo para que
+  // el alta y la edicion se vean en la lista y en el panel sin recargar.
+  const [myPets, setMyPets] = useState<Pet[]>(webMyPets);
   const [blockedOwners, setBlockedOwners] = useState<string[]>([]);
 
   useEffect(() => {
@@ -294,6 +305,15 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
     savedPets,
     savePet: (pet) => { if (!savedPets.some((item) => item.pet.id === pet.id)) persistSaved([{ pet, savedAt: new Date().toISOString() }, ...savedPets]); },
     unsavePet: (id) => persistSaved(savedPets.filter((item) => item.pet.id !== id)),
+    myPets,
+    createPet: (draft) => {
+      const pet: Pet = { ...draft, id: `pet-${Date.now()}`, owner_ids: ['me'], personality_traits: draft.personality_traits ?? [] };
+      setMyPets((current) => [pet, ...current]);
+      return pet;
+    },
+    updatePet: (petId, draft) => setMyPets((current) => current.map((pet) => pet.id === petId
+      ? { ...pet, ...draft, id: pet.id, owner_ids: pet.owner_ids, personality_traits: draft.personality_traits ?? pet.personality_traits }
+      : pet)),
     isSaved: (id) => savedPets.some((item) => item.pet.id === id),
     blockedOwners,
     blockOwner: (name) => { if (!blockedOwners.includes(name)) persistBlocked([name, ...blockedOwners]); },
