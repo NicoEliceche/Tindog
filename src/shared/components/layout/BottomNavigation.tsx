@@ -6,6 +6,9 @@ import { NAV_ITEMS, isBottomNavHidden } from './navigation.config';
 
 const Nav = styled.nav`
   position: fixed; z-index: 1000; left: 0; right: 0; bottom: 0;
+  /* Se estira por debajo del borde para cubrir la franja del area segura en
+     telefonos con gesto de inicio, donde antes asomaba el fondo. */
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
   min-height: calc(64px + env(safe-area-inset-bottom)); padding: 6px 6px env(safe-area-inset-bottom);
   display: flex; align-items: flex-start; justify-content: space-around;
   background: ${({ theme }) => theme.color.glass}; border-top: 1px solid ${({ theme }) => theme.color.border}; backdrop-filter: blur(18px);

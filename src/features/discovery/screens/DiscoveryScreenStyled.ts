@@ -112,6 +112,8 @@ export const HeaderActions = styled.div`
 `;
 
 export const Avatar = styled.div`
+  cursor: pointer;
+  padding: 0;
   width: 42px;
   height: 42px;
   border-radius: 50%;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useWebApp } from '@core/providers/WebAppProvider';
+import { useRouter } from 'next/navigation';
 import { useMotionValue, useTransform } from 'framer-motion';
 import { NotificationBell } from '@shared/components/notifications/NotificationBell';
 import { Bookmark, Loader2, MessageCircle, Undo2, X } from 'lucide-react';
@@ -14,6 +15,7 @@ import {
 } from './DiscoveryScreenStyled';
 
 export function DiscoveryScreen() {
+  const router = useRouter();
   const { profile, discoveryPets, dismissPet, resetDiscovery, restorePet, sendRequest, savePet, blockedOwners } = useWebApp();
   const [notice, setNotice] = useState<{ title: string; body: string } | null>(null);
   const [lastDismissed, setLastDismissed] = useState<Pet | null>(null);
@@ -87,7 +89,15 @@ export function DiscoveryScreen() {
           </Brand>
           <HeaderActions>
             <NotificationBell />
-            <Avatar>{profile.avatar ? <img src={profile.avatar} alt={profile.name} /> : profile.name[0]}</Avatar>
+            {/* La foto lleva al perfil, igual que el boton de la barra. */}
+            <Avatar
+              as="button"
+              type="button"
+              aria-label="Ir a tu perfil"
+              onClick={() => router.push('/profile')}
+            >
+              {profile.avatar ? <img src={profile.avatar} alt={profile.name} /> : profile.name[0]}
+            </Avatar>
           </HeaderActions>
         </Header>
 

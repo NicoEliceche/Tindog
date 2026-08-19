@@ -66,7 +66,7 @@ interface Particle {
 }
 
 const AURORA_COUNT = 5;
-/** Cada "paw" dibuja un par de huellas, como un paso. */
+
 const PAW_COUNT = 21;
 const PARTICLE_DENSITY = 0.00021;
 const MAX_PARTICLES = 240;
@@ -104,24 +104,6 @@ function strokeSinglePaw(ctx: CanvasRenderingContext2D, size: number) {
 }
 
 /**
- * Dibuja un par de huellas, como el paso de un perro: una adelantada
- * respecto de la otra y ambas levemente abiertas hacia afuera.
- */
-function strokePawPair(ctx: CanvasRenderingContext2D, size: number) {
-  ctx.save();
-  ctx.translate(-size * 0.36, size * 0.2);
-  ctx.rotate(-0.18);
-  strokeSinglePaw(ctx, size * 0.82);
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(size * 0.36, -size * 0.24);
-  ctx.rotate(0.18);
-  strokeSinglePaw(ctx, size * 0.82);
-  ctx.restore();
-}
-
-/**
  * Fondo vivo de toda la app, dibujado en un único canvas:
  *
  * - **Auroras doradas** que derivan libremente por toda la pantalla. Cada
@@ -136,6 +118,7 @@ function strokePawPair(ctx: CanvasRenderingContext2D, size: number) {
  */
 export function AuroraBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
   /**
    * `prefers-reduced-motion` pide movimiento contenido, no una pantalla
@@ -151,7 +134,8 @@ export function AuroraBackground() {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const root = rootRef.current;
+    if (!canvas || !root) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -167,6 +151,12 @@ export function AuroraBackground() {
     let paws: Paw[] = [];
     let particles: Particle[] = [];
     let frame = 0;
+    // Referencia de tiempo del cuadro anterior. El avance se calcula contra
+    // el tiempo transcurrido y no por cuadro, asi la velocidad es la misma a
+    // 60Hz que a 120Hz y no depende de cuanto tarde el navegador.
+    let lastTime = 0;
+    /** Cuadros por segundo de referencia: a 60Hz el paso es exactamente 1. */
+    const BASE_FPS = 60;
     let running = true;
     let time = 0;
     const pointer = { x: -9999, y: -9999 };
@@ -193,7 +183,9 @@ export function AuroraBackground() {
         y: rand(0, height),
         vx: drift(0.16, 0.42),
         vy: drift(0.12, 0.34),
-        size: rand(26, 52),
+        // El par ocupaba mas ancho que una huella sola: al pasar a una
+        // sola se agranda para conservar el mismo peso visual.
+        size: rand(34, 66),
         angle: rand(0, Math.PI * 2),
         spin: drift(0.0012, 0.0045),
         alpha: rand(0.16, 0.34),
@@ -213,8 +205,13 @@ export function AuroraBackground() {
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      width = window.innerWidth;
-      height = window.innerHeight;
+      // Se mide el contenedor y no window.innerHeight: en el telefono, cuando
+      // la barra del navegador se retrae, el contenedor -fijo con inset 0-
+      // crece y innerHeight no, y quedaba una franja sin pintar abajo que se
+      // veia a traves de la barra inferior, que es traslucida.
+      const bounds = root.getBoundingClientRect();
+      width = Math.round(bounds.width) || window.innerWidth;
+      height = Math.round(bounds.height) || window.innerHeight;
       canvas.width = Math.floor(width * dpr);
       canvas.height = Math.floor(height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -264,21 +261,40 @@ export function AuroraBackground() {
     };
     const onVisibility = () => {
       running = !document.hidden;
-      if (running) frame = requestAnimationFrame(draw);
+      if (!running) return;
+      // Cancelar antes de volver a pedir: sin esto, cada ida y vuelta a la
+      // pestana dejaba un bucle mas corriendo sobre las mismas particulas y
+      // el fondo se aceleraba sin parar.
+      cancelAnimationFrame(frame);
+      // El reloj arranca de nuevo para que el tiempo detenido no cuente como
+      // un salto gigante en el primer cuadro.
+      lastTime = 0;
+      frame = requestAnimationFrame(draw);
     };
 
-    function draw() {
+    function draw(now = performance.now()) {
       if (!running || !ctx) return;
+
+      // Paso normalizado: 1 a 60Hz, 0.5 a 120Hz. Se acota a 2 para que una
+      // pausa larga -pestana en segundo plano, hilo bloqueado- no dispare
+      // las particulas de golpe al volver.
+      const elapsed = lastTime ? now - lastTime : 1000 / BASE_FPS;
+      lastTime = now;
+      const step = Math.min((elapsed * BASE_FPS) / 1000, 2);
+      // Todo lo que se mueve multiplica por esto, asi que aplicar el paso
+      // aca alcanza para que ningun desplazamiento dependa del cuadro.
+      const advance = speedScale * step;
+
       ctx.clearRect(0, 0, width, height);
-      time += 1;
+      time += step;
 
       // ── Auroras ────────────────────────────────────────────────────────
       for (const a of auroras) {
-        a.wobble += a.wobbleSpeed * speedScale;
+        a.wobble += a.wobbleSpeed * advance;
         // El wobble desvía la trayectoria recta, de modo que el recorrido
         // no se repite de forma perceptible.
-        a.x += (a.vx + Math.cos(a.wobble) * 0.34) * speedScale;
-        a.y += (a.vy + Math.sin(a.wobble * 0.8) * 0.28) * speedScale;
+        a.x += (a.vx + Math.cos(a.wobble) * 0.34) * advance;
+        a.y += (a.vy + Math.sin(a.wobble * 0.8) * 0.28) * advance;
         a.x = wrap(a.x, width, a.radius);
         a.y = wrap(a.y, height, a.radius);
 
@@ -296,9 +312,9 @@ export function AuroraBackground() {
       // ── Patitas ────────────────────────────────────────────────────────
       ctx.lineWidth = 1.6;
       for (const p of paws) {
-        p.x += p.vx * speedScale;
-        p.y += p.vy * speedScale;
-        p.angle += p.spin * speedScale;
+        p.x += p.vx * advance;
+        p.y += p.vy * advance;
+        p.angle += p.spin * advance;
         bounce(p, p.size);
 
         ctx.save();
@@ -308,15 +324,15 @@ export function AuroraBackground() {
         const pulse = reduceMotion ? 0 : Math.sin(time * 0.012 + p.x * 0.01) * 0.06;
         ctx.strokeStyle = gold;
         ctx.globalAlpha = Math.max(0.08, p.alpha + pulse);
-        strokePawPair(ctx, p.size);
+        strokeSinglePaw(ctx, p.size);
         ctx.restore();
       }
       ctx.globalAlpha = 1;
 
       // ── Partículas y sus enlaces ───────────────────────────────────────
       for (const p of particles) {
-        p.x += p.vx * speedScale;
-        p.y += p.vy * speedScale;
+        p.x += p.vx * advance;
+        p.y += p.vy * advance;
 
         // El empuje del cursor es un movimiento reactivo y brusco: se
         // omite bajo movimiento reducido.
@@ -331,7 +347,7 @@ export function AuroraBackground() {
           }
         }
 
-        p.angle += p.spin * speedScale;
+        p.angle += p.spin * advance;
         bounce(p, p.r + 2);
       }
 
@@ -386,6 +402,10 @@ export function AuroraBackground() {
     // que arrancan en segundo plano rAF puede no dispararse nunca.
     draw();
     window.addEventListener('resize', resize);
+    // La barra del navegador al retraerse cambia el alto del contenedor sin
+    // disparar resize de window: se observa el elemento.
+    const observer = new ResizeObserver(resize);
+    observer.observe(root);
     window.addEventListener('pointermove', onPointerMove, { passive: true });
     window.addEventListener('pointerleave', onPointerLeave);
     document.addEventListener('visibilitychange', onVisibility);
@@ -393,6 +413,7 @@ export function AuroraBackground() {
     return () => {
       running = false;
       cancelAnimationFrame(frame);
+      observer.disconnect();
       window.removeEventListener('resize', resize);
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerleave', onPointerLeave);
@@ -401,7 +422,7 @@ export function AuroraBackground() {
   }, [reduceMotion, theme]);
 
   return (
-    <Root aria-hidden="true">
+    <Root ref={rootRef} aria-hidden="true">
       <Canvas ref={canvasRef} />
       <Veil />
     </Root>
