@@ -25,7 +25,7 @@ interface AppDataContextValue {
   unblockOwner: (name: string) => void;
   notifications: AppNotification[];
   unreadNotifications: number;
-  markNotificationsRead: () => void;
+  markNotificationsRead: (notificationId?: string) => void;
   sendConnectionRequest: (pet: Pet) => ConnectionRequest;
   respondToRequest: (requestId: string, accept: boolean) => void;
   sendMessage: (conversationId: string, body: string) => void;
@@ -278,8 +278,15 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
 
   const unreadNotifications = notifications.filter((item) => !item.read).length;
 
-  const markNotificationsRead = useCallback(() => {
-    setReadNotifications((current) => Array.from(new Set([...current, ...notifications.map((item) => item.id)])));
+  /**
+   * Marca avisos como leidos. Sin argumento los marca todos, que es lo que
+   * hace el boton "Marcar leidas"; con un id marca solo ese.
+   */
+  const markNotificationsRead = useCallback((notificationId?: string) => {
+    setReadNotifications((current) => {
+      const ids = notificationId ? [notificationId] : notifications.map((item) => item.id);
+      return Array.from(new Set([...current, ...ids]));
+    });
   }, [notifications]);
 
   const value = useMemo<AppDataContextValue>(() => ({

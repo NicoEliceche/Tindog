@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, NavigationContainer, type NavigationProp, type ParamListBase } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useMemo } from 'react';
@@ -72,14 +72,33 @@ function MainTabs({ onLogout }: { onLogout: () => Promise<void> }) {
       })}
     >
       <Tabs.Screen name="Home" component={DiscoveryScreen} />
-      <Tabs.Screen name="Messages" component={MessagesStack} />
-      <Tabs.Screen name="Appointments" component={AppointmentsStack} />
-      <Tabs.Screen name="Pets" component={PetsStack} />
+      <Tabs.Screen name="Messages" component={MessagesStack} listeners={resetTabOnPress('Messages', 'ChatList')} />
+      <Tabs.Screen name="Appointments" component={AppointmentsStack} listeners={resetTabOnPress('Appointments', 'AppointmentsList')} />
+      <Tabs.Screen name="Pets" component={PetsStack} listeners={resetTabOnPress('Pets', 'PetsList')} />
       <Tabs.Screen name="Profile">
         {() => <ProfileScreen onLogout={onLogout} />}
       </Tabs.Screen>
     </Tabs.Navigator>
   );
+}
+
+/**
+ * Tocar una pestana lleva a su primera pantalla, no una atras.
+ *
+ * Estando dentro de una pila -por ejemplo eligiendo el punto de encuentro
+ * desde un chat- tocar "Mensajes" retrocedia de a un paso, como el boton de
+ * volver. En la web ese boton siempre lleva a la lista, y es lo que se
+ * espera de una barra de secciones.
+ */
+function resetTabOnPress(tabName: string, rootScreen: string) {
+  return ({ navigation }: { navigation: NavigationProp<ParamListBase> }) => ({
+    tabPress: (event: { preventDefault: () => void }) => {
+      event.preventDefault();
+      // Navegar a la pantalla raiz de la pestana descarta lo que haya
+      // apilado encima, en vez de retroceder un solo paso.
+      navigation.navigate(tabName, { screen: rootScreen });
+    },
+  });
 }
 
 /**

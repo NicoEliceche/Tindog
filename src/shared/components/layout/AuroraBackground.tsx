@@ -4,6 +4,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import styled, { useTheme } from 'styled-components';
+import { getPawPath } from './pawGlyph';
 
 const Root = styled.div`
   position: fixed;
@@ -79,49 +80,30 @@ const LINK_DISTANCE = 118;
 const LINK_NEIGHBOURS = 36;
 const CURSOR_RADIUS = 180;
 
-/** Dibuja el contorno de una huella: almohadilla central y cuatro dedos. */
-function strokeSinglePaw(ctx: CanvasRenderingContext2D, size: number) {
-  // La silueta sigue a la del ícono `paw-outline` que usa la aplicación
-  // nativa, para que el mismo motivo se vea igual en las dos plataformas:
-  // almohadilla ancha y baja, y cuatro dedos alargados en arco, los dos
-  // centrales más altos que los externos.
-  ctx.beginPath();
-  ctx.ellipse(0, size * 0.26, size * 0.33, size * 0.27, 0, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // [x, y, radio, inclinación]
-  const toes: Array<[number, number, number, number]> = [
-    [-size * 0.38, -size * 0.1, size * 0.15, -0.35],
-    [-size * 0.15, -size * 0.33, size * 0.155, -0.12],
-    [size * 0.15, -size * 0.33, size * 0.155, 0.12],
-    [size * 0.38, -size * 0.1, size * 0.15, 0.35],
-  ];
-  for (const [tx, ty, tr, tilt] of toes) {
-    ctx.beginPath();
-    ctx.ellipse(tx, ty, tr * 0.78, tr * 1.15, tilt, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-}
-
 /**
  * Dibuja un par de huellas, como el paso de un perro. Replica la
  * disposicion de la aplicacion nativa: una adelantada respecto de la otra y
  * ambas inclinadas hacia afuera unos diez grados.
  */
 function strokePawPair(ctx: CanvasRenderingContext2D, size: number) {
+  const path = getPawPath();
   const print = size * 0.62;
 
-  ctx.save();
-  ctx.translate(-size * 0.36, size * 0.21);
-  ctx.rotate(-0.175);
-  strokeSinglePaw(ctx, print);
-  ctx.restore();
+  // El trazado viene en una caja de 1x1, asi que escalar por `print` lo lleva
+  // al tamano pedido. El grosor se compensa con la misma escala para que la
+  // linea no engorde junto con la huella.
+  const stroke = (dx: number, dy: number, rotation: number) => {
+    ctx.save();
+    ctx.translate(dx, dy);
+    ctx.rotate(rotation);
+    ctx.scale(print, print);
+    ctx.lineWidth = 1.6 / print;
+    ctx.stroke(path);
+    ctx.restore();
+  };
 
-  ctx.save();
-  ctx.translate(size * 0.36, -size * 0.21);
-  ctx.rotate(0.175);
-  strokeSinglePaw(ctx, print);
-  ctx.restore();
+  stroke(-size * 0.36, size * 0.21, -0.175);
+  stroke(size * 0.36, -size * 0.21, 0.175);
 }
 
 /**
@@ -329,7 +311,7 @@ export function AuroraBackground() {
       }
 
       // ── Patitas ────────────────────────────────────────────────────────
-      ctx.lineWidth = 1.6;
+      // El grosor lo fija cada huella, que trabaja en su propia escala.
       for (const p of paws) {
         p.x += p.vx * advance;
         p.y += p.vy * advance;

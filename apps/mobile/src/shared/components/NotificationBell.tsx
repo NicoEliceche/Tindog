@@ -29,14 +29,12 @@ export function NotificationBell() {
   const { notifications, unreadNotifications, markNotificationsRead } = useAppData();
   const [open, setOpen] = useState(false);
 
-  // Al cerrar se dan por vistas. Marcarlas al abrir borraria el resaltado de
-  // las nuevas justo cuando el usuario esta por leerlas.
-  const close = () => {
-    setOpen(false);
-    markNotificationsRead();
-  };
+  // Cerrar el panel no marca nada: haber abierto la campana no significa
+  // haber leido los avisos. Se marcan al abrir uno, o con "Marcar leidas".
+  const close = () => setOpen(false);
 
   const go = (item: AppNotification) => {
+    markNotificationsRead(item.id);
     close();
     if (item.target === 'Messages' && item.conversationId) {
       navigation.navigate('Main', { screen: 'Messages', params: { screen: 'ChatRoom', params: { conversationId: item.conversationId } } });
@@ -76,7 +74,7 @@ export function NotificationBell() {
               <Pressable
                 accessibilityRole="button"
                 disabled={unreadNotifications === 0}
-                onPress={markNotificationsRead}
+                onPress={() => markNotificationsRead()}
               >
                 <Text style={[styles.markRead, unreadNotifications === 0 && styles.markReadOff]}>
                   Marcar leídas

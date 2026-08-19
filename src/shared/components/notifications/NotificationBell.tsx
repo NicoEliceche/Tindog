@@ -30,12 +30,10 @@ export function NotificationBell() {
   const reduceMotion = useReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
 
-  // Al cerrar se dan por vistas. Marcarlas al abrir borraría el resaltado de
-  // las nuevas justo cuando el usuario está por leerlas.
-  const close = useCallback(() => {
-    setOpen(false);
-    markNotificationsRead();
-  }, [markNotificationsRead]);
+  // Cerrar el panel no marca nada: haber abierto la campana no significa
+  // haber leido los avisos, y se perdia el resaltado de todo lo pendiente.
+  // Se marcan al abrir uno, o con el boton "Marcar leidas".
+  const close = useCallback(() => setOpen(false), []);
 
   // Escape cierra el panel: es lo que espera cualquiera que lo abrió sin querer.
   useEffect(() => {
@@ -97,7 +95,7 @@ export function NotificationBell() {
             >
               <PanelHeader>
                 <h2>Notificaciones</h2>
-                <button type="button" onClick={markNotificationsRead} disabled={unreadNotifications === 0}>
+                <button type="button" onClick={() => markNotificationsRead()} disabled={unreadNotifications === 0}>
                   Marcar leídas
                 </button>
               </PanelHeader>
@@ -116,7 +114,7 @@ export function NotificationBell() {
                           ? { duration: 0 }
                           : { delay: index * 0.045, duration: 0.28, ease: 'easeOut' }}
                       >
-                        <Link href={item.href} onClick={close}>
+                        <Link href={item.href} onClick={() => { markNotificationsRead(item.id); close(); }}>
                           <ItemIcon>
                             {item.avatar ? <img src={item.avatar} alt="" /> : <Icon size={17} />}
                           </ItemIcon>

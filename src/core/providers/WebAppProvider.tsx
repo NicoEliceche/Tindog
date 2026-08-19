@@ -130,7 +130,7 @@ interface WebAppValue {
   conversations: WebConversation[]; messages: Record<string, WebMessage[]>; sendMessage: (chatId: string, body: string) => void;
   locations: WebSafeLocation[]; appointments: WebAppointment[]; scheduleAppointment: (chatId: string, locationId: string, startAt: string) => WebAppointment | null; setAppointmentStatus: (id: string, status: WebAppointmentStatus) => void; addReview: (locationId: string, rating: number, comment: string) => void;
   /** Derivadas del estado real: solicitudes, chats sin leer y citas próximas. */
-  notifications: WebNotification[]; unreadNotifications: number; markNotificationsRead: () => void;
+  notifications: WebNotification[]; unreadNotifications: number; markNotificationsRead: (notificationId?: string) => void;
   /** Perfiles guardados desde Discovery para revisarlos después. */
   savedPets: WebSavedPet[]; savePet: (pet: Pet) => void; unsavePet: (id: string) => void; isSaved: (id: string) => boolean;
   myPets: Pet[];
@@ -267,11 +267,15 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
   }, [requests, conversations, appointments, cancelledNotices, readNotifications]);
 
   const unreadNotifications = notifications.filter((item) => !item.read).length;
-  const markNotificationsRead = useCallback(() => {
+  /**
+   * Marca avisos como leidos. Sin argumento los marca todos, que es lo que
+   * hace el boton "Marcar leidas"; con un id marca solo ese, para cuando se
+   * abre un aviso puntual.
+   */
+  const markNotificationsRead = useCallback((notificationId?: string) => {
     setReadNotifications((current) => {
-      const ids = notifications.map((item) => item.id);
-      const merged = new Set([...current, ...ids]);
-      return Array.from(merged);
+      const ids = notificationId ? [notificationId] : notifications.map((item) => item.id);
+      return Array.from(new Set([...current, ...ids]));
     });
   }, [notifications]);
 
