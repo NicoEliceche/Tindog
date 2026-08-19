@@ -27,7 +27,7 @@ export const lightTheme = {
     primaryFaded: 'rgba(201, 162, 39, 0.14)',
     accent: '#D4AF37', accentLight: '#F0D98A', accentDark: '#9A7B14',
     glass: 'rgba(253, 251, 247, 0.82)', glassBorder: 'rgba(154, 123, 20, 0.2)', glassShadow: 'rgba(74, 58, 16, 0.1)',
-    success: '#1F7A42', successLight: 'rgba(31, 122, 66, 0.12)', error: '#B23B27', errorLight: 'rgba(178, 59, 39, 0.1)',
+    success: '#1F7A42', errorSolid: '#8A3D28', successSolid: '#1F5B38', successLight: 'rgba(31, 122, 66, 0.12)', error: '#B23B27', errorLight: 'rgba(178, 59, 39, 0.1)',
     warning: '#8A5A00', warningLight: 'rgba(138, 90, 0, 0.12)', info: '#2A5FA0', infoLight: 'rgba(42, 95, 160, 0.12)',
     // `surface` se mantiene blanco (tarjetas sobre el marfil del fondo).
     // `surfaceRaised` baja hasta un arena cálido: su contraste contra el

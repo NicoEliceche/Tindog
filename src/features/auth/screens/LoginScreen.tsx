@@ -125,7 +125,7 @@ export function LoginScreen() {
         <Divider>O CONTINUÁ CON</Divider>
         <MethodList>
           <MethodButton type="button" onClick={() => { setMethod('code'); setError(''); }}>
-            <Mail size={18} /> Continuar con email
+            <Mail size={18} /> Enviar código al email
           </MethodButton>
           <MethodButton type="button" onClick={() => { setMethod('password'); setError(''); }}>
             <KeyRound size={18} /> Email y contraseña

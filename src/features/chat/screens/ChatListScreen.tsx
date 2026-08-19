@@ -3,6 +3,7 @@
 import { useWebApp } from '@core/providers/WebAppProvider';
 import { Check, ChevronRight, Search, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@shared/components/ui';
 import { useState } from 'react';
 import { WebContent, WebHeading, WebScreen, WebSubtitle } from '@shared/components/layout/WebScreen';
 import { Chat, Dot, Request, SearchBox, SectionTitle } from './ChatListScreenStyled';
@@ -18,6 +19,17 @@ export function ChatListScreen({ panelMode = false, activeId, onSelectChat }: Ch
   const router = useRouter();
   const { conversations, requests, respondRequest } = useWebApp();
   const [query, setQuery] = useState('');
+  const toast = useToast();
+
+  // Responder no daba ninguna senal: la solicitud simplemente desaparecia de
+  // la lista y no quedaba claro que habia pasado.
+  const respond = (requestId: string, ownerName: string, accept: boolean) => {
+    respondRequest(requestId, accept);
+    toast({
+      title: `Solicitud de ${ownerName} ${accept ? 'aceptada' : 'rechazada'}.`,
+      tone: accept ? 'success' : 'error',
+    });
+  };
   const incoming = requests.filter((item) => item.direction === 'incoming' && item.status === 'pending');
   const chats = conversations.filter((item) => `${item.ownerName} ${item.petName}`.toLowerCase().includes(query.toLowerCase()));
 
@@ -50,8 +62,8 @@ export function ChatListScreen({ panelMode = false, activeId, onSelectChat }: Ch
                 <h3>{request.ownerName}</h3>
                 <p>Quiere conectar con {request.pet.name}</p>
               </div>
-              <button aria-label="Rechazar" onClick={() => respondRequest(request.id, false)}><X size={19} /></button>
-              <button aria-label="Aceptar" onClick={() => respondRequest(request.id, true)}><Check size={19} /></button>
+              <button aria-label="Rechazar" onClick={() => respond(request.id, request.ownerName, false)}><X size={19} /></button>
+              <button aria-label="Aceptar" onClick={() => respond(request.id, request.ownerName, true)}><Check size={19} /></button>
             </Request>
           ))}
         </>

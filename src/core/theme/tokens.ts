@@ -21,6 +21,10 @@ export const tokens = {
     success:       '#78D69A',
     successLight:  'rgba(64, 169, 100, 0.16)',
     error:         '#FF9278',
+    /** Fondo de los avisos: rojizo y verde plenos, para leerlos de un vistazo.
+        Con el texto claro dan 6.8:1 y 7.2:1. */
+    errorSolid:    '#8A3D28',
+    successSolid:  '#1F5B38',
     errorLight:    'rgba(168, 76, 48, 0.2)',
     warning:       '#F2C45A',
     warningLight:  'rgba(242, 196, 90, 0.16)',

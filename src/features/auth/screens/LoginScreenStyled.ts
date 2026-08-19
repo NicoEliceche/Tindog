@@ -43,19 +43,31 @@ export const Hero = styled.div`
   gap: 7px;
   text-align: center;
 
-  /* El logo va suelto, sin marco ni fondo, como en la portada. */
+  /* Circulo con fondo negro metalizado. El circulo va algo mas grande que
+     antes porque la patita, con el recorte redondo, quedaba cortada. */
   .logo {
-    width: clamp(128px, 22dvh, 190px);
+    width: clamp(148px, 25dvh, 215px);
     aspect-ratio: 1;
     position: relative;
+    border-radius: 50%;
+    overflow: hidden;
+    background: radial-gradient(
+      circle at 32% 28%,
+      #3A3A37 0%,
+      #262624 45%,
+      #141413 100%
+    );
+    border: 1px solid ${({ theme }) => theme.color.border};
   }
 
   .logo img {
     width: 100%;
     height: 100%;
+    /* contain: la patita entra entera dentro del circulo. Con cover y el
+       acercamiento se le cortaban los bordes. */
     object-fit: contain;
-    /* Recorta el borde en punta de abajo a la derecha de la imagen. */
-    transform: scale(1.05);
+    /* Un poco de aire para que no toque el borde del circulo. */
+    padding: 6%;
   }
 
   /* El texto flota sobre el fondo animado, sin panel detras. La sombra lo

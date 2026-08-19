@@ -9,7 +9,9 @@ import styled from 'styled-components';
  */
 export const Stack = styled.div`
   position: fixed;
-  top: max(12px, env(safe-area-inset-top));
+  /* Abajo a la derecha en todos los tamanos, apoyado sobre la barra fija:
+     64px de barra, el area segura y 5px de aire. */
+  bottom: calc(64px + env(safe-area-inset-bottom) + 5px);
   left: 12px;
   right: 12px;
   z-index: 4000;
@@ -18,12 +20,17 @@ export const Stack = styled.div`
   gap: ${({ theme }) => theme.spacing[2]};
   pointer-events: none;
 
+  align-items: flex-end;
+
   @media (min-width: ${({ theme }) => theme.breakpoints.sm}) {
-    top: auto;
     left: auto;
-    bottom: ${({ theme }) => theme.spacing[6]};
     right: ${({ theme }) => theme.spacing[6]};
     width: min(24rem, calc(100vw - 3rem));
+  }
+
+  /* En escritorio no hay barra inferior: el aviso baja al borde. */
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    bottom: ${({ theme }) => theme.spacing[6]};
   }
 `;
 
@@ -33,10 +40,16 @@ export const Item = styled(motion.div)<{ $tone: 'info' | 'success' | 'error' }>`
   gap: ${({ theme }) => theme.spacing[3]};
   padding: ${({ theme }) => theme.spacing[3]} ${({ theme }) => theme.spacing[4]};
   border-radius: ${({ theme }) => theme.radius.xl};
-  background: ${({ theme }) => theme.color.surface};
+  /* Los tonos llevan fondo propio y no solo un borde: el aviso se lee de
+     un vistazo sin tener que leer el texto. */
+  background: ${({ theme, $tone }) => (
+    $tone === 'error' ? theme.color.errorSolid
+      : $tone === 'success' ? theme.color.successSolid
+        : theme.color.surface
+  )};
   border: 1px solid ${({ theme, $tone }) => (
     $tone === 'error' ? theme.color.error
-      : $tone === 'success' ? theme.color.borderFocus
+      : $tone === 'success' ? theme.color.success
         : theme.color.border
   )};
   box-shadow: ${({ theme }) => theme.elevation.lg}, ${({ theme }) => theme.glow.subtle};
@@ -48,7 +61,7 @@ export const Item = styled(motion.div)<{ $tone: 'info' | 'success' | 'error' }>`
     flex-shrink: 0;
     margin-top: 1px;
     color: ${({ theme, $tone }) => (
-      $tone === 'error' ? theme.color.error : theme.color.primary
+      $tone === 'info' ? theme.color.primary : theme.color.text
     )};
   }
 `;
