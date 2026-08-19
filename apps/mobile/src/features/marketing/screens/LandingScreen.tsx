@@ -66,10 +66,15 @@ function createStyles(theme: AppTheme) {
     screen: { flex: 1, backgroundColor: 'transparent' },
     content: { paddingHorizontal: 20, alignItems: 'center' },
 
-    // El alto sigue la proporcion del archivo (1192x1320). Con un cuadrado
-    // y recorte redondo se le comian los bordes a la patita.
-    logo: { width: 168, height: 186, borderRadius: 24 },
-    logoCompact: { width: 132, height: 146, borderRadius: 20 },
+    // El alto sigue la proporcion del archivo (1192x1320) y el radio es la
+    // mitad del lado mayor, que es lo que hace el 50% de la web. React
+    // Native no admite porcentajes en borderRadius.
+    //
+    // La web pasa de 120 a 235 en escritorio; en el telefono ese salto
+    // literal daria 329 y ocuparia casi todo el ancho, asi que va a 220,
+    // dos tercios del ancho util de una pantalla de 375.
+    logo: { width: 220, height: 244, borderRadius: 122 },
+    logoCompact: { width: 176, height: 195, borderRadius: 98 },
 
     eyebrow: {
       flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10,

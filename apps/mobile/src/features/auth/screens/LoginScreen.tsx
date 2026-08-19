@@ -204,13 +204,18 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
           {/* El logo va suelto, sin marco ni fondo. El 5% de acercamiento
               recorta el borde en punta de abajo a la derecha que traia la
               imagen y que se notaba contra el fondo. */}
-          {/* Sin recorte redondo: la patita llega al borde del archivo y un
-              circulo le comia los bordes. La imagen ya trae su fondo negro. */}
+          {/* El alto sigue la proporcion del archivo y el radio es la mitad
+              del lado mayor: es lo que da el 50% de la web, que React Native
+              no admite en porcentaje. */}
           <Image
             source={logoSource}
             resizeMode="contain"
             accessibilityLabel="Logo de Tindog"
-            style={{ width: logoSize, height: logoSize * (1320 / 1192), borderRadius: 28 }}
+            style={{
+              width: logoSize,
+              height: logoSize * (1320 / 1192),
+              borderRadius: (logoSize * (1320 / 1192)) / 2,
+            }}
           />
 
           <Text style={[styles.kicker, { fontSize: kickerSize }]}>Conectá, cruzá y encontrá su pareja ideal</Text>
