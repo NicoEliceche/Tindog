@@ -98,10 +98,10 @@ export function LandingScreen() {
             transition={{ duration: reduceMotion ? 0 : 1, ease: [0.16, 1, 0.3, 1] }}
           >
             <LogoImage
-              src={withPublicBasePath('/assets/tindog_patita_logo.png')}
+              src={withPublicBasePath('/assets/tindog_patita_logo_black.png')}
               alt="Tindog Logo"
-              width={220}
-              height={220}
+              width={1192}
+              height={1320}
             />
           </LogoWrapper>
 
@@ -146,7 +146,7 @@ export function LandingScreen() {
           transition={{ delay: reduceMotion ? 0 : 0.5, duration: reduceMotion ? 0 : 1.1, ease: [0.16, 1, 0.3, 1] }}
         >
           <MockupGlow />
-          <MockupImage src={withPublicBasePath('/assets/tindog_patita_logo_black.png')} alt="Tindog" />
+          <MockupImage src={withPublicBasePath('/assets/home_screen.jpeg')} alt="Vista previa de Tindog" />
         </HeroMockup>
       </HeroSection>
 

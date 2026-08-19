@@ -90,29 +90,23 @@ export const HeroCopy = styled.div`
 `;
 
 export const LogoWrapper = styled(motion.div)`
+  /* Sin alto fijo ni recorte redondo: la patita llega al borde del archivo
+     y un circulo le comia los bordes. El alto sale de la proporcion. */
   width: 220px;
-  height: 220px;
   z-index: 10;
-  overflow: hidden;
-  border-radius: ${({ theme }) => theme.radius.full};
   filter: drop-shadow(0 10px 20px rgba(212, 175, 55, 0.18));
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     width: 120px;
-    height: 120px;
   }
 `;
 
 export const LogoImage = styled.img`
   display: block;
   width: 100%;
-  height: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-  border-radius: ${({ theme }) => theme.radius.full};
-  /* Un 5% de acercamiento recorta el borde en punta de abajo a la derecha
-     que traia la imagen y que se notaba contra el fondo. */
-  transform: scale(1.05);
+  /* El alto lo fija el archivo (1192x1320), asi la patita entra entera. */
+  height: auto;
+  border-radius: 22px;
 `;
 
 export const ContentBox = styled(motion.div)`
@@ -233,7 +227,7 @@ export const HeroMockup = styled(motion.div)`
   display: block;
   position: relative;
   width: 100%;
-  max-width: 230px;
+  max-width: 190px;
   margin: 0 auto;
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
