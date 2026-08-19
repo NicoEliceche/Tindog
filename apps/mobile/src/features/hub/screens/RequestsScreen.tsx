@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import { useToast } from '../../../shared/components/Toast';
+import { DEFAULT_FILTERS, FilterBar, withinRange, type FilterState } from '../components/FilterBar';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { ConnectionRequest } from '../../../core/types/social.types';
 
@@ -36,8 +37,26 @@ export function RequestsScreen() {
     });
   };
 
-  const incoming = requests.filter((item) => item.direction === 'incoming');
-  const outgoing = requests.filter((item) => item.direction === 'outgoing');
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+
+  // El mismo criterio que en la web: busqueda por nombre, ventana de fecha
+  // y orden, aplicados a las dos listas.
+  const visible = useMemo(() => {
+    const needle = filters.query.trim().toLowerCase();
+    return requests
+      .filter((item) => {
+        if (!withinRange(new Date(item.createdAt), filters.range)) return false;
+        if (!needle) return true;
+        return `${item.ownerName} ${item.pet.name} ${item.pet.breed}`.toLowerCase().includes(needle);
+      })
+      .sort((a, b) => {
+        const diff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return filters.order === 'recent' ? diff : -diff;
+      });
+  }, [filters, requests]);
+
+  const incoming = visible.filter((item) => item.direction === 'incoming');
+  const outgoing = visible.filter((item) => item.direction === 'outgoing');
 
   const renderIncoming = ({ item }: { item: ConnectionRequest }) => (
     <View style={styles.card}>
@@ -92,6 +111,7 @@ export function RequestsScreen() {
           <Text style={styles.intro}>
             Acá decidís con quién se abre un chat. Nadie puede escribirte hasta que aceptes su solicitud.
           </Text>
+          <FilterBar value={filters} onChange={setFilters} placeholder="Buscar por nombre o mascota" />
           <Text style={styles.section}>RECIBIDAS</Text>
         </View>
       }

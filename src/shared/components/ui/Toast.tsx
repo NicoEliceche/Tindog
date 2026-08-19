@@ -49,7 +49,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       title: input.title,
       body: input.body,
       tone: input.tone ?? 'info',
-      duration: input.duration ?? 5000,
+      // Diez segundos: cinco daban justo para leer un aviso con cuerpo.
+      duration: input.duration ?? 10000,
     };
     setToasts((current) => [...current, toast]);
     if (toast.duration > 0) {
@@ -77,7 +78,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 transition={reduceMotion ? { duration: 0.12 } : { type: 'spring', stiffness: 420, damping: 32 }}
               >
                 <Icon size={18} />
-                <Copy>
+                <Copy $tone={toast.tone}>
                   <strong>{toast.title}</strong>
                   {toast.body ? <p>{toast.body}</p> : null}
                 </Copy>

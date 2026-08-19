@@ -4,14 +4,11 @@ import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData, type SavedPet } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
+import {
+  DEFAULT_FILTERS, FilterBar, monthLabel, withinRange, type FilterState,
+} from '../components/FilterBar';
 import { useToast } from '../../../shared/components/Toast';
 import type { AppTheme } from '../../../core/theme/tokens';
-
-/** Etiqueta de mes en español con la inicial en mayúscula: "Agosto de 2026". */
-function monthLabel(date: Date): string {
-  const label = date.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
-  return label.charAt(0).toUpperCase() + label.slice(1);
-}
 
 /** Los guardados de un mismo mes van juntos: con varios, la fecha sola no ubica. */
 function groupByMonth(items: SavedPet[]): Array<[string, SavedPet[]]> {
@@ -38,12 +35,22 @@ export function SavedScreen() {
   const { savedPets, unsavePet, sendConnectionRequest } = useAppData();
   const [sent, setSent] = useState<string[]>([]);
 
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+
   const groups = useMemo(() => {
-    const ordered = [...savedPets].sort(
-      (a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime(),
-    );
-    return groupByMonth(ordered);
-  }, [savedPets]);
+    const needle = filters.query.trim().toLowerCase();
+    const visible = savedPets
+      .filter((item) => {
+        if (!withinRange(new Date(item.savedAt), filters.range)) return false;
+        if (!needle) return true;
+        return `${item.pet.name} ${item.pet.breed}`.toLowerCase().includes(needle);
+      })
+      .sort((a, b) => {
+        const diff = new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime();
+        return filters.order === 'recent' ? diff : -diff;
+      });
+    return groupByMonth(visible);
+  }, [filters, savedPets]);
 
   const connect = (item: SavedPet) => {
     sendConnectionRequest(item.pet);
@@ -61,9 +68,12 @@ export function SavedScreen() {
       data={groups}
       keyExtractor={([month]) => month}
       ListHeaderComponent={
-        <Text style={styles.intro}>
-          Los perfiles que apartaste para decidir con calma. Podés enviarles una solicitud o sacarlos de la lista.
-        </Text>
+        <View style={styles.head}>
+          <Text style={styles.intro}>
+            Los perfiles que apartaste para decidir con calma. Podés enviarles una solicitud o sacarlos de la lista.
+          </Text>
+          <FilterBar value={filters} onChange={setFilters} placeholder="Buscar por nombre o raza" />
+        </View>
       }
       ListEmptyComponent={
         <View style={styles.empty}>
@@ -117,7 +127,8 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     screen: { flex: 1 },
     content: { padding: 16, paddingTop: 8 },
-    intro: { color: theme.colors.textSecondary, fontSize: 13, lineHeight: 19, marginBottom: 16 },
+    head: { gap: 14, marginBottom: 16 },
+    intro: { color: theme.colors.textSecondary, fontSize: 13, lineHeight: 19 },
     group: { marginBottom: 20, gap: 9 },
     month: { color: theme.colors.textSecondary, fontSize: 11, fontWeight: '900', letterSpacing: 1 },
     card: {

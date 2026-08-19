@@ -2,13 +2,22 @@
 import styled from 'styled-components';
 
 export const Bar = styled.div`
-  display: flex;
-  flex-wrap: wrap;
+  /* En el telefono el buscador toma la fila entera y los dos filtros van
+     juntos abajo, cada uno con la mitad. Con flex-wrap el reparto dependia
+     del texto de cada opcion y quedaban desparejos. */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: ${({ theme }) => theme.spacing[2]};
   align-items: center;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+    display: flex;
+    flex-wrap: wrap;
+  }
 `;
 
 export const SearchField = styled.div`
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing[2]};
@@ -47,6 +56,10 @@ export const SearchField = styled.div`
 `;
 
 export const Select = styled.select`
+  /* Sin esto la opcion mas larga estira su mitad de la grilla y las dos
+     quedan desparejas. */
+  min-width: 0;
+  width: 100%;
   min-height: 44px;
   padding: 0 ${({ theme }) => theme.spacing[3]};
   border-radius: 999px;

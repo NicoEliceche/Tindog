@@ -36,17 +36,23 @@ export const Stack = styled.div`
 
 export const Item = styled(motion.div)<{ $tone: 'info' | 'success' | 'error' }>`
   display: flex;
-  align-items: flex-start;
+  /* Centrado: con flex-start el texto de una sola linea quedaba pegado
+     arriba, desalineado del icono y del boton de cerrar. */
+  align-items: center;
   gap: ${({ theme }) => theme.spacing[3]};
   padding: ${({ theme }) => theme.spacing[3]} ${({ theme }) => theme.spacing[4]};
   border-radius: ${({ theme }) => theme.radius.xl};
   /* Los tonos llevan fondo propio y no solo un borde: el aviso se lee de
      un vistazo sin tener que leer el texto. */
+  /* Translucido con desenfoque: deja ver el fondo animado por detras sin
+     perder legibilidad. */
   background: ${({ theme, $tone }) => (
-    $tone === 'error' ? theme.color.errorSolid
-      : $tone === 'success' ? theme.color.successSolid
-        : theme.color.surface
+    $tone === 'error' ? `${theme.color.errorSolid}E6`
+      : $tone === 'success' ? `${theme.color.successSolid}E6`
+        : `${theme.color.surface}E6`
   )};
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 1px solid ${({ theme, $tone }) => (
     $tone === 'error' ? theme.color.error
       : $tone === 'success' ? theme.color.success
@@ -59,28 +65,32 @@ export const Item = styled(motion.div)<{ $tone: 'info' | 'success' | 'error' }>`
 
   svg {
     flex-shrink: 0;
-    margin-top: 1px;
     color: ${({ theme, $tone }) => (
       $tone === 'info' ? theme.color.primary : theme.color.text
     )};
   }
 `;
 
-export const Copy = styled.div`
+export const Copy = styled.div<{ $tone: 'info' | 'success' | 'error' }>`
   flex: 1;
   min-width: 0;
 
   strong {
     display: block;
     color: ${({ theme }) => theme.color.text};
-    font-size: ${({ theme }) => theme.typography.size.sm};
+    /* Dos pixeles mas que el sm del sistema (13): el aviso es texto suelto
+       sobre color y agradece el cuerpo extra. */
+    font-size: 0.9375rem;
     font-weight: ${({ theme }) => theme.typography.weight.bold};
   }
 
   p {
     margin-top: 2px;
-    color: ${({ theme }) => theme.color.textSecondary};
-    font-size: ${({ theme }) => theme.typography.size.xs};
+    /* Sobre los tonos de color el cuerpo usa el texto principal: con el
+       secundario, y el panel al 90%, caia a 3.3:1 sobre el peor fondo. */
+    color: ${({ theme, $tone }) => ($tone === 'info' ? theme.color.textSecondary : theme.color.text)};
+    /* Dos pixeles mas que el xs del sistema (11). */
+    font-size: 0.8125rem;
     line-height: 1.45;
   }
 `;

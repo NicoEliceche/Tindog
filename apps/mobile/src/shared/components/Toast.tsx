@@ -53,7 +53,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       title: input.title,
       body: input.body,
       tone: input.tone ?? 'info',
-      duration: input.duration ?? 5000,
+      // Diez segundos, como en la web: cinco daban justo para leer.
+      duration: input.duration ?? 10000,
     };
     setToasts((current) => [...current, toast]);
     if (toast.duration > 0) setTimeout(() => dismiss(id), toast.duration);
@@ -85,7 +86,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             />
             <View style={styles.copy}>
               <Text style={styles.title}>{toast.title}</Text>
-              {toast.body ? <Text style={styles.body}>{toast.body}</Text> : null}
+              {toast.body ? <Text style={[styles.body, toast.tone !== 'info' && { color: theme.colors.text }]}>{toast.body}</Text> : null}
             </View>
             <Pressable
               accessibilityRole="button"
@@ -120,11 +121,13 @@ function createStyles(theme: AppTheme) {
     },
     item: {
       flexDirection: 'row',
-      alignItems: 'flex-start',
+      // Centrado: con flex-start el texto de una linea quedaba pegado arriba,
+      // desalineado del icono y del boton de cerrar.
+      alignItems: 'center',
       gap: 10,
       padding: 13,
       borderRadius: 18,
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.colors.surfaceOverlay,
       borderWidth: 1,
       borderColor: theme.colors.border,
       shadowColor: '#000',
@@ -134,7 +137,7 @@ function createStyles(theme: AppTheme) {
       elevation: 8,
     },
     copy: { flex: 1, minWidth: 0 },
-    title: { color: theme.colors.text, fontSize: 14, fontWeight: '900' },
-    body: { color: theme.colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 2 },
+    title: { color: theme.colors.text, fontSize: 16, fontWeight: '900' },
+    body: { color: theme.colors.textSecondary, fontSize: 14, lineHeight: 19, marginTop: 2 },
   });
 }
