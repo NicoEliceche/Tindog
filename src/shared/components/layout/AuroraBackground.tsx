@@ -186,7 +186,11 @@ export function AuroraBackground() {
         y: rand(0, height),
         vx: drift(0.16, 0.42),
         vy: drift(0.12, 0.34),
-        size: rand(30, 58),
+        // El triple en escritorio y el doble en el telefono. La huella es
+        // sutil de fondo y a este tamano se lee como motivo de marca; el
+        // corte va en el mismo ancho que usa el resto de la aplicacion
+        // para pasar a escritorio.
+        size: rand(30, 58) * (width >= 1024 ? 3 : 2),
         angle: rand(0, Math.PI * 2),
         spin: drift(0.0012, 0.0045),
         alpha: rand(0.16, 0.34),
