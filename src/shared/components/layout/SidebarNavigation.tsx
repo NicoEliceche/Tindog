@@ -37,11 +37,9 @@ const Logo = styled(Link)`
 `;
 
 const LogoImage = styled.img`
-  /* Sin recorte redondo: la patita llega al borde del archivo y un circulo
-     le comia los bordes. Se muestra entera, apenas redondeada. */
   width: 2.5rem;
   height: auto;
-  border-radius: 12px;
+  border-radius: 50%;
 `;
 
 const LogoText = styled.span`

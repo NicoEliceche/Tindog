@@ -43,14 +43,12 @@ export const Hero = styled.div`
   gap: 7px;
   text-align: center;
 
-  /* Sin recorte redondo ni proporcion cuadrada. La patita llega hasta el
-     borde mismo del archivo -sin margen- y un circulo inscripto le comia
-     164px de alto: la imagen ya trae su propio fondo negro, asi que se
-     muestra tal cual, con las esquinas apenas redondeadas. */
+  /* La caja sigue la proporcion del archivo; el redondeo completo recorta
+     las puntas de la patita, que llega al borde. */
   .logo {
     width: clamp(148px, 25dvh, 215px);
     position: relative;
-    border-radius: 28px;
+    border-radius: 50%;
     overflow: hidden;
   }
 

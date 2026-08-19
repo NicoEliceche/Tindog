@@ -90,23 +90,22 @@ export const HeroCopy = styled.div`
 `;
 
 export const LogoWrapper = styled(motion.div)`
-  /* Sin alto fijo ni recorte redondo: la patita llega al borde del archivo
-     y un circulo le comia los bordes. El alto sale de la proporcion. */
   width: 220px;
   z-index: 10;
   filter: drop-shadow(0 10px 20px rgba(212, 175, 55, 0.18));
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    width: 120px;
+    width: 235px;
   }
 `;
 
 export const LogoImage = styled.img`
   display: block;
   width: 100%;
-  /* El alto lo fija el archivo (1192x1320), asi la patita entra entera. */
+  /* El alto lo fija el archivo (1192x1320). El recorte redondo se come las
+     puntas de la patita, que llega al borde del archivo. */
   height: auto;
-  border-radius: 22px;
+  border-radius: 50%;
 `;
 
 export const ContentBox = styled(motion.div)`
