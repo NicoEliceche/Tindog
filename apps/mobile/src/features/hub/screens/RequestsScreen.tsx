@@ -4,6 +4,7 @@ import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
+import { useToast } from '../../../shared/components/Toast';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { ConnectionRequest } from '../../../core/types/social.types';
 
@@ -24,6 +25,16 @@ export function RequestsScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
   const { requests, respondToRequest } = useAppData();
+  const toast = useToast();
+
+  // Mismo aviso que en la web y en la lista de mensajes.
+  const respond = (requestId: string, ownerName: string, accept: boolean) => {
+    respondToRequest(requestId, accept);
+    toast({
+      title: `Solicitud de ${ownerName} ${accept ? 'aceptada' : 'rechazada'}.`,
+      tone: accept ? 'success' : 'error',
+    });
+  };
 
   const incoming = requests.filter((item) => item.direction === 'incoming');
   const outgoing = requests.filter((item) => item.direction === 'outgoing');
@@ -39,14 +50,14 @@ export function RequestsScreen() {
         <View style={styles.actions}>
           <Pressable
             accessibilityRole="button"
-            onPress={() => respondToRequest(item.id, true)}
+            onPress={() => respond(item.id, item.ownerName, true)}
             style={styles.accept}
           >
             <Ionicons name="checkmark" size={18} color={theme.colors.onPrimary} />
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            onPress={() => respondToRequest(item.id, false)}
+            onPress={() => respond(item.id, item.ownerName, false)}
             style={styles.decline}
           >
             <Ionicons name="close" size={18} color={theme.colors.textMuted} />

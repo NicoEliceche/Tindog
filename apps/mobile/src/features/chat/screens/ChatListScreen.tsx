@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../../../core/providers/AppDataProvider';
+import { useToast } from '../../../shared/components/Toast';
 import { GoldHeading } from '../../../shared/components/GoldHeading';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
@@ -18,6 +19,17 @@ export function ChatListScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<MessagesStackParamList & RootStackParamList>>();
   const { conversations, requests, respondToRequest } = useAppData();
   const [query, setQuery] = useState('');
+  const toast = useToast();
+
+  // Responder no daba ninguna senal: la solicitud desaparecia de la lista y
+  // no quedaba claro que habia pasado.
+  const respond = (requestId: string, ownerName: string, accept: boolean) => {
+    respondToRequest(requestId, accept);
+    toast({
+      title: `Solicitud de ${ownerName} ${accept ? 'aceptada' : 'rechazada'}.`,
+      tone: accept ? 'success' : 'error',
+    });
+  };
   const pendingIncoming = requests.filter((item) => item.direction === 'incoming' && item.status === 'pending');
   const filtered = conversations.filter((item) => `${item.ownerName} ${item.petName}`.toLowerCase().includes(query.toLowerCase()));
 
@@ -51,8 +63,8 @@ export function ChatListScreen() {
             {pendingIncoming.map((request) => <View key={request.id} style={styles.requestCard}>
               <Image source={{ uri: request.pet.photos[0] }} style={styles.requestPhoto} />
               <View style={{ flex: 1 }}><Text style={styles.requestTitle}>{request.ownerName}</Text><Text style={styles.requestMeta}>Quiere conectar con {request.pet.name}</Text></View>
-              <Pressable accessibilityRole="button" accessibilityLabel="Rechazar solicitud" onPress={() => respondToRequest(request.id, false)} style={styles.roundSecondary}><Ionicons name="close" size={20} color={theme.colors.danger} /></Pressable>
-              <Pressable accessibilityRole="button" accessibilityLabel="Aceptar solicitud" onPress={() => respondToRequest(request.id, true)} style={styles.roundPrimary}><Ionicons name="checkmark" size={20} color={theme.colors.onPrimary} /></Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel="Rechazar solicitud" onPress={() => respond(request.id, request.ownerName, false)} style={styles.roundSecondary}><Ionicons name="close" size={20} color={theme.colors.danger} /></Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel="Aceptar solicitud" onPress={() => respond(request.id, request.ownerName, true)} style={styles.roundPrimary}><Ionicons name="checkmark" size={20} color={theme.colors.onPrimary} /></Pressable>
             </View>)}
           </View> : null}
           <Text style={styles.sectionTitle}>Conversaciones</Text>

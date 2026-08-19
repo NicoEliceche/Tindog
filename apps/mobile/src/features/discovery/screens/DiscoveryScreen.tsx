@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -7,6 +9,7 @@ import Animated, {
   interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { RootStackParamList } from '../../../navigation/types';
 import { fetchDiscoveryPets } from '../../../core/data/services/petService';
 import { NotificationBell } from '../../../shared/components/NotificationBell';
 import { useAppData } from '../../../core/providers/AppDataProvider';
@@ -28,6 +31,7 @@ export function DiscoveryScreen() {
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { width, height } = useWindowDimensions();
   const { profile, sendConnectionRequest, requests, savePet, blockedOwners } = useAppData();
   const [pets, setPets] = useState<Pet[]>([]);
@@ -180,19 +184,26 @@ export function DiscoveryScreen() {
   return (
     <View style={styles.screen}>
       <View style={[styles.safeArea, { paddingTop: Math.max(insets.top + 6, 10) }]}>
+        {/* Tres columnas como en la web: hueco, marca y acciones. La marca ya
+            no se superpone con la campana porque tiene su propia columna. */}
         <View style={styles.header}>
-          {/* La marca se centra sobre el ancho completo del encabezado, con la
-              campana y la foto encima. Repartir el ancho en columnas dejaba a
-              la marca sin lugar y el subtitulo volvia a envolver. */}
-          <View pointerEvents="none" style={styles.brand}>
-            <Text style={[styles.brandName, !compact && styles.brandNameLarge]}>TINDOG</Text>
-            <Text style={styles.tagline} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>ENCONTRÁ SU PAREJA IDEAL</Text>
+          <View style={styles.headerSide} />
+          <View style={styles.brand}>
+            <Text style={[styles.brandName, !compact && styles.brandNameLarge]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>TINDOG</Text>
+            <Text style={styles.tagline} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>ENCONTRÁ SU PAREJA IDEAL</Text>
           </View>
-          <View style={styles.headerActions}>
-            <NotificationBell />
-            <View style={styles.profileChip}>
-              {profile.avatar ? <Image source={{ uri: profile.avatar }} style={styles.avatar} /> : <Text style={styles.initial}>{firstName[0]?.toUpperCase()}</Text>}
-              <Text style={styles.profileName} numberOfLines={1}>{firstName}</Text>
+          <View style={styles.headerSide}>
+            <View style={styles.headerActions}>
+              <NotificationBell />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Ir a tu perfil"
+                onPress={() => navigation.navigate('Main', { screen: 'Profile' })}
+              >
+                {profile.avatar
+                  ? <Image source={{ uri: profile.avatar }} style={styles.avatar} />
+                  : <Text style={styles.initial}>{firstName[0]?.toUpperCase()}</Text>}
+              </Pressable>
             </View>
           </View>
         </View>
@@ -294,9 +305,13 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: 'transparent' },
     safeArea: { flex: 1, width: '100%', maxWidth: theme.layout.maxPhoneWidth, alignSelf: 'center', paddingHorizontal: theme.spacing.lg },
-    header: { minHeight: 78, justifyContent: 'center', marginBottom: theme.spacing.sm },
-    headerActions: { position: 'absolute', right: 0, flexDirection: 'row', alignItems: 'center' },
-    brand: { alignItems: 'center' },
+    // Tres columnas como en la web. Los 82 de los lados son exactamente lo
+    // que ocupan campana mas foto: con los 96 de la web la columna del medio
+    // quedaba en 136 en telefonos chicos y TINDOG entraba apretado.
+    header: { minHeight: 78, flexDirection: 'row', alignItems: 'center', marginBottom: theme.spacing.sm },
+    headerSide: { width: 82, alignItems: 'flex-end' },
+    headerActions: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+    brand: { flex: 1, alignItems: 'center' },
     brandName: { color: theme.colors.primary, fontWeight: '900', fontSize: 34, letterSpacing: 3 },
     brandNameLarge: { fontSize: 42, letterSpacing: 4 },
     // A 16 el subtitulo necesitaba unos 267px y en el header solo quedan
@@ -304,10 +319,8 @@ function createStyles(theme: AppTheme) {
     // con margen, y numberOfLines mas el autoajuste lo garantizan tambien con
     // el tamano de fuente del sistema agrandado.
     tagline: { color: theme.colors.textMuted, fontSize: 12, fontWeight: '900', letterSpacing: 0.8 },
-    profileChip: { width: 58, alignItems: 'center', gap: 2 },
     avatar: { width: 38, height: 38, borderRadius: 19 },
     initial: { width: 38, height: 38, borderRadius: 19, textAlign: 'center', textAlignVertical: 'center', color: theme.colors.primary, backgroundColor: theme.colors.primaryFaded, fontWeight: '900' },
-    profileName: { maxWidth: 58, color: theme.colors.text, fontSize: 10, fontWeight: '800' },
     main: { flex: 1, alignItems: 'center', justifyContent: 'space-between', paddingBottom: theme.spacing.md },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: theme.spacing.md, paddingHorizontal: theme.spacing.xl },
     cardStack: { position: 'relative' },

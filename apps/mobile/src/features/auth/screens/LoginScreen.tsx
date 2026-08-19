@@ -32,7 +32,7 @@ interface LoginScreenProps {
   onAuthenticated: (auth: AuthResponse) => void;
 }
 
-const logoSource = require('../../../../assets/tindog_patita_logo.png');
+const logoSource = require('../../../../assets/tindog_patita_logo_black.png');
 const googleIconSource = require('../../../../assets/google_g_icon.png');
 
 function clamp(value: number, min: number, max: number) {
@@ -204,11 +204,13 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
           {/* El logo va suelto, sin marco ni fondo. El 5% de acercamiento
               recorta el borde en punta de abajo a la derecha que traia la
               imagen y que se notaba contra el fondo. */}
+          {/* Redondo como en la web. El negro ya viene en la imagen y
+              contain la muestra entera: no es cuadrada (1192x1320). */}
           <Image
             source={logoSource}
             resizeMode="contain"
             accessibilityLabel="Logo de Tindog"
-            style={{ width: logoSize, height: logoSize, transform: [{ scale: 1.05 }] }}
+            style={{ width: logoSize, height: logoSize, borderRadius: logoSize / 2 }}
           />
 
           <Text style={[styles.kicker, { fontSize: kickerSize }]}>Conectá, cruzá y encontrá su pareja ideal</Text>
@@ -253,7 +255,7 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
           ) : null}
           {method === 'none' ? (
             <View style={styles.methodList}>
-              <MethodButton icon="mail-outline" label="Continuar con email" onPress={() => { setMethod('code'); setErrorMessage(''); }} />
+              <MethodButton icon="mail-outline" label="Enviar código al email" onPress={() => { setMethod('code'); setErrorMessage(''); }} />
               <MethodButton icon="key-outline" label="Email y contraseña" onPress={() => { setMethod('password'); setErrorMessage(''); }} />
               <MethodButton icon="phone-portrait-outline" label="Continuar con teléfono" onPress={() => { setMethod('phone'); setErrorMessage(''); }} />
             </View>

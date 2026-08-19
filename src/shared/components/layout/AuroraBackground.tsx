@@ -104,6 +104,27 @@ function strokeSinglePaw(ctx: CanvasRenderingContext2D, size: number) {
 }
 
 /**
+ * Dibuja un par de huellas, como el paso de un perro. Replica la
+ * disposicion de la aplicacion nativa: una adelantada respecto de la otra y
+ * ambas inclinadas hacia afuera unos diez grados.
+ */
+function strokePawPair(ctx: CanvasRenderingContext2D, size: number) {
+  const print = size * 0.62;
+
+  ctx.save();
+  ctx.translate(-size * 0.36, size * 0.21);
+  ctx.rotate(-0.175);
+  strokeSinglePaw(ctx, print);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(size * 0.36, -size * 0.21);
+  ctx.rotate(0.175);
+  strokeSinglePaw(ctx, print);
+  ctx.restore();
+}
+
+/**
  * Fondo vivo de toda la app, dibujado en un único canvas:
  *
  * - **Auroras doradas** que derivan libremente por toda la pantalla. Cada
@@ -183,9 +204,7 @@ export function AuroraBackground() {
         y: rand(0, height),
         vx: drift(0.16, 0.42),
         vy: drift(0.12, 0.34),
-        // El par ocupaba mas ancho que una huella sola: al pasar a una
-        // sola se agranda para conservar el mismo peso visual.
-        size: rand(34, 66),
+        size: rand(30, 58),
         angle: rand(0, Math.PI * 2),
         spin: drift(0.0012, 0.0045),
         alpha: rand(0.16, 0.34),
@@ -324,7 +343,7 @@ export function AuroraBackground() {
         const pulse = reduceMotion ? 0 : Math.sin(time * 0.012 + p.x * 0.01) * 0.06;
         ctx.strokeStyle = gold;
         ctx.globalAlpha = Math.max(0.08, p.alpha + pulse);
-        strokeSinglePaw(ctx, p.size);
+        strokePawPair(ctx, p.size);
         ctx.restore();
       }
       ctx.globalAlpha = 1;

@@ -64,7 +64,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <View pointerEvents="box-none" style={[styles.stack, { top: insets.top + 10 }]}>
+      {/* Abajo a la derecha y sobre la barra de pestanas, como en la web:
+          60 de barra, el area segura y 5 de aire. */}
+      <View pointerEvents="box-none" style={[styles.stack, { bottom: 60 + insets.bottom + 5 }]}>
         {toasts.map((toast) => (
           <Animated.View
             key={toast.id}
@@ -72,13 +74,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             exiting={FadeOut.duration(160)}
             style={[
               styles.item,
-              toast.tone === 'error' && { borderColor: theme.colors.danger },
+              toast.tone === 'error' && { backgroundColor: theme.colors.dangerSolid, borderColor: theme.colors.danger },
+              toast.tone === 'success' && { backgroundColor: theme.colors.successSolid, borderColor: theme.colors.success },
             ]}
           >
             <Ionicons
               name={ICON[toast.tone]}
               size={20}
-              color={toast.tone === 'error' ? theme.colors.danger : theme.colors.primary}
+              color={toast.tone === 'info' ? theme.colors.primary : theme.colors.text}
             />
             <View style={styles.copy}>
               <Text style={styles.title}>{toast.title}</Text>
@@ -113,6 +116,7 @@ function createStyles(theme: AppTheme) {
       right: 12,
       gap: 8,
       zIndex: 4000,
+      alignItems: 'flex-end',
     },
     item: {
       flexDirection: 'row',

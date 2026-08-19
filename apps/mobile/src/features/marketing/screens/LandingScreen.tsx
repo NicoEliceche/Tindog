@@ -6,7 +6,7 @@ import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import { GoldHeading } from '../../../shared/components/GoldHeading';
 
-const logoSource = require('../../../../assets/tindog_patita_logo.png');
+const logoSource = require('../../../../assets/tindog_patita_logo_black.png');
 const mockupSource = require('../../../../assets/home_screen.jpeg');
 
 /**
@@ -68,8 +68,8 @@ function createStyles(theme: AppTheme) {
 
     // Sin marco ni fondo, y con un recorte que se come el borde en punta de
     // abajo a la derecha que traía la imagen.
-    logo: { width: 168, height: 168, transform: [{ scale: 1.05 }] },
-    logoCompact: { width: 132, height: 132 },
+    logo: { width: 168, height: 168, borderRadius: 84 },
+    logoCompact: { width: 132, height: 132, borderRadius: 66 },
 
     eyebrow: {
       flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10,

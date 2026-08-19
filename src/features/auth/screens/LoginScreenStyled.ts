@@ -43,31 +43,21 @@ export const Hero = styled.div`
   gap: 7px;
   text-align: center;
 
-  /* Circulo con fondo negro metalizado. El circulo va algo mas grande que
-     antes porque la patita, con el recorte redondo, quedaba cortada. */
+  /* El negro ya viene en la imagen, asi que el contenedor no pinta nada. */
   .logo {
     width: clamp(148px, 25dvh, 215px);
     aspect-ratio: 1;
     position: relative;
     border-radius: 50%;
     overflow: hidden;
-    background: radial-gradient(
-      circle at 32% 28%,
-      #3A3A37 0%,
-      #262624 45%,
-      #141413 100%
-    );
-    border: 1px solid ${({ theme }) => theme.color.border};
   }
 
   .logo img {
     width: 100%;
     height: 100%;
-    /* contain: la patita entra entera dentro del circulo. Con cover y el
-       acercamiento se le cortaban los bordes. */
+    /* La imagen no es cuadrada (1192x1320): contain la muestra entera, sin
+       recortarle los bordes al encajarla en el circulo. */
     object-fit: contain;
-    /* Un poco de aire para que no toque el borde del circulo. */
-    padding: 6%;
   }
 
   /* El texto flota sobre el fondo animado, sin panel detras. La sombra lo

@@ -44,6 +44,9 @@ const darkColors = {
   warning: '#F2C45A',
   warningFaded: 'rgba(242, 196, 90, 0.16)',
   danger: '#FF9278',
+  /** Fondo de los avisos, igual que en la web: 6.8:1 y 7.2:1 con el texto. */
+  dangerSolid: '#8A3D28',
+  successSolid: '#1F5B38',
   dangerFaded: 'rgba(168, 76, 48, 0.2)',
   dangerBorder: 'rgba(255, 146, 120, 0.38)',
   background: '#262624',
@@ -86,6 +89,8 @@ const lightColors: Record<keyof typeof darkColors, string> = {
   warning: '#8A5A00',
   warningFaded: 'rgba(138, 90, 0, 0.12)',
   danger: '#B23B27',
+  dangerSolid: '#8A3D28',
+  successSolid: '#1F5B38',
   dangerFaded: 'rgba(178, 59, 39, 0.1)',
   dangerBorder: 'rgba(178, 59, 39, 0.32)',
   background: '#FDFBF7',
