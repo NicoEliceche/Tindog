@@ -54,9 +54,10 @@ export function LandingScreen({ onStart }: { onStart: () => void }) {
 
       <Text style={styles.trust}>Gratis · Sin tarjeta de crédito</Text>
 
-      <View style={styles.mockupFrame}>
-        <Image source={mockupSource} style={styles.mockup} resizeMode="cover" />
-      </View>
+      {/* La captura va suelta, sin marco: el borde dorado y la sombra van
+          sobre la imagen. Con un marco de proporcion propia, cover le
+          recortaba 27px de alto. */}
+      <Image source={mockupSource} style={styles.mockup} resizeMode="contain" />
     </ScrollView>
   );
 }
@@ -102,13 +103,13 @@ function createStyles(theme: AppTheme) {
     ctaText: { color: theme.colors.onPrimary, fontSize: 16, fontWeight: '900' },
     trust: { color: theme.colors.textMuted, fontSize: 11, marginTop: 10 },
 
-    mockupFrame: {
-      width: 232, height: 464, marginTop: 28, borderRadius: 32, overflow: 'hidden',
-      backgroundColor: theme.colors.surface,
-      borderWidth: 1, borderColor: theme.colors.borderStrong,
+    // El alto sale de la proporcion del archivo (389x823), no de un marco.
+    mockup: {
+      width: 232, height: Math.round(232 * (823 / 389)),
+      marginTop: 28, borderRadius: 24,
+      borderWidth: 1, borderColor: theme.colors.primary,
       elevation: 10, shadowColor: theme.colors.shadow,
       shadowOpacity: 0.28, shadowRadius: 26, shadowOffset: { width: 0, height: 14 },
     },
-    mockup: { width: '100%', height: '100%' },
   });
 }

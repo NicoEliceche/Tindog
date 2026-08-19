@@ -264,7 +264,9 @@ export function AuroraBackground({ theme }: { theme: AppTheme }) {
   }), [width, height]);
 
   const paws = useMemo<PawSpec[]>(() => Array.from({ length: PAW_COUNT }, (_, i) => {
-    const size = rand(30, 54);
+    // El doble que antes, como en la web para telefono: la huella es sutil
+    // de fondo y a este tamano se lee como motivo de marca.
+    const size = rand(60, 108);
     const startX = rand(0, Math.max(1, width - size));
     const startY = rand(0, Math.max(1, height - size));
     // Cinco destinos al azar dentro de la pantalla; el último vuelve al
