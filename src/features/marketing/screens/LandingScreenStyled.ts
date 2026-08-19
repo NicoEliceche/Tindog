@@ -227,11 +227,13 @@ export const HeroMockup = styled(motion.div)`
   /* En el teléfono también se muestra: la captura es lo que explica de qué
      se trata la app antes de que alguien se registre. Va más chica, debajo
      del texto, para no empujar el botón fuera de la pantalla. */
-  display: flex;
-  justify-content: center;
+  /* Bloque y no flex: un contenedor flex estira a sus hijos a lo alto y la
+     imagen se deformaba respecto de su proporcion. Con bloque, la imagen
+     define su propio alto. */
+  display: block;
   position: relative;
   width: 100%;
-  max-width: 190px;
+  max-width: 230px;
   margin: 0 auto;
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
@@ -240,23 +242,25 @@ export const HeroMockup = styled(motion.div)`
   }
 `;
 
-export const MockupFrame = styled.div`
+/**
+ * La imagen va suelta, sin caja que la contenga.
+ *
+ * Antes vivia dentro de un marco con proporcion propia: la fila del hero le
+ * achataba el alto, la proporcion dejaba de coincidir con la del archivo y
+ * `contain` centraba la imagen dejando casi cincuenta pixeles de aire
+ * arriba y abajo. Sin marco no hay desajuste posible: la imagen define su
+ * propio alto, y el borde dorado y el halo van sobre ella.
+ */
+export const MockupImage = styled.img`
+  display: block;
   width: min(100%, 320px);
-  /* La proporción sigue a la del archivo (389x827). Con un marco distinto,
-     object-fit recortaba los lados y la captura se veía ampliada. */
-  aspect-ratio: 389 / 827;
-  border-radius: ${({ theme }) => theme.radius.xl};
-  overflow: hidden;
-  border: 1px solid ${({ theme }) => theme.color.border};
+  height: auto;
+  margin: 0 auto;
+  border-radius: ${({ theme }) => theme.radius.full};
+  border: 1px solid ${({ theme }) => theme.color.borderFocus};
   box-shadow: ${({ theme }) => theme.elevation.glow};
   position: relative;
-`;
-
-export const MockupImage = styled.img`
-  width: 100%;
-  height: 100%;
-  /* Se muestra entera, sin recorte: con cover se ampliaba. */
-  object-fit: contain;
+  z-index: 1;
 `;
 
 export const MockupGlow = styled.div`

@@ -94,8 +94,10 @@ export const Hero = styled.div`
     text-align: left;
     gap: ${({ theme }) => theme.spacing[4]};
 
+    /* Tres veces mas grande: en escritorio la columna del hero tiene alto
+       de sobra y a 96px el logo se perdia al lado del titulo. */
     .logo {
-      width: 96px;
+      width: 288px;
     }
 
     h1 {

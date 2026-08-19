@@ -40,7 +40,9 @@ const LogoImage = styled.img`
   width: 2.5rem;
   height: 2.5rem;
   border-radius: ${({ theme }) => theme.radius.full};
-  object-fit: cover;
+  /* contain y no cover: la imagen no es cuadrada (1192x1320) y con cover se
+     le recortaban los bordes al encajarla en el circulo. */
+  object-fit: contain;
 `;
 
 const LogoText = styled.span`
@@ -176,7 +178,7 @@ export function SidebarNavigation() {
     <Aside aria-label="Navegación principal">
       <div>
         <Logo href="/discovery">
-          <LogoImage src={withPublicBasePath('/assets/tindog_patita_logo.png')} alt="Tindog" width={40} height={40} />
+          <LogoImage src={withPublicBasePath('/assets/tindog_patita_logo_black.png')} alt="Tindog" width={40} height={40} />
           <LogoText>Tindog</LogoText>
         </Logo>
 

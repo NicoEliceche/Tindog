@@ -10,7 +10,7 @@ import { restoreAuthSession } from '@core/data/services/authService';
 import {
   LoadingScreen, LoadingMessage,
   Page, HeroSection, HeroCopy, LogoWrapper, LogoImage, ContentBox, Eyebrow, Title, Subtitle,
-  CtaRow, Button, TrustNote, HeroMockup, MockupFrame, MockupImage, MockupGlow,
+  CtaRow, Button, TrustNote, HeroMockup, MockupImage, MockupGlow,
   Section, SectionHeading, SectionSubheading, StepsGrid, StepCardIcon, StepNumber, StepTitle, StepDescription,
   ValueGrid, ValueIcon, ValueTitle, ValueDescription,
   Footer, FooterBrand, FooterNote,
@@ -146,9 +146,7 @@ export function LandingScreen() {
           transition={{ delay: reduceMotion ? 0 : 0.5, duration: reduceMotion ? 0 : 1.1, ease: [0.16, 1, 0.3, 1] }}
         >
           <MockupGlow />
-          <MockupFrame>
-            <MockupImage src={withPublicBasePath('/assets/home_screen.jpeg')} alt="Vista previa de Tindog" />
-          </MockupFrame>
+          <MockupImage src={withPublicBasePath('/assets/tindog_patita_logo_black.png')} alt="Tindog" />
         </HeroMockup>
       </HeroSection>
 
