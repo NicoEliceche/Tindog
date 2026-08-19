@@ -256,7 +256,7 @@ export const MockupImage = styled.img`
   width: min(100%, 320px);
   height: auto;
   margin: 0 auto;
-  border-radius: ${({ theme }) => theme.radius.full};
+  border-radius: ${({ theme }) => theme.radius.xl};
   border: 1px solid ${({ theme }) => theme.color.borderFocus};
   box-shadow: ${({ theme }) => theme.elevation.glow};
   position: relative;

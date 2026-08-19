@@ -37,12 +37,11 @@ const Logo = styled(Link)`
 `;
 
 const LogoImage = styled.img`
+  /* Sin recorte redondo: la patita llega al borde del archivo y un circulo
+     le comia los bordes. Se muestra entera, apenas redondeada. */
   width: 2.5rem;
-  height: 2.5rem;
-  border-radius: ${({ theme }) => theme.radius.full};
-  /* contain y no cover: la imagen no es cuadrada (1192x1320) y con cover se
-     le recortaban los bordes al encajarla en el circulo. */
-  object-fit: contain;
+  height: auto;
+  border-radius: 12px;
 `;
 
 const LogoText = styled.span`

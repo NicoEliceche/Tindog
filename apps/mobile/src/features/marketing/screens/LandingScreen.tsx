@@ -66,10 +66,10 @@ function createStyles(theme: AppTheme) {
     screen: { flex: 1, backgroundColor: 'transparent' },
     content: { paddingHorizontal: 20, alignItems: 'center' },
 
-    // Sin marco ni fondo, y con un recorte que se come el borde en punta de
-    // abajo a la derecha que traía la imagen.
-    logo: { width: 168, height: 168, borderRadius: 84 },
-    logoCompact: { width: 132, height: 132, borderRadius: 66 },
+    // El alto sigue la proporcion del archivo (1192x1320). Con un cuadrado
+    // y recorte redondo se le comian los bordes a la patita.
+    logo: { width: 168, height: 186, borderRadius: 24 },
+    logoCompact: { width: 132, height: 146, borderRadius: 20 },
 
     eyebrow: {
       flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10,

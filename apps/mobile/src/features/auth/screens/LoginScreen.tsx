@@ -204,13 +204,13 @@ export function LoginScreen({ onAuthenticated }: LoginScreenProps) {
           {/* El logo va suelto, sin marco ni fondo. El 5% de acercamiento
               recorta el borde en punta de abajo a la derecha que traia la
               imagen y que se notaba contra el fondo. */}
-          {/* Redondo como en la web. El negro ya viene en la imagen y
-              contain la muestra entera: no es cuadrada (1192x1320). */}
+          {/* Sin recorte redondo: la patita llega al borde del archivo y un
+              circulo le comia los bordes. La imagen ya trae su fondo negro. */}
           <Image
             source={logoSource}
             resizeMode="contain"
             accessibilityLabel="Logo de Tindog"
-            style={{ width: logoSize, height: logoSize, borderRadius: logoSize / 2 }}
+            style={{ width: logoSize, height: logoSize * (1320 / 1192), borderRadius: 28 }}
           />
 
           <Text style={[styles.kicker, { fontSize: kickerSize }]}>Conectá, cruzá y encontrá su pareja ideal</Text>

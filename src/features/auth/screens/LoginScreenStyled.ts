@@ -43,21 +43,22 @@ export const Hero = styled.div`
   gap: 7px;
   text-align: center;
 
-  /* El negro ya viene en la imagen, asi que el contenedor no pinta nada. */
+  /* Sin recorte redondo ni proporcion cuadrada. La patita llega hasta el
+     borde mismo del archivo -sin margen- y un circulo inscripto le comia
+     164px de alto: la imagen ya trae su propio fondo negro, asi que se
+     muestra tal cual, con las esquinas apenas redondeadas. */
   .logo {
     width: clamp(148px, 25dvh, 215px);
-    aspect-ratio: 1;
     position: relative;
-    border-radius: 50%;
+    border-radius: 28px;
     overflow: hidden;
   }
 
   .logo img {
+    display: block;
     width: 100%;
-    height: 100%;
-    /* La imagen no es cuadrada (1192x1320): contain la muestra entera, sin
-       recortarle los bordes al encajarla en el circulo. */
-    object-fit: contain;
+    /* El alto lo fija la proporcion del archivo: asi entra completa. */
+    height: auto;
   }
 
   /* El texto flota sobre el fondo animado, sin panel detras. La sombra lo
