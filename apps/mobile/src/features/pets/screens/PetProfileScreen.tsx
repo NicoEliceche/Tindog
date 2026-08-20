@@ -7,9 +7,9 @@ import { useAppData } from '../../../core/providers/AppDataProvider';
 import { GoldHeading } from '../../../shared/components/GoldHeading';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
-import type { RootStackParamList } from '../../../navigation/types';
+import type { PetsStackParamList, RootStackParamList } from '../../../navigation/types';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'PetProfile'>;
+type Props = NativeStackScreenProps<PetsStackParamList & RootStackParamList, 'PetProfile'>;
 
 export function PetProfileScreen({ route, navigation }: Props) {
   const theme = useAppTheme();
@@ -24,8 +24,17 @@ export function PetProfileScreen({ route, navigation }: Props) {
   const docsCount = pet.paper_types?.length ?? 0;
 
   return (
+    <View style={styles.screen}>
+      {/* La pantalla vive en la pila de la pestana, que no dibuja barra, asi
+          que trae su propia flecha: como el resto de la aplicacion. */}
+      <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 8) + 6 }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={styles.back}>
+          <Ionicons name="arrow-back" size={24} color={theme.colors.heading} />
+        </Pressable>
+        <GoldHeading style={styles.topTitle} numberOfLines={1}>Panel de mascota</GoldHeading>
+      </View>
+
     <ScrollView
-      style={styles.screen}
       contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, 10) }]}
       showsVerticalScrollIndicator={false}
     >
@@ -40,7 +49,7 @@ export function PetProfileScreen({ route, navigation }: Props) {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Editar a ${pet.name}`}
-            onPress={() => navigation.navigate('Main', { screen: 'Pets', params: { screen: 'PetForm', params: { petId: pet.id } } })}
+            onPress={() => navigation.navigate('PetForm', { petId: pet.id })}
             style={styles.edit}
           >
             <Ionicons name="create-outline" size={20} color={theme.colors.primary} />
@@ -66,6 +75,7 @@ export function PetProfileScreen({ route, navigation }: Props) {
 
         {!compact ? <View style={styles.tip}><Ionicons name="bulb-outline" size={21} color={theme.colors.primary} /><Text style={styles.tipText}><Text style={{ fontWeight: '900' }}>Consejo Tindog: </Text>compartí estudios de salud antes de coordinar una cruza.</Text></View> : null}
     </ScrollView>
+    </View>
   );
 }
 
@@ -82,6 +92,9 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: 'transparent' },
     content: { flexGrow: 1, maxWidth: 520, width: '100%', alignSelf: 'center', padding: 16, gap: 14 },
+    topBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingBottom: 10 },
+    back: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
+    topTitle: { fontSize: 22, fontWeight: '800' },
     hero: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     petPhoto: { width: 76, height: 76, borderRadius: 24, borderWidth: 2, borderColor: theme.colors.primary },
     petPhotoCompact: { width: 62, height: 62, borderRadius: 20 },

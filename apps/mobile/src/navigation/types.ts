@@ -19,6 +19,7 @@ export type AppointmentsStackParamList = {
 
 export type PetsStackParamList = {
   PetsList: undefined;
+  PetProfile: { petId: string };
   PetForm: { petId?: string } | undefined;
 };
 
@@ -32,7 +33,6 @@ export type MainTabParamList = {
 
 export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
-  PetProfile: { petId: string };
   Requests: undefined;
   Saved: undefined;
   Safety: undefined;

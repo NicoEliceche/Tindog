@@ -141,6 +141,7 @@ function PetsStack() {
   return (
     <PetsStackNav.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}>
       <PetsStackNav.Screen name="PetsList" component={PetsScreen} />
+      <PetsStackNav.Screen name="PetProfile" component={PetProfileScreen} />
       <PetsStackNav.Screen name="PetForm" component={PetFormScreen} />
     </PetsStackNav.Navigator>
   );
@@ -195,7 +196,6 @@ export function AppNavigator({ onLogout }: { onLogout: () => Promise<void> }) {
         <Stack.Screen name="Main" options={{ headerShown: false }}>
           {() => <MainTabs onLogout={onLogout} />}
         </Stack.Screen>
-        <Stack.Screen name="PetProfile" component={PetProfileScreen} options={{ title: 'Panel de mascota' }} />
         {/* El chat dibuja su propio encabezado (foto, nombre, mascota, escudo)
             en una sola barra, como en la web. La barra del stack quedaba
             encima repitiendo la flecha y el titulo. */}
