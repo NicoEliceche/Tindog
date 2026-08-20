@@ -7,11 +7,12 @@ import { NotificationBell } from '@shared/components/notifications/NotificationB
 import { Bookmark, Loader2, MessageCircle, Undo2, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Pet } from '@core/types/pet.types';
+import { PetDetailSheet } from '../components/PetDetailSheet';
 import { SwipeCard, type SwipeDirection } from '../components/SwipeCard';
 import {
   Page, Shell, Header, Brand, BrandCopy, HeaderActions, Avatar, DesktopLayout, SidePanel, SidePanelTitle,
   NextPreviewCard, StatsCard, CenterColumn, CardStack, BackdropCard, UndoButton, Actions, Action,
-  Empty, Backdrop, Modal,
+  Empty, Backdrop, Modal, TapHint,
 } from './DiscoveryScreenStyled';
 
 export function DiscoveryScreen() {
@@ -19,6 +20,8 @@ export function DiscoveryScreen() {
   const { profile, discoveryPets, dismissPet, resetDiscovery, restorePet, sendRequest, savePet, blockedOwners } = useWebApp();
   const [notice, setNotice] = useState<{ title: string; body: string } | null>(null);
   const [lastDismissed, setLastDismissed] = useState<Pet | null>(null);
+  /** Mascota abierta en la ficha completa. */
+  const [detail, setDetail] = useState<Pet | null>(null);
   // Progreso del arrastre (-1..1) como MotionValue: alimenta la animación de
   // la carta de atrás sin provocar un render por frame. Con estado de React,
   // cada movimiento del puntero re-renderizaba la pantalla entera y el
@@ -128,8 +131,10 @@ export function DiscoveryScreen() {
                     pet={pet}
                     onSwipe={handleSwipe}
                     dragProgress={dragProgress}
+                    onTap={() => setDetail(pet)}
                   />
                 </CardStack>
+                <TapHint>Presiona una vez la tarjeta para ver más información</TapHint>
                 <Actions>
                   <Action onClick={() => pass(pet)} aria-label="Pasar perfil"><i><X /></i>Pasar</Action>
                   <Action $primary onClick={() => connect(pet)} aria-label="Enviar solicitud de conexión"><i><MessageCircle /></i>Conectar</Action>
@@ -163,6 +168,8 @@ export function DiscoveryScreen() {
             ) : null}
           </SidePanel>
         </DesktopLayout>
+
+        <PetDetailSheet pet={detail} onClose={() => setDetail(null)} />
 
         {notice ? (
           <Backdrop role="dialog" aria-modal="true">

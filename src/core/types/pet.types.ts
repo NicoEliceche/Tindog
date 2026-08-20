@@ -19,6 +19,32 @@ export interface BreedingPreferences {
   last_heat_cycle?: string; // For females
 }
 
+/**
+ * Persona a cargo de una mascota. Varias pueden estarlo a la vez -pareja,
+ * familia, un cuidador contratado- asi que esto va en una lista, no en un
+ * campo suelto. `role` distingue quien puede editar de quien solo coordina.
+ */
+export interface PetCaregiver {
+  id: string;
+  name: string;
+  avatar?: string;
+  /** Area aproximada, nunca el domicilio exacto. */
+  zone: string;
+  role: 'owner' | 'co_owner' | 'caregiver';
+  memberSince?: string;
+  bio?: string;
+  verified?: boolean;
+}
+
+/** Una foto o un video de la galeria. */
+export interface PetMedia {
+  id: string;
+  kind: 'photo' | 'video';
+  url: string;
+  /** Imagen de portada del video, para no descargarlo hasta que se lo mire. */
+  poster?: string;
+}
+
 export interface Pet {
   id: string;
   name: string;
@@ -28,6 +54,13 @@ export interface Pet {
   weight?: number;
   bio: string;
   photos: string[];
+  /** Galeria completa: hasta diez fotos y un video. */
+  media?: PetMedia[];
+  /** Personas a cargo. La primera con rol owner es el titular. */
+  caregivers?: PetCaregiver[];
+  /** Si esta cerca de quien mira, para mostrarlo en el detalle. */
+  nearby?: boolean;
+  distanceKm?: number;
   owner_ids: string[];
   personality_traits: string[];
   has_papers: boolean;

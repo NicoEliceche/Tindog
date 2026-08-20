@@ -18,7 +18,8 @@ model User {
   googleSub                  String?                  @unique
   authAccounts               AuthAccount[]
   sessions                   AuthSession[]
-  pets                       Pet[]
+  pets                       Pet[]                    @relation("PetOriginalOwner")
+  petCaregiverships          PetCaregiver[]
   conversations              Conversation[]
   messages                   Message[]
   sentConnectionRequests     ConnectionRequest[]      @relation("ConnectionRequestSender")
@@ -87,8 +88,13 @@ model Pet {
   paper_types        String[]
   is_competitor      Boolean  @default(false)
 
-  owner                   User                     @relation(fields: [ownerId], references: [id])
+  // La pertenencia vive en PetCaregiver: una mascota puede estar a cargo de
+  // varias personas -pareja, familia, un cuidador- y cada una necesita verla
+  // y coordinar sus citas. `ownerId` queda como el titular original, para
+  // saber quien la dio de alta y a quien atribuir la cuenta.
+  owner                   User                     @relation("PetOriginalOwner", fields: [ownerId], references: [id])
   ownerId                 String
+  caregivers              PetCaregiver[]
   competitions            Competition[]
   healthRecords           HealthRecord[]
   breedingPrefs           BreedingPreference?
@@ -463,6 +469,34 @@ model SecurityAuditEvent {
   @@index([occurredAt])
   @@index([actorUserId, occurredAt])
   @@index([action, outcome, occurredAt])
+}
+
+/**
+ * Personas a cargo de una mascota. Es la relacion N-N entre User y Pet.
+ *
+ * `role` distingue quien puede que cosa: el titular edita y da de baja, un
+ * cuidador coordina citas mientras dura el encargo. `until` deja caducar ese
+ * acceso solo, sin que nadie tenga que acordarse de quitarlo.
+ */
+model PetCaregiver {
+  id     String @id @default(cuid())
+  pet    Pet    @relation(fields: [petId], references: [id], onDelete: Cascade)
+  petId  String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  /** owner | co_owner | caregiver */
+  role      String    @default("caregiver")
+  invitedBy String?
+  until     DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Una persona aparece una sola vez por mascota.
+  @@unique([petId, userId])
+  // Listar las mascotas de alguien, que es la consulta de cada pantalla.
+  @@index([userId, role])
+  @@index([petId, role])
 }
 
 model Competition {

@@ -17,6 +17,9 @@ export type SwipeDirection = 'left' | 'right';
  * se confirme. Tinder usa una proporción (no píxeles fijos) para que el
  * gesto pida el mismo esfuerzo relativo en un teléfono chico y en desktop.
  */
+/** Margen en pixeles para distinguir un toque de un arrastre minimo. */
+const TAP_SLOP = 8;
+
 const SWIPE_RATIO = 0.32;
 /** Flick corto pero rápido: la velocidad sola alcanza para confirmar. */
 const FLICK_VELOCITY = 520;
@@ -27,6 +30,8 @@ const SPARK_COUNT = 14;
 interface SwipeCardProps {
   pet: Pet;
   onSwipe: (direction: SwipeDirection, pet: Pet) => void;
+  /** Toque sin arrastre: abre la ficha completa. */
+  onTap?: () => void;
   /** Progreso del arrastre (-1..1) para que el padre anime el stack. */
   /**
    * Progreso del arrastre, de -1 a 1, como MotionValue.
@@ -51,7 +56,7 @@ interface SwipeCardProps {
  * - **Arrastre libre en X e Y**, con la Y amortiguada.
  * - **Rebote elástico** al soltar sin llegar al umbral.
  */
-export function SwipeCard({ pet, onSwipe, dragProgress }: SwipeCardProps) {
+export function SwipeCard({ pet, onSwipe, onTap, dragProgress }: SwipeCardProps) {
   const reduceMotion = useReducedMotion();
   const cardRef = useRef<HTMLDivElement>(null);
   const [burst, setBurst] = useState(false);
@@ -69,6 +74,8 @@ export function SwipeCard({ pet, onSwipe, dragProgress }: SwipeCardProps) {
   const widthRef = useRef(320);
   /** Mientras dura el arrastre se apagan los adornos que leen el layout. */
   const draggingRef = useRef(false);
+  /** Si el puntero se movio lo suficiente como para no ser un toque. */
+  const movedRef = useRef(false);
 
   const rotate = useTransform(x, (value) => {
     const span = widthRef.current * 1.6;
@@ -155,6 +162,9 @@ export function SwipeCard({ pet, onSwipe, dragProgress }: SwipeCardProps) {
   }, [dragProgress, onSwipe, pet, reduceMotion]);
 
   const handleDragEnd = useCallback((_: unknown, info: PanInfo) => {
+    // Un arrastre, por corto que sea, no cuenta como toque: si no, soltar la
+    // tarjeta en el medio abriria la ficha sin querer.
+    movedRef.current = Math.abs(info.offset.x) > TAP_SLOP || Math.abs(info.offset.y) > TAP_SLOP;
     draggingRef.current = false;
     resetTilt();
     const threshold = widthRef.current * SWIPE_RATIO;
@@ -192,6 +202,7 @@ export function SwipeCard({ pet, onSwipe, dragProgress }: SwipeCardProps) {
       drag
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
       dragElastic={{ left: 1, right: 1, top: 0.35, bottom: 0.35 }}
+      onTap={() => { if (!movedRef.current) onTap?.(); movedRef.current = false; }}
       onDragStart={handleDragStart}
       onDrag={handleDrag}
       onDragEnd={handleDragEnd}

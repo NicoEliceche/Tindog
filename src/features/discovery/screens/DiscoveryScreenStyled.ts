@@ -407,3 +407,17 @@ export const Modal = styled.div`
     font-weight: 900;
   }
 `;
+
+/**
+ * Aviso de que la tarjeta se puede tocar. Va entre la tarjeta y los botones,
+ * que es donde la vista ya está cuando termina de mirar la foto.
+ */
+export const TapHint = styled.p`
+  margin-top: ${({ theme }) => theme.spacing[2]};
+  text-align: center;
+  color: ${({ theme }) => theme.color.primary};
+  font-size: ${({ theme }) => theme.typography.size.xs};
+  font-weight: ${({ theme }) => theme.typography.weight.bold};
+  /* Halo blanco: el fondo animado cambia por detrás. */
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+`;

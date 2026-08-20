@@ -1,12 +1,18 @@
+import { ALLOWED_PHOTO_MIMES, MAX_PHOTO_BYTES } from './mediaLimits';
 import crypto from 'crypto';
 import { fileTypeFromBuffer } from 'file-type';
 import sharp from 'sharp';
 import { moderateImage } from '@core/security/moderation';
 import { headQuarantineObject, readQuarantineObject, writeProcessedObject } from '@core/security/objectStorage';
 
-export const MAX_IMAGE_BYTES = 6 * 1024 * 1024;
+// El limite compartido con el cliente: 6MB rechazaba fotos legitimas de
+// telefonos comunes -un Android de 108MP saca 12MB-. Ver mediaLimits.ts.
+export const MAX_IMAGE_BYTES = MAX_PHOTO_BYTES;
 export const MAX_IMAGE_PIXELS = 25_000_000;
-export const ALLOWED_IMAGE_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+// HEIC/HEIF entra porque es el formato por defecto de los iPhone. sharp lo
+// decodifica y la salida sigue siendo WebP, asi que el navegador nunca tiene
+// que saber leerlo.
+export const ALLOWED_IMAGE_MIMES = new Set<string>(ALLOWED_PHOTO_MIMES);
 
 async function scanForMalware(bytes: Uint8Array): Promise<void> {
   const url = process.env.MALWARE_SCANNER_URL;
