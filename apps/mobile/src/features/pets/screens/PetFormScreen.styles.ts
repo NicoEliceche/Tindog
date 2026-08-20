@@ -117,8 +117,10 @@ export function createStyles(theme: AppTheme) {
     // alcanza bajando, pero en el telefono un formulario de seis secciones
     // dejaba el guardado demasiado lejos.
     footer: {
+      // Igual arriba que abajo: con solo paddingTop el boton quedaba
+      // descentrado dentro de su propia franja.
       paddingHorizontal: 16,
-      paddingTop: 12,
+      paddingVertical: 12,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
       backgroundColor: theme.colors.surfaceOverlay,

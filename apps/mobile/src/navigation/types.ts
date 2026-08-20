@@ -8,7 +8,6 @@ import type { NavigatorScreenParams } from '@react-navigation/native';
 export type MessagesStackParamList = {
   ChatList: undefined;
   ChatRoom: { conversationId: string };
-  AppointmentPlanner: { conversationId: string };
   SafeLocations: { conversationId?: string; appointmentId?: string; startAt?: string } | undefined;
 };
 

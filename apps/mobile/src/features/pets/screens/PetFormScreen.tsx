@@ -166,7 +166,7 @@ export function PetFormScreen() {
         ref={scrollRef}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, 16) + 96 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: 24 }]}
       >
         <Pressable
           accessibilityRole="button"
@@ -458,7 +458,8 @@ export function PetFormScreen() {
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+      {/* Sin insets.bottom: la barra de pestanas ya reserva el area segura. */}
+      <View style={styles.footer}>
         <Pressable accessibilityRole="button" onPress={handleSubmit} style={styles.submit}>
           <Ionicons name="checkmark" size={20} color={theme.colors.onPrimary} />
           <Text style={styles.submitText}>{editing ? 'Actualizar perfil' : 'Guardar perfil'}</Text>

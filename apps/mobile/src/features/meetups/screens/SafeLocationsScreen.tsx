@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Constants from 'expo-constants';
 import { useMemo, useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToast } from '../../../shared/components/Toast';
 import { requestForegroundCoordinates } from '../../../core/data/services/foregroundLocation';
@@ -25,6 +25,17 @@ type Props = NativeStackScreenProps<
   'SafeLocations'
 >;
 
+/** Tres horarios propuestos, los mismos que ofrecia la pantalla anterior. */
+function buildSlots() {
+  const now = new Date();
+  return [1, 2, 3].map((days, index) => {
+    const date = new Date(now);
+    date.setDate(now.getDate() + days);
+    date.setHours(index === 1 ? 11 : 18, 0, 0, 0);
+    return date;
+  });
+}
+
 export function SafeLocationsScreen({ route, navigation }: Props) {
   const theme = useAppTheme(); const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
@@ -42,19 +53,67 @@ export function SafeLocationsScreen({ route, navigation }: Props) {
   // no sigue la identidad de la aplicación.
   const [confirmed, setConfirmed] = useState(false);
 
+  // La fecha se elige en esta misma pantalla, como en la web: antes vivia en
+  // una pantalla aparte y el punto de encuentro en otra.
+  const slots = useMemo(buildSlots, []);
+  const [startAt, setStartAt] = useState(route.params?.startAt ?? slots[0].toISOString());
+
   const confirm = () => {
-    if (!route.params?.conversationId || !route.params.startAt) return;
-    const created = scheduleAppointment(route.params.conversationId, selectedId, route.params.startAt);
+    if (!route.params?.conversationId) return;
+    const created = scheduleAppointment(route.params.conversationId, selectedId, startAt);
     if (created) setConfirmed(true);
   };
 
-  return <View style={[styles.screen, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+  const agendando = Boolean(route.params?.conversationId);
+
+  return <View style={styles.screen}>
+    {/* Mismo encabezado que la web: flecha y titulo dorado en linea. */}
+    <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 8) + 6 }]}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Volver" onPress={() => navigation.goBack()} style={styles.back}>
+        <Ionicons name="arrow-back" size={24} color={theme.colors.heading} />
+      </Pressable>
+      <GoldHeading style={styles.topTitle} numberOfLines={1}>
+        {agendando ? 'Agendar encuentro' : 'Punto de encuentro'}
+      </GoldHeading>
+    </View>
+
+    <ScrollView
+      style={styles.body}
+      contentContainerStyle={styles.bodyContent}
+      showsVerticalScrollIndicator={false}
+    >
     <View style={styles.mapWrap}>
       {mapsConfigured ? <SafeMap locations={locations} selectedId={selectedId} userCoordinates={coordinates} onSelect={setSelectedId} /> : <View style={styles.mapFallback}><Ionicons name="map" size={40} color={theme.colors.primary} /><Text style={styles.mapTitle}>Mapa listo para configurar</Text><Text style={styles.mapText}>La lista funciona ahora. Para ver Google Maps agregá las claves nativas restringidas y generá un nuevo development build.</Text></View>}
       <Pressable accessibilityRole="button" accessibilityLabel="Usar mi ubicación" disabled={locating} onPress={locate} style={styles.locate}><Ionicons name={locating ? 'hourglass-outline' : 'locate'} size={20} color={theme.colors.primary} /></Pressable>
     </View>
+    {agendando ? (
+      <View style={styles.slotsBlock}>
+        <Text style={styles.sectionTitle}>Fecha y hora</Text>
+        {slots.map((slot) => {
+          const iso = slot.toISOString();
+          const active = startAt === iso;
+          return (
+            <Pressable key={iso} accessibilityRole="button" accessibilityState={{ selected: active }} onPress={() => setStartAt(iso)} style={[styles.slot, active && styles.slotActive]}>
+              <View style={[styles.radio, active && styles.radioActive]}>{active ? <View style={styles.radioDot} /> : null}</View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.slotTitle, active && { color: theme.colors.onPrimary }]}>{slot.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}</Text>
+                <Text style={[styles.slotTime, active && { color: 'rgba(5,5,5,.7)' }]}>{slot.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} · 60 minutos</Text>
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+    ) : null}
+
     <View style={styles.header}><View style={{ flex: 1 }}><GoldHeading style={styles.title}>Puntos públicos recomendados</GoldHeading><Text style={styles.disclaimer}>La recomendación reduce riesgos, pero no garantiza seguridad.</Text></View></View>
-    <FlatList data={locations} keyExtractor={(item) => item.id} contentContainerStyle={styles.list} showsVerticalScrollIndicator={false} renderItem={({ item }) => <LocationCard item={item} selected={item.id === selectedId} theme={theme} onSelect={() => setSelectedId(item.id)} onReviews={() => navigation.navigate('LocationReviews', { locationId: item.id, appointmentId: appointment?.id })} />} ItemSeparatorComponent={() => <View style={{ height: 9 }} />} />
+    <View style={styles.list}>
+      {locations.map((item) => (
+        <View key={item.id} style={{ marginBottom: 9 }}>
+          <LocationCard item={item} selected={item.id === selectedId} theme={theme} onSelect={() => setSelectedId(item.id)} onReviews={() => navigation.navigate('LocationReviews', { locationId: item.id, appointmentId: appointment?.id })} />
+        </View>
+      ))}
+    </View>
+    </ScrollView>
     <Modal transparent visible={confirmed} animationType="fade" onRequestClose={() => setConfirmed(false)}>
       <View style={styles.backdrop}>
         <View style={styles.modal}>
@@ -87,7 +146,21 @@ function LocationCard({ item, selected, theme, onSelect, onReviews }: { item: Sa
   </Pressable>;
 }
 
-function createStyles(theme: AppTheme) { return StyleSheet.create({ screen: { flex: 1, backgroundColor: 'transparent' }, mapWrap: { height: '30%', minHeight: 176, position: 'relative', overflow: 'hidden', backgroundColor: theme.colors.surfaceAlt }, mapFallback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 35 }, mapTitle: { color: theme.colors.text, fontSize: 16, fontWeight: '900' }, mapText: { color: theme.colors.textSecondary, fontSize: 11, lineHeight: 16, textAlign: 'center' }, locate: { position: 'absolute', right: 13, bottom: 13, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border, elevation: 5 }, header: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 14 }, title: { color: theme.colors.heading, fontSize: 19, fontWeight: '900' }, disclaimer: { color: theme.colors.warning, fontSize: 10, marginTop: 3 }, list: { padding: 14, paddingBottom: 18 }, footer: { minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 9, backgroundColor: theme.colors.surface, borderTopWidth: 1, borderTopColor: theme.colors.border }, selectedLabel: { color: theme.colors.primary, fontSize: 9, fontWeight: '900' }, selectedName: { color: theme.colors.text, fontSize: 12, fontWeight: '800', marginTop: 2 }, confirm: { minHeight: 46, paddingHorizontal: 16, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.primary }, confirmText: { color: theme.colors.onPrimary, fontSize: 13, fontWeight: '900' },
+function createStyles(theme: AppTheme) { return StyleSheet.create({ screen: { flex: 1, backgroundColor: 'transparent' },
+  topBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingBottom: 10 },
+  back: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
+  topTitle: { fontSize: 22, fontWeight: '800' },
+  body: { flex: 1 },
+  bodyContent: { paddingBottom: 16 },
+  slotsBlock: { gap: 9, paddingHorizontal: 16, paddingTop: 16 },
+  sectionTitle: { color: theme.colors.text, fontSize: 16, fontWeight: '900' },
+  slot: { minHeight: 66, flexDirection: 'row', alignItems: 'center', gap: 11, padding: 12, borderRadius: 19, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border },
+  slotActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: theme.colors.textMuted, alignItems: 'center', justifyContent: 'center' },
+  radioActive: { borderColor: theme.colors.onPrimary },
+  radioDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: theme.colors.onPrimary },
+  slotTitle: { color: theme.colors.text, fontSize: 14, fontWeight: '900', textTransform: 'capitalize' },
+  slotTime: { color: theme.colors.textSecondary, fontSize: 12, marginTop: 3 }, mapWrap: { height: '30%', minHeight: 176, position: 'relative', overflow: 'hidden', backgroundColor: theme.colors.surfaceAlt }, mapFallback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 35 }, mapTitle: { color: theme.colors.text, fontSize: 16, fontWeight: '900' }, mapText: { color: theme.colors.textSecondary, fontSize: 11, lineHeight: 16, textAlign: 'center' }, locate: { position: 'absolute', right: 13, bottom: 13, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border, elevation: 5 }, header: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 14 }, title: { color: theme.colors.heading, fontSize: 19, fontWeight: '900' }, disclaimer: { color: theme.colors.warning, fontSize: 10, marginTop: 3 }, list: { padding: 14, paddingBottom: 18 }, footer: { minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 9, backgroundColor: theme.colors.surface, borderTopWidth: 1, borderTopColor: theme.colors.border }, selectedLabel: { color: theme.colors.primary, fontSize: 9, fontWeight: '900' }, selectedName: { color: theme.colors.text, fontSize: 12, fontWeight: '800', marginTop: 2 }, confirm: { minHeight: 46, paddingHorizontal: 16, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.primary }, confirmText: { color: theme.colors.onPrimary, fontSize: 13, fontWeight: '900' },
     backdrop: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: theme.colors.overlay },
     modal: { padding: 20, gap: 12, borderRadius: 24, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border },
     modalTitle: { color: theme.colors.primary, fontSize: 20, fontWeight: '900' },

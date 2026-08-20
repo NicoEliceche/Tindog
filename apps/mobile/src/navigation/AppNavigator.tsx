@@ -14,7 +14,7 @@ import { useAppTheme } from '../core/providers/AppPreferencesProvider';
 import { AppointmentsScreen } from '../features/appointments';
 import { ChatListScreen, ChatRoomScreen } from '../features/chat';
 import { DiscoveryScreen } from '../features/discovery';
-import { AppointmentPlannerScreen, LocationReviewsScreen, SafeLocationsScreen } from '../features/meetups';
+import { LocationReviewsScreen, SafeLocationsScreen } from '../features/meetups';
 import { PetFormScreen, PetProfileScreen, PetsScreen } from '../features/pets';
 import { ProfileScreen, SettingsScreen } from '../features/profile';
 import type { AppointmentsStackParamList, MainTabParamList, MessagesStackParamList, PetsStackParamList, RootStackParamList } from './types';
@@ -114,7 +114,6 @@ function MessagesStack() {
     <MessagesStackNav.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}>
       <MessagesStackNav.Screen name="ChatList" component={ChatListScreen} />
       <MessagesStackNav.Screen name="ChatRoom" component={ChatRoomScreen} />
-      <MessagesStackNav.Screen name="AppointmentPlanner" component={AppointmentPlannerScreen} />
       <MessagesStackNav.Screen name="SafeLocations" component={SafeLocationsScreen} />
     </MessagesStackNav.Navigator>
   );
