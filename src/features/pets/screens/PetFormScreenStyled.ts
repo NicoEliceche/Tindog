@@ -11,10 +11,10 @@ export const FormWrapper = styled(motion.div)`
   max-width: 500px;
   margin: 0 auto;
   color: ${({ theme }) => theme.color.text};
-  /* La barra inferior de navegación flota sobre el contenido, así que el
-     último control del formulario (Guardar) quedaba tapado. Se reserva su
-     alto más el área segura del teléfono. */
-  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  /* Se reserva el alto exacto de la barra inferior, que flota sobre el
+     contenido. Antes eran 96 y sobraban 32, que dejaban el boton de guardar
+     flotando lejos de la barra en vez de apoyado sobre ella. */
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     max-width: ${({ theme }) => theme.layout.shellMaxWidth};
@@ -100,9 +100,9 @@ export const FormColumn = styled.div`
   flex-direction: column;
   gap: 1.5rem;
   min-width: 0;
-  /* El botón Guardar cierra esta columna, así que la reserva para la barra
-     inferior tiene que estar acá y no en el contenedor de la pantalla. */
-  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  /* Sin reserva propia: la franja del boton ya cierra la columna y el
+     contenedor de la pantalla reserva el alto de la barra. Sumarlo aca
+     tambien dejaba al boton flotando lejos de la barra. */
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     /* Única zona que scrollea en escritorio. El min-height en cero es
@@ -358,7 +358,26 @@ export const SectionBody = styled.div`
   margin-top: 0.5rem;
 `;
 
+/**
+ * Franja del boton de guardar, igual que en la aplicacion nativa: queda
+ * pegada al final del formulario en vez de flotar suelta -medido: terminaba
+ * 120px por encima de la barra inferior- y con el mismo relleno arriba y
+ * abajo, para que el boton quede centrado dentro de ella.
+ */
+export const SubmitBar = styled.div`
+  display: flex;
+  padding: ${({ theme }) => theme.spacing[3]} 0;
+  border-top: 1px solid ${({ theme }) => theme.color.border};
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    /* En escritorio no hay barra inferior: la franja no hace falta. */
+    border-top: 0;
+    padding: 0;
+  }
+`;
+
 export const SubmitButton = styled(motion.button)`
+  width: 100%;
   background: ${({ theme }) => theme.color.primary};
   color: ${({ theme }) => theme.color.textInverse};
   min-height: 56px;

@@ -167,6 +167,11 @@ export const Composer = styled.form`
     outline: 0;
     background: transparent;
     color: ${({ theme }) => theme.color.text};
+    /* La caja ya esta centrada, pero la metrica de Inter deja mas aire
+       debajo de la linea base que encima y el texto se ve caido. Con una
+       altura de linea explicita la tinta queda pareja. */
+    line-height: 1.15;
+    padding: 0;
   }
 
   .send {

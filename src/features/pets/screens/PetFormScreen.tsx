@@ -12,7 +12,7 @@ import {
   CoiInput, CompetitionCard, DateSmallInput, Divider, FieldGrid, FieldRow, Form, FormColumn,
   FormGroup, FormWrapper, HealthCard, Header, HeaderTitle, HelperText, InlineLabelRow,
   Input, Label, Layout, LineageGrid, PhotoUpload, PhotoHint, RevealGroup, SectionBody, SectionNav,
-  SectionNavLink, SmallInput, SubmitButton, SwitchContainer, TextArea, YearInput,
+  SectionNavLink, SmallInput, SubmitBar, SubmitButton, SwitchContainer, TextArea, YearInput,
 } from './PetFormScreenStyled';
 
 const SECTIONS = [
@@ -456,13 +456,15 @@ export function PetFormScreen() {
               </HelperText>
             </FormGroup>
 
-            <SubmitButton
-              type="submit"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Check size={20} /> {editing ? 'Actualizar perfil' : 'Guardar perfil'}
-            </SubmitButton>
+            <SubmitBar>
+              <SubmitButton
+                type="submit"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Check size={20} /> {editing ? 'Actualizar perfil' : 'Guardar perfil'}
+              </SubmitButton>
+            </SubmitBar>
           </Form>
         </FormColumn>
       </Layout>
