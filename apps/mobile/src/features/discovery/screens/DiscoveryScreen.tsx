@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '../../../navigation/types';
 import { fetchDiscoveryPets } from '../../../core/data/services/petService';
 import { NotificationBell } from '../../../shared/components/NotificationBell';
+import { PetDetailSheet } from '../components/PetDetailSheet';
 import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
@@ -121,6 +122,9 @@ export function DiscoveryScreen() {
     translateY.value = 0;
   }, [connect, pass, translateX, translateY]);
 
+  /** Ficha completa de la mascota que se toco. */
+  const [detail, setDetail] = useState<Pet | null>(null);
+
   const pan = useMemo(() => Gesture.Pan()
     .enabled(Boolean(currentPet))
     .onBegin((event) => {
@@ -144,6 +148,17 @@ export function DiscoveryScreen() {
         translateY.value = withSpring(0, { damping: 18, stiffness: 220 });
       }
     }), [cardHeight, currentPet, grabSign, handleSwiped, swipeThreshold, translateX, translateY, width]);
+
+  // El toque abre la ficha. Va junto al arrastre con Exclusive: si el dedo
+  // se mueve, gana el arrastre y el toque no llega a dispararse.
+  const tap = useMemo(() => Gesture.Tap()
+    .enabled(Boolean(currentPet))
+    .maxDistance(8)
+    .onEnd((_event, success) => {
+      if (success && currentPet) runOnJS(setDetail)(currentPet);
+    }), [currentPet]);
+
+  const cardGesture = useMemo(() => Gesture.Exclusive(pan, tap), [pan, tap]);
 
   const cardAnimatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -183,6 +198,7 @@ export function DiscoveryScreen() {
 
   return (
     <View style={styles.screen}>
+      <PetDetailSheet pet={detail} onClose={() => setDetail(null)} />
       <View style={[styles.safeArea, { paddingTop: Math.max(insets.top + 6, 10) }]}>
         {/* Tres columnas como en la web: hueco, marca y acciones. La marca ya
             no se superpone con la campana porque tiene su propia columna. */}
@@ -223,7 +239,7 @@ export function DiscoveryScreen() {
                     />
                   </Animated.View>
                 ) : null}
-                <GestureDetector gesture={pan}>
+                <GestureDetector gesture={cardGesture}>
                   <Animated.View style={[styles.card, StyleSheet.absoluteFill, cardAnimatedStyle]}>
                     <Animated.View style={[styles.swipeLabel, styles.likeLabel, likeLabelStyle]}>
                       <Text style={[styles.swipeLabelText, { color: theme.colors.success, borderColor: theme.colors.success }]}>Conectar</Text>
@@ -248,6 +264,7 @@ export function DiscoveryScreen() {
                   </Animated.View>
                 </GestureDetector>
               </View>
+              <Text style={styles.tapHint}>Presiona una vez la tarjeta para ver más información</Text>
               <View style={styles.actions}>
                 <Action icon="close" label="Pasar" theme={theme} onPress={pass} />
                 <Action icon="chatbubble-ellipses" label="Conectar" theme={theme} primary disabled={pendingPetIds.includes(currentPet.id)} onPress={connect} />
@@ -356,6 +373,13 @@ function createStyles(theme: AppTheme) {
     age: { color: theme.colors.text, fontSize: 20, fontWeight: '700' },
     meta: { color: theme.colors.textSecondary, fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
     bio: { color: theme.colors.text, fontSize: 14, lineHeight: 19, marginTop: 3 },
+    tapHint: {
+      color: theme.colors.primary, fontSize: 11, fontWeight: '800', textAlign: 'center', marginTop: 8,
+      // Halo blanco: el fondo animado cambia por detras.
+      textShadowColor: 'rgba(255, 255, 255, 0.35)',
+      textShadowOffset: { width: 0, height: 0 },
+      textShadowRadius: 8,
+    },
     actions: { width: '100%', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-around', paddingTop: theme.spacing.md },
     muted: { color: theme.colors.textSecondary, fontSize: 15, lineHeight: 22, textAlign: 'center' },
     emptyTitle: { color: theme.colors.text, fontSize: 24, fontWeight: '900', textAlign: 'center' },

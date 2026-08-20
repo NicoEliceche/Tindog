@@ -5,7 +5,9 @@ import {
   Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, Text, TextInput, View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { pickProfilePhoto } from '../../../core/data/services/profilePhotoPicker';
+import { pickGalleryPhotos, pickGalleryVideo } from '../../../core/data/services/galleryPicker';
+import { MAX_GALLERY_PHOTOS, PHOTO_HINT, VIDEO_HINT } from '../../../core/security/mediaLimits';
+import type { PetMedia } from '../../../core/types/pet.types';
 import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import { GoldHeading } from '../../../shared/components/GoldHeading';
@@ -56,17 +58,43 @@ export function PetFormScreen() {
   const [mother, setMother] = useState('');
   const [coi, setCoi] = useState(String(editing?.coi_percentage ?? 0));
 
-  const [photo, setPhoto] = useState(editing?.photos[0] ?? '');
+  // Galeria: hasta diez fotos y un video, con los mismos limites que la web.
+  const [media, setMedia] = useState<PetMedia[]>(
+    editing?.media?.length
+      ? editing.media
+      : (editing?.photos ?? []).map((url, index) => ({ id: `m-${index}`, kind: 'photo' as const, url })),
+  );
+  const photos = media.filter((item) => item.kind === 'photo');
+  const video = media.find((item) => item.kind === 'video');
   const [error, setError] = useState('');
 
-  const changePhoto = async () => {
-    const uri = await pickProfilePhoto();
-    if (!uri) {
-      toast({ title: 'Foto sin cambios', body: 'Elegí una imagen y permití el acceso a tus fotos.' });
+  const addPhotos = async () => {
+    const room = MAX_GALLERY_PHOTOS - photos.length;
+    if (room <= 0) {
+      toast({ title: 'Galería completa', body: `El máximo es ${MAX_GALLERY_PHOTOS} fotos. Quitá alguna para sumar otra.` });
       return;
     }
-    setPhoto(uri);
+    const result = await pickGalleryPhotos(room);
+    if (result.error) { toast({ title: 'No pudimos agregarla', body: result.error }); return; }
+    if (!result.media.length) return;
+    setMedia((current) => [
+      ...current,
+      ...result.media.map((item, index) => ({ id: `m-${Date.now()}-${index}`, kind: item.kind, url: item.uri })),
+    ]);
   };
+
+  const addVideo = async () => {
+    const result = await pickGalleryVideo();
+    if (result.error) { toast({ title: 'No pudimos agregarlo', body: result.error }); return; }
+    const picked = result.media[0];
+    if (!picked) return;
+    setMedia((current) => [
+      ...current.filter((item) => item.kind !== 'video'),
+      { id: `v-${Date.now()}`, kind: 'video', url: picked.uri },
+    ]);
+  };
+
+  const removeMedia = (id: string) => setMedia((current) => current.filter((item) => item.id !== id));
 
   const togglePaperType = (type: string) => {
     setPaperTypes((current) => current.includes(type)
@@ -121,7 +149,9 @@ export function PetFormScreen() {
       weight: weight ? Number.parseFloat(weight) : undefined,
       gender,
       bio: bio.trim(),
-      photos: [photo || FALLBACK_PHOTO],
+      // `photos` sigue alimentando las tarjetas; `media` es la galeria.
+      photos: photos.length ? photos.map((item) => item.url) : [FALLBACK_PHOTO],
+      media,
       has_papers: hasPapers,
       paper_types: hasPapers ? paperTypes : [],
       is_competitor: isCompetitor,
@@ -168,21 +198,56 @@ export function PetFormScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingBottom: 24 }]}
       >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Elegir foto de la mascota"
-          onPress={changePhoto}
-          style={styles.photoUpload}
-        >
-          {photo ? <Image source={{ uri: photo }} style={styles.photo} /> : (
-            <View style={styles.photoEmpty}>
-              <Ionicons name="camera" size={32} color={theme.colors.primary} />
-              <Text style={styles.photoEmptyText}>Añadir Foto</Text>
+        <View style={styles.mediaGrid}>
+          {media.map((item, index) => (
+            <View key={item.id} style={styles.mediaTile}>
+              <Image source={{ uri: item.url }} style={styles.mediaThumb} />
+              {item.kind === 'video' ? (
+                <View style={styles.mediaBadge}>
+                  <Ionicons name="videocam" size={11} color={theme.colors.primary} />
+                  <Text style={styles.mediaBadgeText}>Video</Text>
+                </View>
+              ) : index === 0 ? (
+                <View style={styles.mediaBadge}><Text style={styles.mediaBadgeText}>Portada</Text></View>
+              ) : null}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={item.kind === 'video' ? 'Quitar el video' : `Quitar la foto ${index + 1}`}
+                onPress={() => removeMedia(item.id)}
+                style={styles.removeMedia}
+              >
+                <Ionicons name="close" size={13} color={theme.colors.text} />
+              </Pressable>
             </View>
-          )}
-        </Pressable>
+          ))}
+
+          {photos.length < MAX_GALLERY_PHOTOS ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Elegir fotos de la mascota"
+              onPress={addPhotos}
+              style={styles.photoUpload}
+            >
+              <Ionicons name="camera" size={24} color={theme.colors.primary} />
+              <Text style={styles.photoEmptyText}>Añadir fotos</Text>
+            </Pressable>
+          ) : null}
+
+          {!video ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Elegir un video de la mascota"
+              onPress={addVideo}
+              style={styles.photoUpload}
+            >
+              <Ionicons name="videocam" size={24} color={theme.colors.primary} />
+              <Text style={styles.photoEmptyText}>Añadir video</Text>
+            </Pressable>
+          ) : null}
+        </View>
+
         <Text style={styles.photoHint}>
-          {photo ? 'Tocá la foto para cambiarla.' : 'JPG o PNG, hasta 5 MB.'}
+          {photos.length}/{MAX_GALLERY_PHOTOS} fotos · {PHOTO_HINT}. {VIDEO_HINT}.
         </Text>
 
         <View style={styles.group}>

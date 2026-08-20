@@ -21,6 +21,14 @@ export const discoveryPets: Pet[] = [
     breeding_preferences: { looking_for_pair: true, terms: 'Cruza con controles de salud al dia.' },
     coi_percentage: 3.8,
     is_verified_breeder_pet: true,
+    media: [
+      { id: '1-m1', kind: 'photo', url: 'https://images.unsplash.com/photo-1507146426996-ef05306b995a?auto=format&fit=crop&q=80&w=900' },
+      { id: '1-m2', kind: 'photo', url: 'https://images.unsplash.com/photo-1503256207526-0d5d80fa2f47?auto=format&fit=crop&q=80&w=900' },
+      { id: '1-m3', kind: 'photo', url: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&q=80&w=900' },
+    ],
+    caregivers: [{ id: 'u-1', name: 'Laura Martínez', zone: 'Palermo, Buenos Aires', role: 'owner', memberSince: '2024-03-01', bio: 'Adiestradora de agility. Salgo temprano casi todos los días.', verified: true }],
+    nearby: true,
+    distanceKm: 1.2,
   },
   {
     id: '2',
@@ -39,6 +47,13 @@ export const discoveryPets: Pet[] = [
     health_records: [{ test_name: 'Respiratorio', result: 'Apto', date: '2026-02-03' }],
     breeding_preferences: { looking_for_pair: false },
     coi_percentage: 6.1,
+    media: [
+      { id: '2-m1', kind: 'photo', url: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&q=80&w=900' },
+      { id: '2-m2', kind: 'photo', url: 'https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&q=80&w=900' },
+    ],
+    caregivers: [{ id: 'u-2', name: 'Diego Sosa', zone: 'Villa Crespo, Buenos Aires', role: 'owner', memberSince: '2023-11-12', bio: 'Trabajo desde casa, así que tiene compañía todo el día.', verified: false }],
+    nearby: false,
+    distanceKm: 4.8,
   },
   {
     id: '3',
@@ -55,6 +70,13 @@ export const discoveryPets: Pet[] = [
     is_competitor: false,
     breeding_preferences: { looking_for_pair: true, terms: 'Buscamos familia responsable y estudios previos.' },
     coi_percentage: 2.4,
+    media: [
+      { id: '3-m1', kind: 'photo', url: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&q=80&w=900' },
+      { id: '3-m2', kind: 'photo', url: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=900' },
+    ],
+    caregivers: [{ id: 'u-3', name: 'Sofía Pereyra', zone: 'Caballito, Buenos Aires', role: 'owner', memberSince: '2025-01-20', bio: 'Nos gustan las plazas grandes y los amigos tranquilos.', verified: true }],
+    nearby: true,
+    distanceKm: 2.1,
   },
   {
     id: '4',

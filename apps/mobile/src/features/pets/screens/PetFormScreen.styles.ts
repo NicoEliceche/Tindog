@@ -12,12 +12,34 @@ export function createStyles(theme: AppTheme) {
 
     content: { paddingHorizontal: 16, paddingTop: 18 },
 
+    // La galeria se acomoda sola al ancho: cada celda es cuadrada.
+    mediaGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    mediaTile: {
+      width: 104, height: 104, borderRadius: 24, overflow: 'hidden',
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1, borderColor: theme.colors.border,
+    },
+    mediaThumb: { width: '100%', height: '100%' },
+    mediaBadge: {
+      position: 'absolute', left: 6, bottom: 6, flexDirection: 'row', alignItems: 'center', gap: 4,
+      paddingHorizontal: 8, paddingVertical: 3, borderRadius: 99,
+      backgroundColor: theme.colors.surfaceOverlay,
+    },
+    mediaBadgeText: { color: theme.colors.primary, fontSize: 10, fontWeight: '900' },
+    removeMedia: {
+      position: 'absolute', top: 6, right: 6, width: 26, height: 26, borderRadius: 13,
+      alignItems: 'center', justifyContent: 'center',
+      backgroundColor: theme.colors.surfaceOverlay,
+      borderWidth: 1, borderColor: theme.colors.border,
+    },
+
     photoUpload: {
-      alignSelf: 'center',
-      width: 148,
-      height: 148,
-      borderRadius: 28,
-      overflow: 'hidden',
+      width: 104,
+      height: 104,
+      borderRadius: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
       backgroundColor: theme.colors.surface,
       borderWidth: 1,
       borderColor: theme.colors.primaryBorder,

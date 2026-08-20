@@ -65,11 +65,14 @@ export const CloseButton = styled.button`
 
 export const Gallery = styled.div`
   position: relative;
-  margin: 0 -${({ theme }) => theme.spacing[4]};
+  /* Redondeada en las cuatro puntas, como la tarjeta de Inicio. */
+  margin: ${({ theme }) => theme.spacing[3]} 0 0;
+  border-radius: 28px;
+  overflow: hidden;
   background: ${({ theme }) => theme.color.surface};
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
-    margin: 0;
+    margin: ${({ theme }) => theme.spacing[4]} ${({ theme }) => theme.spacing[6]} 0;
   }
 `;
 

@@ -2,16 +2,22 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Camera, Check } from 'lucide-react';
+import { ArrowLeft, Camera, Check, Film, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useWebApp } from '@core/providers/WebAppProvider';
+import {
+  MAX_GALLERY_PHOTOS, MAX_VIDEO_SECONDS, PHOTO_ACCEPT_ATTRIBUTE, PHOTO_HINT,
+  rejectPhoto, rejectVideo, VIDEO_ACCEPT_ATTRIBUTE, VIDEO_HINT,
+} from '@core/security/mediaLimits';
+import type { PetMedia } from '@core/types/pet.types';
 import { motion } from 'framer-motion';
 import { Toggle } from '@shared/components/ui';
 import {
   AddButton, BackButton, CardTopInput, CheckboxGroup, CheckboxItem, CheckboxRow,
   CoiInput, CompetitionCard, DateSmallInput, Divider, FieldGrid, FieldRow, Form, FormColumn,
   FormGroup, FormWrapper, HealthCard, Header, HeaderTitle, HelperText, InlineLabelRow,
-  Input, Label, Layout, LineageGrid, PhotoUpload, PhotoHint, RevealGroup, SectionBody, SectionNav,
+  Input, Label, Layout, LineageGrid, MediaGrid, MediaTile, MediaBadge, RemoveMedia,
+  PhotoUpload, PhotoHint, RevealGroup, SectionBody, SectionNav,
   SectionNavLink, SmallInput, SubmitBar, SubmitButton, SwitchContainer, TextArea, YearInput,
 } from './PetFormScreenStyled';
 
@@ -101,29 +107,95 @@ export function PetFormScreen() {
   };
 
   /**
-   * Foto de la mascota. Se guarda como data URL en el mock; con backend
-   * real acá iría la subida al almacenamiento y se guardaría la URL.
+   * Galería de la mascota: hasta diez fotos y un video. Se guarda como data
+   * URL en el mock; con backend real acá iría la subida al almacenamiento y
+   * se guardaría la URL que devuelve.
    */
-  const [photo, setPhoto] = useState(editing?.photos[0] ?? '');
+  const [media, setMedia] = useState<PetMedia[]>(
+    editing?.media?.length
+      ? editing.media
+      : (editing?.photos ?? []).map((url, index) => ({ id: `m-${index}`, kind: 'photo' as const, url })),
+  );
   const [photoError, setPhotoError] = useState('');
-  const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
-  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setPhotoError('El archivo tiene que ser una imagen.');
-      return;
-    }
-    if (file.size > MAX_PHOTO_BYTES) {
-      setPhotoError('La imagen no puede superar los 5 MB.');
-      return;
-    }
-    setPhotoError('');
+  const readAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => setPhoto(typeof reader.result === 'string' ? reader.result : '');
-    reader.onerror = () => setPhotoError('No pudimos leer el archivo. Probá con otro.');
+    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+    reader.onerror = () => reject(new Error('No pudimos leer el archivo. Probá con otro.'));
     reader.readAsDataURL(file);
+  });
+
+  const photos = media.filter((item) => item.kind === 'photo');
+  const video = media.find((item) => item.kind === 'video');
+
+  const handlePhotosChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = '';
+    if (!files.length) return;
+
+    const room = MAX_GALLERY_PHOTOS - photos.length;
+    if (room <= 0) {
+      setPhotoError(`Ya cargaste ${MAX_GALLERY_PHOTOS} fotos. Quitá alguna para sumar otra.`);
+      return;
+    }
+
+    const rejected = files.map(rejectPhoto).find(Boolean);
+    if (rejected) { setPhotoError(rejected); return; }
+
+    // Si eligió más de las que entran, se toman las primeras y se avisa: es
+    // menos frustrante que rechazar la selección entera.
+    const accepted = files.slice(0, room);
+    setPhotoError(accepted.length < files.length
+      ? `Se agregaron ${accepted.length}: el máximo es ${MAX_GALLERY_PHOTOS} fotos.`
+      : '');
+
+    try {
+      const urls = await Promise.all(accepted.map(readAsDataUrl));
+      setMedia((current) => [
+        ...current,
+        ...urls.map((url, index) => ({ id: `m-${Date.now()}-${index}`, kind: 'photo' as const, url })),
+      ]);
+    } catch (error) {
+      setPhotoError(error instanceof Error ? error.message : 'No pudimos leer el archivo.');
+    }
+  };
+
+  const handleVideoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    const rejected = rejectVideo(file);
+    if (rejected) { setPhotoError(rejected); return; }
+
+    // La duración sólo se conoce leyendo el archivo: el peso no alcanza,
+    // porque depende del bitrate con que se grabó.
+    const url = await readAsDataUrl(file).catch(() => '');
+    if (!url) { setPhotoError('No pudimos leer el video. Probá con otro.'); return; }
+
+    const probe = document.createElement('video');
+    probe.preload = 'metadata';
+    probe.src = url;
+    const duration = await new Promise<number>((resolve) => {
+      probe.onloadedmetadata = () => resolve(probe.duration);
+      probe.onerror = () => resolve(0);
+    });
+
+    if (duration > MAX_VIDEO_SECONDS) {
+      setPhotoError(`El video dura ${Math.round(duration)}s y el máximo es ${MAX_VIDEO_SECONDS}s.`);
+      return;
+    }
+
+    setPhotoError('');
+    setMedia((current) => [
+      ...current.filter((item) => item.kind !== 'video'),
+      { id: `v-${Date.now()}`, kind: 'video', url },
+    ]);
+  };
+
+  const removeMedia = (id: string) => {
+    setMedia((current) => current.filter((item) => item.id !== id));
+    setPhotoError('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -134,7 +206,12 @@ export function PetFormScreen() {
       weight: formData.weight ? parseFloat(formData.weight) : undefined,
       // Sin foto elegida se usa una de reserva para que la tarjeta no quede
       // vacía en la lista.
-      photos: [photo || 'https://images.unsplash.com/photo-1517849845537-4d257902454a?q=80&w=500'],
+      // `photos` sigue existiendo para las tarjetas y la lista; `media` es
+      // la galería completa.
+      photos: photos.length
+        ? photos.map((item) => item.url)
+        : ['https://images.unsplash.com/photo-1517849845537-4d257902454a?q=80&w=500'],
+      media,
     };
     if (editing) updatePet(editing.id, draft);
     else createPet(draft);
@@ -181,20 +258,54 @@ export function PetFormScreen() {
 
         <FormColumn>
           <div>
-            <PhotoUpload>
-              {photo ? <img src={photo} alt="Vista previa de la foto elegida" /> : (<>
-                <Camera size={32} />
-                <span>Añadir Foto</span>
-              </>)}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoChange}
-                aria-label="Elegir foto de la mascota"
-              />
-            </PhotoUpload>
+            <MediaGrid>
+              {media.map((item, index) => (
+                <MediaTile key={item.id}>
+                  {item.kind === 'video'
+                    ? <video src={item.url} muted playsInline preload="metadata" />
+                    : <img src={item.url} alt={`Foto ${index + 1} de la mascota`} />}
+                  {item.kind === 'video' ? <MediaBadge><Film size={12} /> Video</MediaBadge> : null}
+                  {index === 0 && item.kind === 'photo' ? <MediaBadge>Portada</MediaBadge> : null}
+                  <RemoveMedia
+                    type="button"
+                    onClick={() => removeMedia(item.id)}
+                    aria-label={item.kind === 'video' ? 'Quitar el video' : `Quitar la foto ${index + 1}`}
+                  >
+                    <X size={13} />
+                  </RemoveMedia>
+                </MediaTile>
+              ))}
+
+              {photos.length < MAX_GALLERY_PHOTOS ? (
+                <PhotoUpload>
+                  <Camera size={26} />
+                  <span>Añadir fotos</span>
+                  <input
+                    type="file"
+                    accept={PHOTO_ACCEPT_ATTRIBUTE}
+                    multiple
+                    onChange={handlePhotosChange}
+                    aria-label="Elegir fotos de la mascota"
+                  />
+                </PhotoUpload>
+              ) : null}
+
+              {!video ? (
+                <PhotoUpload>
+                  <Film size={26} />
+                  <span>Añadir video</span>
+                  <input
+                    type="file"
+                    accept={VIDEO_ACCEPT_ATTRIBUTE}
+                    onChange={handleVideoChange}
+                    aria-label="Elegir un video de la mascota"
+                  />
+                </PhotoUpload>
+              ) : null}
+            </MediaGrid>
+
             <PhotoHint $error={!!photoError}>
-              {photoError || (photo ? 'Tocá la foto para cambiarla.' : 'JPG o PNG, hasta 5 MB.')}
+              {photoError || `${photos.length}/${MAX_GALLERY_PHOTOS} fotos · ${PHOTO_HINT}. ${VIDEO_HINT}.`}
             </PhotoHint>
           </div>
 

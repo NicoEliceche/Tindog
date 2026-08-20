@@ -133,7 +133,6 @@ export const PhotoUpload = styled.label`
   align-items: center;
   justify-content: center;
   color: ${({ theme }) => theme.color.primary};
-  margin: 0 auto;
   cursor: pointer;
   gap: 4px;
   font-size: 12px;
@@ -389,4 +388,68 @@ export const SubmitButton = styled(motion.button)`
   align-items: center;
   justify-content: center;
   gap: ${({ theme }) => theme.spacing[2]};
+`;
+
+/**
+ * Galería de la mascota: cada foto es una celda y los cuadros de subida son
+ * dos más. Se acomodan solas al ancho disponible en vez de ir en una fila
+ * fija, que en el teléfono obligaría a desplazar de costado.
+ */
+export const MediaGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: ${({ theme }) => theme.spacing[2]};
+`;
+
+export const MediaTile = styled.div`
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: ${({ theme }) => theme.radius['2xl']};
+  overflow: hidden;
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+
+  img, video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+`;
+
+/** Marca "Portada" o "Video" sobre la miniatura. */
+export const MediaBadge = styled.span`
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  color: ${({ theme }) => theme.color.primary};
+  background: ${({ theme }) => theme.color.overlay};
+  backdrop-filter: blur(6px);
+`;
+
+export const RemoveMedia = styled.button`
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: ${({ theme }) => theme.color.text};
+  background: ${({ theme }) => theme.color.overlay};
+  backdrop-filter: blur(6px);
+  border: 1px solid ${({ theme }) => theme.color.border};
+
+  &:hover {
+    color: ${({ theme }) => theme.color.error};
+    border-color: ${({ theme }) => theme.color.error};
+  }
 `;
