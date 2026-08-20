@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { sanitizeAuditMetadata } from './audit';
+import { MAX_PHOTO_BYTES } from './mediaLimits';
 import { MAX_IMAGE_BYTES, ALLOWED_IMAGE_MIMES } from './mediaPipeline';
 import { moderateText } from './moderation';
 import { enforceRateLimit } from './rateLimit';
@@ -13,10 +14,16 @@ describe('production security primitives', () => {
     expect(sanitizeAuditMetadata({ email: 'person@example.com', messageText: 'secret', actionType: 'profile\nupdate', count: 2 })).toEqual({ actionType: 'profile update', count: 2 });
   });
 
-  it('allows only raster image types and caps uploads at 6 MiB', () => {
+  it('allows only raster image types and caps uploads at 25 MiB', () => {
     expect(ALLOWED_IMAGE_MIMES.has('image/jpeg')).toBe(true);
+    // SVG sigue fuera: es texto ejecutable, no un mapa de bits.
     expect(ALLOWED_IMAGE_MIMES.has('image/svg+xml')).toBe(false);
-    expect(MAX_IMAGE_BYTES).toBe(6 * 1024 * 1024);
+    // HEIC entra porque es lo que sacan los iPhone por defecto.
+    expect(ALLOWED_IMAGE_MIMES.has('image/heic')).toBe(true);
+    // El tope subio de 6 a 25 MiB: con 6 se rechazaban fotos legitimas de
+    // telefonos comunes. Ver mediaLimits.ts.
+    expect(MAX_IMAGE_BYTES).toBe(MAX_PHOTO_BYTES);
+    expect(MAX_IMAGE_BYTES).toBe(25 * 1024 * 1024);
   });
 
   it('flags urgent animal-welfare text in development fallback', async () => {
