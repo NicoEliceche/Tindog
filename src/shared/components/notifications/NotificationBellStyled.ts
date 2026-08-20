@@ -232,3 +232,35 @@ export const EmptyState = styled.div`
     font-size: ${({ theme }) => theme.typography.size.sm};
   }
 `;
+
+/**
+ * Menu de un aviso: se abre con clic derecho en escritorio y con toque
+ * sostenido en el telefono, anclado donde ocurrio el gesto.
+ */
+export const ContextMenu = styled(motion.div)`
+  position: fixed;
+  z-index: 4200;
+  min-width: 12rem;
+  padding: 6px;
+  border-radius: ${({ theme }) => theme.radius.lg};
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.borderFocus};
+  box-shadow: ${({ theme }) => theme.elevation.lg};
+  /* Nace en la esquina del gesto, como cualquier menu contextual. */
+  transform-origin: top left;
+
+  button {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: ${({ theme }) => theme.radius.md};
+    text-align: left;
+    color: ${({ theme }) => theme.color.text};
+    font-size: ${({ theme }) => theme.typography.size.sm};
+    font-weight: ${({ theme }) => theme.typography.weight.semibold};
+  }
+
+  button:hover {
+    background: ${({ theme }) => theme.color.surfaceRaised};
+  }
+`;

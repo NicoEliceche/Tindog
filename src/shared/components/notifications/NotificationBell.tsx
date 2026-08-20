@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Root, BellButton, Badge, Dismiss, Panel, PanelHeader, List, Item, ItemIcon, ItemCopy,
-  UnreadDot, EmptyState,
+  UnreadDot, EmptyState, ContextMenu,
 } from './NotificationBellStyled';
 
 const KIND_ICON: Record<WebNotificationKind, typeof Bell> = {
@@ -25,7 +25,21 @@ const KIND_ICON: Record<WebNotificationKind, typeof Bell> = {
  * suelto en la pantalla.
  */
 export function NotificationBell() {
-  const { notifications, unreadNotifications, markNotificationsRead } = useWebApp();
+  const { notifications, unreadNotifications, markNotificationsRead, markNotificationUnread } = useWebApp();
+  /** Aviso sobre el que se abrio el menu, y donde ponerlo. */
+  const [menu, setMenu] = useState<{ id: string; read: boolean; x: number; y: number } | null>(null);
+  // El toque largo en el telefono equivale al clic derecho: se mide el tiempo
+  // desde que se apoya el dedo y se cancela si se mueve o se suelta antes.
+  const pressTimer = useRef<number | undefined>(undefined);
+
+  const openMenu = useCallback((item: { id: string; read: boolean }, x: number, y: number) => {
+    setMenu({ id: item.id, read: item.read, x, y });
+  }, []);
+
+  const cancelPress = useCallback(() => {
+    if (pressTimer.current) window.clearTimeout(pressTimer.current);
+    pressTimer.current = undefined;
+  }, []);
   const [open, setOpen] = useState(false);
   const reduceMotion = useReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -33,7 +47,7 @@ export function NotificationBell() {
   // Cerrar el panel no marca nada: haber abierto la campana no significa
   // haber leido los avisos, y se perdia el resaltado de todo lo pendiente.
   // Se marcan al abrir uno, o con el boton "Marcar leidas".
-  const close = useCallback(() => setOpen(false), []);
+  const close = useCallback(() => { setOpen(false); setMenu(null); }, []);
 
   // Escape cierra el panel: es lo que espera cualquiera que lo abrió sin querer.
   useEffect(() => {
@@ -113,6 +127,18 @@ export function NotificationBell() {
                         transition={reduceMotion
                           ? { duration: 0 }
                           : { delay: index * 0.045, duration: 0.28, ease: 'easeOut' }}
+                        onContextMenu={(event) => {
+                          event.preventDefault();
+                          openMenu(item, event.clientX, event.clientY);
+                        }}
+                        onPointerDown={(event) => {
+                          if (event.pointerType === 'mouse') return;
+                          const { clientX, clientY } = event;
+                          pressTimer.current = window.setTimeout(() => openMenu(item, clientX, clientY), 500);
+                        }}
+                        onPointerUp={cancelPress}
+                        onPointerMove={cancelPress}
+                        onPointerCancel={cancelPress}
                       >
                         <Link href={item.href} onClick={() => { markNotificationsRead(item.id); close(); }}>
                           <ItemIcon>
@@ -135,6 +161,32 @@ export function NotificationBell() {
                 </EmptyState>
               )}
             </Panel>
+
+            {menu ? (
+              <>
+                <Dismiss onClick={() => setMenu(null)} />
+                <ContextMenu
+                  role="menu"
+                  style={{ left: menu.x, top: menu.y }}
+                  initial={{ opacity: 0, scale: reduceMotion ? 1 : 0.92 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: reduceMotion ? 1 : 0.96 }}
+                  transition={{ duration: reduceMotion ? 0 : 0.16 }}
+                >
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      if (menu.read) markNotificationUnread(menu.id);
+                      else markNotificationsRead(menu.id);
+                      setMenu(null);
+                    }}
+                  >
+                    {menu.read ? 'Marcar como no leída' : 'Marcar como leída'}
+                  </button>
+                </ContextMenu>
+              </>
+            ) : null}
           </>
         ) : null}
       </AnimatePresence>

@@ -318,7 +318,13 @@ function createStyles(theme: AppTheme) {
     // entre 212 y 264 segun el telefono: por eso envolvia. A 12 entra en todos
     // con margen, y numberOfLines mas el autoajuste lo garantizan tambien con
     // el tamano de fuente del sistema agrandado.
-    tagline: { color: theme.colors.textMuted, fontSize: 12, fontWeight: '900', letterSpacing: 0.8 },
+    tagline: {
+      color: theme.colors.textMuted, fontSize: 12, fontWeight: '900', letterSpacing: 0.8,
+      // Mismo halo que en la web: el fondo animado cambia por detras.
+      textShadowColor: 'rgba(255, 255, 255, 0.35)',
+      textShadowOffset: { width: 0, height: 0 },
+      textShadowRadius: 8,
+    },
     avatar: { width: 38, height: 38, borderRadius: 19 },
     initial: { width: 38, height: 38, borderRadius: 19, textAlign: 'center', textAlignVertical: 'center', color: theme.colors.primary, backgroundColor: theme.colors.primaryFaded, fontWeight: '900' },
     main: { flex: 1, alignItems: 'center', justifyContent: 'space-between', paddingBottom: theme.spacing.md },

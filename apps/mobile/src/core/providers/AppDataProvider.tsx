@@ -26,6 +26,7 @@ interface AppDataContextValue {
   notifications: AppNotification[];
   unreadNotifications: number;
   markNotificationsRead: (notificationId?: string) => void;
+  markNotificationUnread: (notificationId: string) => void;
   sendConnectionRequest: (pet: Pet) => ConnectionRequest;
   respondToRequest: (requestId: string, accept: boolean) => void;
   sendMessage: (conversationId: string, body: string) => void;
@@ -276,6 +277,11 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
     return items.map((item) => ({ ...item, read: readNotifications.includes(item.id) }));
   }, [appointments, conversations, readNotifications, requests]);
 
+  /** Devuelve un aviso a no leido, para poder retomarlo mas tarde. */
+  const markNotificationUnread = useCallback((notificationId: string) => {
+    setReadNotifications((current) => current.filter((id) => id !== notificationId));
+  }, []);
+
   const unreadNotifications = notifications.filter((item) => !item.read).length;
 
   /**
@@ -293,12 +299,12 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
     profile, requests, conversations, messages, appointments, locations, myPets,
     sendConnectionRequest, respondToRequest, sendMessage, scheduleAppointment, createPet, updatePet, adoptRemotePets,
     savedPets, savePet, unsavePet, blockedOwners, blockOwner, unblockOwner,
-    notifications, unreadNotifications, markNotificationsRead,
+    notifications, unreadNotifications, markNotificationsRead, markNotificationUnread,
     updateAppointmentStatus, addLocationReview,
     updateProfileAvatar: (uri) => setProfile((current) => ({ ...current, avatar: uri })),
     updateProfile: (updates) => setProfile((current) => ({ ...current, ...updates })),
   }), [adoptRemotePets, appointments, blockOwner, blockedOwners, conversations, locations, markNotificationsRead,
-    messages, myPets, notifications, profile, requests, savePet, savedPets, unblockOwner, unreadNotifications,
+    markNotificationUnread, messages, myPets, notifications, profile, requests, savePet, savedPets, unblockOwner, unreadNotifications,
     unsavePet, updatePet]);
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;

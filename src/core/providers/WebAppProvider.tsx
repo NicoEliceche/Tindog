@@ -131,6 +131,7 @@ interface WebAppValue {
   locations: WebSafeLocation[]; appointments: WebAppointment[]; scheduleAppointment: (chatId: string, locationId: string, startAt: string) => WebAppointment | null; setAppointmentStatus: (id: string, status: WebAppointmentStatus) => void; addReview: (locationId: string, rating: number, comment: string) => void;
   /** Derivadas del estado real: solicitudes, chats sin leer y citas próximas. */
   notifications: WebNotification[]; unreadNotifications: number; markNotificationsRead: (notificationId?: string) => void;
+  markNotificationUnread: (notificationId: string) => void;
   /** Perfiles guardados desde Discovery para revisarlos después. */
   savedPets: WebSavedPet[]; savePet: (pet: Pet) => void; unsavePet: (id: string) => void; isSaved: (id: string) => boolean;
   myPets: Pet[];
@@ -266,6 +267,11 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
     return items.map((item) => ({ ...item, read: readNotifications.includes(item.id) }));
   }, [requests, conversations, appointments, cancelledNotices, readNotifications]);
 
+  /** Devuelve un aviso a no leido, para poder retomarlo mas tarde. */
+  const markNotificationUnread = useCallback((notificationId: string) => {
+    setReadNotifications((current) => current.filter((id) => id !== notificationId));
+  }, []);
+
   const unreadNotifications = notifications.filter((item) => !item.read).length;
   /**
    * Marca avisos como leidos. Sin argumento los marca todos, que es lo que
@@ -323,7 +329,7 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
     blockOwner: (name) => { if (!blockedOwners.includes(name)) persistBlocked([name, ...blockedOwners]); },
     unblockOwner: (name) => persistBlocked(blockedOwners.filter((item) => item !== name)),
     preferences, resolvedTheme: preferences.themeMode === 'system' ? (systemDark ? 'dark' : 'light') : preferences.themeMode, updatePreference,
-    notifications, unreadNotifications, markNotificationsRead,
+    notifications, unreadNotifications, markNotificationsRead, markNotificationUnread,
     profile, updateProfile: (value) => setProfile((current) => ({ ...current, ...value })), discoveryPets, dismissPet: (id) => setDiscoveryPets((current) => current.filter((item) => item.id !== id)), resetDiscovery: () => setDiscoveryPets(pets), restorePet: (pet) => setDiscoveryPets((current) => (current.some((item) => item.id === pet.id) ? current : [pet, ...current])), requests,
     sendRequest: (pet) => { if (!requests.some((item) => item.pet.id === pet.id && item.direction === 'outgoing' && item.status === 'pending')) setRequests((current) => [{ id: `req-${Date.now()}`, direction: 'outgoing', status: 'pending', ownerName: `Tutor de ${pet.name}`, pet, avatar: pet.photos[0], createdAt: new Date().toISOString() }, ...current]); }, respondRequest, cancelRequest,
     conversations, messages, sendMessage: (chatId, body) => { const clean = body.trim(); if (!clean) return; setMessages((current) => ({ ...current, [chatId]: [...(current[chatId] ?? []), { id: `m-${Date.now()}`, sender: 'me', body: clean, sentAt: new Date().toISOString() }] })); setConversations((current) => current.map((item) => item.id === chatId ? { ...item, lastMessage: clean, timeLabel: 'Ahora' } : item)); },

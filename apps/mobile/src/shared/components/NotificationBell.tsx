@@ -26,12 +26,14 @@ export function NotificationBell() {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { notifications, unreadNotifications, markNotificationsRead } = useAppData();
+  const { notifications, unreadNotifications, markNotificationsRead, markNotificationUnread } = useAppData();
+  /** Aviso sobre el que se mantuvo el dedo, y donde apareció el menú. */
+  const [menu, setMenu] = useState<{ id: string; read: boolean; x: number; y: number } | null>(null);
   const [open, setOpen] = useState(false);
 
   // Cerrar el panel no marca nada: haber abierto la campana no significa
   // haber leido los avisos. Se marcan al abrir uno, o con "Marcar leidas".
-  const close = () => setOpen(false);
+  const close = () => { setOpen(false); setMenu(null); };
 
   const go = (item: AppNotification) => {
     markNotificationsRead(item.id);
@@ -89,6 +91,15 @@ export function NotificationBell() {
                     key={item.id}
                     accessibilityRole="button"
                     onPress={() => go(item)}
+                    // El toque sostenido abre el menú desde donde está el
+                    // dedo, como el clic derecho en escritorio.
+                    onLongPress={(event) => setMenu({
+                      id: item.id,
+                      read: item.read,
+                      x: event.nativeEvent.pageX,
+                      y: event.nativeEvent.pageY,
+                    })}
+                    delayLongPress={400}
                     style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
                   >
                     <View style={styles.itemIcon}>
@@ -111,6 +122,38 @@ export function NotificationBell() {
               </View>
             )}
           </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal visible={!!menu} transparent animationType="fade" onRequestClose={() => setMenu(null)}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Cerrar menú" style={styles.menuBackdrop} onPress={() => setMenu(null)}>
+          {menu ? (
+            <Pressable
+              // Anclado donde ocurrió el toque, acotado para que no se salga
+              // por el borde derecho ni por abajo.
+              style={[styles.menu, { left: Math.min(menu.x, 220), top: Math.min(menu.y, 560) }]}
+              onPress={(event) => event.stopPropagation()}
+            >
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  if (menu.read) markNotificationUnread(menu.id);
+                  else markNotificationsRead(menu.id);
+                  setMenu(null);
+                }}
+                style={({ pressed }) => [styles.menuItem, pressed && styles.itemPressed]}
+              >
+                <Ionicons
+                  name={menu.read ? 'mail-unread-outline' : 'checkmark-done-outline'}
+                  size={18}
+                  color={theme.colors.primary}
+                />
+                <Text style={styles.menuText}>
+                  {menu.read ? 'Marcar como no leída' : 'Marcar como leída'}
+                </Text>
+              </Pressable>
+            </Pressable>
+          ) : null}
         </Pressable>
       </Modal>
     </>
@@ -157,6 +200,17 @@ function createStyles(theme: AppTheme) {
     itemTitle: { color: theme.colors.text, fontSize: 13, fontWeight: '900' },
     itemBody: { color: theme.colors.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 2 },
     unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.colors.primary },
+
+    menuBackdrop: { flex: 1, backgroundColor: theme.colors.overlay },
+    menu: {
+      position: 'absolute', minWidth: 210, padding: 6, borderRadius: 16,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1, borderColor: theme.colors.borderStrong,
+      elevation: 12, shadowColor: theme.colors.shadow,
+      shadowOpacity: 0.32, shadowRadius: 18, shadowOffset: { width: 0, height: 8 },
+    },
+    menuItem: { minHeight: 46, flexDirection: 'row', alignItems: 'center', gap: 9, paddingHorizontal: 12, borderRadius: 12 },
+    menuText: { color: theme.colors.text, fontSize: 14, fontWeight: '800' },
 
     empty: { alignItems: 'center', gap: 9, paddingVertical: 34, paddingHorizontal: 24 },
     emptyText: { color: theme.colors.textMuted, fontSize: 13, textAlign: 'center' },

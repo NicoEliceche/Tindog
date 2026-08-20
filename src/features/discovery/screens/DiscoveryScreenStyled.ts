@@ -74,6 +74,9 @@ export const Brand = styled.div`
     font-size: 0.72rem;
     letter-spacing: 0.6px;
     white-space: nowrap;
+    /* Se lee sobre el fondo animado, que cambia por detrás: el halo lo
+       despega de las partículas. */
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
   }
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
