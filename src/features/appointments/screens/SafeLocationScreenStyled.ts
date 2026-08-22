@@ -9,7 +9,10 @@ export const Screen = styled.section`
   /* Deja lugar para la barra inferior, que ahora tambien se ve aca: si no,
      el ultimo bloque quedaba tapado. */
   padding-bottom: calc(18px + 64px + env(safe-area-inset-bottom));
-  background: ${({ theme }) => theme.color.background};
+  /* Sin fondo propio: se ve el lienzo animado que la aplicacion dibuja
+     detras de todas las pantallas. Las tarjetas de adentro conservan el
+     suyo, asi que el texto se sigue leyendo. */
+  background: transparent;
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
     width: 100%;
@@ -19,6 +22,9 @@ export const Screen = styled.section`
 `;
 
 export const Header = styled.header`
+  /* El titulo va sobre el fondo animado. */
+  h1 { text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); }
+
   min-height: 62px;
   padding: 8px 14px;
   display: flex;
@@ -225,6 +231,12 @@ export const Content = styled.div`
   padding: 14px;
   display: grid;
   gap: 11px;
+
+  /* Estos textos quedan sobre el fondo animado, sin tarjeta detras: el halo
+     los despega de las particulas en movimiento. */
+  h2, .warning {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+  }
 
   h2 {
     font-size: 1.1rem;
