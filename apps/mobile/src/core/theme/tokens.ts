@@ -66,6 +66,8 @@ const darkColors = {
   onPrimary: '#221F18',
   overlay: 'rgba(20, 20, 19, 0.76)',
   shadow: '#000000',
+  /** Tinta de los dibujos del fondo: en oscuro, el dorado de siempre. */
+  canvasInk: '#E8C252',
   glow: 'rgba(232, 194, 82, 0.16)',
   glowSoft: 'rgba(232, 194, 82, 0.09)',
   /** Dorado de los titulos de pantalla. Sobre el fondo oscuro da 8.9:1. */
@@ -110,6 +112,9 @@ const lightColors: Record<keyof typeof darkColors, string> = {
   onPrimary: '#FFFFFF',
   overlay: 'rgba(38, 30, 12, 0.5)',
   shadow: '#4A3A10',
+  // Sobre el marfil el dorado de acentos da 2.1 de contraste y no se ve;
+  // este tono sube a 5.1.
+  canvasInk: '#7D6212',
   glow: 'rgba(201, 162, 39, 0.18)',
   glowSoft: 'rgba(201, 162, 39, 0.1)',
   // El dorado normal sobre marfil da 2.34:1, por debajo del minimo; el tono

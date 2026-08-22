@@ -151,6 +151,22 @@ export function AuroraBackground() {
     const goldLight = styles.getPropertyValue('--tindog-gold-light').trim() || '#FFF4C2';
     const goldDeep = styles.getPropertyValue('--tindog-gold-deep').trim() || '#B8860B';
 
+    /**
+     * Modo claro, deducido del brillo del fondo del tema.
+     *
+     * Las lineas que unen los puntos son finas y muy tenues: sobre el fondo
+     * oscuro se leen, pero sobre el claro desaparecen. En claro van mas
+     * gruesas y con mas cuerpo.
+     */
+    const bg = theme.color.background;
+    const rgb = bg.startsWith('#')
+      ? [1, 3, 5].map((i) => parseInt(bg.slice(i, i + 2), 16))
+      : (bg.match(/\d+/g) ?? ['0', '0', '0']).map(Number);
+    const isLight = (rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114) > 140;
+
+    const linkWidth = isLight ? 2 : 1;
+    const linkAlpha = isLight ? 0.34 : 0.16;
+
     let width = 0;
     let height = 0;
     let auroras: Drifter[] = [];
@@ -369,7 +385,7 @@ export function AuroraBackground() {
       // contiguas, así que se pierde una fracción mínima de líneas a cambio
       // de recortar el costo por frame.
       particles.sort((a, b) => a.x - b.x);
-      ctx.lineWidth = 1;
+      ctx.lineWidth = linkWidth;
       for (let i = 0; i < particles.length; i += 1) {
         const limit = Math.min(particles.length, i + 1 + LINK_NEIGHBOURS);
         for (let j = i + 1; j < limit; j += 1) {
@@ -377,7 +393,7 @@ export function AuroraBackground() {
           const b = particles[j];
           const d = Math.hypot(a.x - b.x, a.y - b.y);
           if (d < LINK_DISTANCE) {
-            ctx.strokeStyle = `${gold}${Math.round(0.16 * (1 - d / LINK_DISTANCE) * 255).toString(16).padStart(2, '0')}`;
+            ctx.strokeStyle = `${gold}${Math.round(linkAlpha * (1 - d / LINK_DISTANCE) * 255).toString(16).padStart(2, '0')}`;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);

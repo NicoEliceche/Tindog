@@ -361,19 +361,21 @@ export function AuroraBackground({ theme }: { theme: AppTheme }) {
             y1={link.y1}
             x2={link.x2}
             y2={link.y2}
-            stroke={theme.colors.primary}
-            strokeWidth={1}
-            strokeOpacity={0.16}
+            // Sobre el fondo claro la linea fina y tenue desaparece: va mas
+            // gruesa y con mas cuerpo, y con la tinta oscura del tema.
+            stroke={theme.colors.canvasInk}
+            strokeWidth={theme.dark ? 1 : 2}
+            strokeOpacity={theme.dark ? 0.16 : 0.34}
           />
         ))}
       </Svg>
 
       {nodes.map((spec) => (
-        <FloatingNode key={`node-${spec.id}`} spec={spec} color={theme.colors.primary} disabled={reduceMotion} />
+        <FloatingNode key={`node-${spec.id}`} spec={spec} color={theme.colors.canvasInk} disabled={reduceMotion} />
       ))}
 
       {paws.map((spec) => (
-        <FloatingPaw key={spec.id} spec={spec} color={theme.colors.primary} disabled={reduceMotion} />
+        <FloatingPaw key={spec.id} spec={spec} color={theme.colors.canvasInk} disabled={reduceMotion} />
       ))}
     </View>
   );
