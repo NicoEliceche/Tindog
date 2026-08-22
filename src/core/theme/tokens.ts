@@ -54,10 +54,10 @@ export const tokens = {
     surfaceRaised: '#3A3A37',
     /**
      * Panel que deja ver el fondo animado por detras, con desenfoque.
-     * A 0.86 el texto secundario queda en 4.8:1 aun con una parada dorada
-     * clara detras; mas transparente bajaba de 4.5 y dejaba de leerse.
+     * A 0.85 el texto queda en 7.6:1 aun con una parada dorada clara
+     * detras; mas transparente bajaba de 4.5 y dejaba de leerse.
      */
-    surfaceGlass:  'rgba(48, 48, 46, 0.86)',
+    surfaceGlass:  'rgba(48, 48, 46, 0.85)',
     overlay:       'rgba(20, 20, 19, 0.76)',
     border:        'rgba(232, 194, 82, 0.18)',
     borderSubtle:  '#3F3F3C',

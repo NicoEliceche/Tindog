@@ -45,14 +45,16 @@ export const Item = styled(motion.div)<{ $tone: 'info' | 'success' | 'error' }>`
   /* Los tonos llevan fondo propio y no solo un borde: el aviso se lee de
      un vistazo sin tener que leer el texto. */
   /* Translucido con desenfoque: deja ver el fondo animado por detras sin
-     perder legibilidad. */
+     perder legibilidad. D9 es 0.85, el punto mas claro que deja el texto
+     por encima de 4.5:1 aun con una parada dorada clara detras. El
+     desenfoque sube para compensar la transparencia extra. */
   background: ${({ theme, $tone }) => (
-    $tone === 'error' ? `${theme.color.errorSolid}E6`
-      : $tone === 'success' ? `${theme.color.successSolid}E6`
-        : `${theme.color.surface}E6`
+    $tone === 'error' ? `${theme.color.errorSolid}D9`
+      : $tone === 'success' ? `${theme.color.successSolid}D9`
+        : `${theme.color.surface}D9`
   )};
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border: 1px solid ${({ theme, $tone }) => (
     $tone === 'error' ? theme.color.error
       : $tone === 'success' ? theme.color.success
