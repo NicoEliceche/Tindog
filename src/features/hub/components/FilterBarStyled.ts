@@ -56,11 +56,16 @@ export const SearchField = styled.div`
 `;
 
 export const Select = styled.select`
-  /* Sin esto la opcion mas larga estira su mitad de la grilla y las dos
-     quedan desparejas. */
+  /* En el telefono cada filtro toma la mitad de su fila. */
   min-width: 0;
   width: 100%;
   min-height: 44px;
+
+  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
+    /* En escritorio se ajustan a su contenido: al 100% quedaban dos cajas
+       enormes al lado del buscador. */
+    width: auto;
+  }
   padding: 0 ${({ theme }) => theme.spacing[3]};
   border-radius: 999px;
   background: ${({ theme }) => theme.color.surface};

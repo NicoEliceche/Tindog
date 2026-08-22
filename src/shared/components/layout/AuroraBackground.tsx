@@ -22,9 +22,12 @@ const Canvas = styled.canvas`
   inset: 0;
   width: 100%;
   height: 100%;
-  --tindog-gold: ${({ theme }) => theme.color.primary};
-  --tindog-gold-light: ${({ theme }) => theme.color.primaryLight};
-  --tindog-gold-deep: ${({ theme }) => theme.color.primaryDark};
+  /* En claro los dibujos usan un dorado mas oscuro: el de acentos sobre el
+     marfil del fondo da 2.3 de contraste y practicamente no se ve. Medido:
+     con estos tonos sube a 5.1 y 6.4. */
+  --tindog-gold: ${({ theme }) => theme.color.canvasInk};
+  --tindog-gold-light: ${({ theme }) => theme.color.canvasInkLight};
+  --tindog-gold-deep: ${({ theme }) => theme.color.canvasInkDeep};
 `;
 
 // Velo que baja el contraste del fondo para que el contenido siga legible.
@@ -184,15 +187,15 @@ export function AuroraBackground() {
       paws = Array.from({ length: PAW_COUNT }, () => ({
         x: rand(0, width),
         y: rand(0, height),
-        vx: drift(0.16, 0.42),
-        vy: drift(0.12, 0.34),
+        vx: drift(0.32, 0.84),
+        vy: drift(0.24, 0.68),
         // El triple en escritorio y el doble en el telefono. La huella es
         // sutil de fondo y a este tamano se lee como motivo de marca; el
         // corte va en el mismo ancho que usa el resto de la aplicacion
         // para pasar a escritorio.
         size: rand(30, 58) * (width >= 1024 ? 3 : 2),
         angle: rand(0, Math.PI * 2),
-        spin: drift(0.0012, 0.0045),
+        spin: drift(0.0024, 0.009),
         alpha: rand(0.16, 0.34),
       }));
 
@@ -200,11 +203,13 @@ export function AuroraBackground() {
       particles = Array.from({ length: target }, () => ({
         x: rand(0, width),
         y: rand(0, height),
-        vx: drift(0.05, 0.22),
-        vy: drift(0.05, 0.22),
-        r: rand(0.8, 2.4),
+        vx: drift(0.1, 0.44),
+        vy: drift(0.1, 0.44),
+        // Al doble: a este tamano la red de puntos se lee como motivo y no
+        // como ruido de fondo.
+        r: rand(1.6, 4.8),
         angle: rand(0, Math.PI * 2),
-        spin: drift(0.004, 0.016),
+        spin: drift(0.008, 0.032),
       }));
     };
 
@@ -247,8 +252,10 @@ export function AuroraBackground() {
       // una casi inmóvil si los signos se cancelan. Se acota por arriba y
       // por abajo para que todas sigan viajando.
       const speed = Math.hypot(b.vx, b.vy);
-      const MAX = 1.5;
-      const MIN = 0.08;
+      // Al doble, como las velocidades iniciales: con el tope viejo los
+      // rebotes iban frenando las particulas hasta el ritmo anterior.
+      const MAX = 3;
+      const MIN = 0.16;
       if (speed > MAX) { b.vx = (b.vx / speed) * MAX; b.vy = (b.vy / speed) * MAX; }
       else if (speed < MIN) {
         const a = Math.random() * Math.PI * 2;

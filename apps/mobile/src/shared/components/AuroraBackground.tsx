@@ -288,16 +288,18 @@ export function AuroraBackground({ theme }: { theme: AppTheme }) {
       pathX,
       pathY,
       // El doble de rápido que antes, y fijo: menos milisegundos por vuelta.
-      duration: rand(4200, 9000),
+      duration: rand(2100, 4500),
       rotation: rand(0, 360),
       spinDirection: Math.random() < 0.5 ? -1 : 1,
-      spinDuration: rand(9000, 18000),
+      spinDuration: rand(4500, 9000),
       opacity: rand(0.14, 0.28),
     };
   }), [width, height]);
 
   const nodes = useMemo<NodeSpec[]>(() => Array.from({ length: NODE_COUNT }, (_, i) => {
-    const size = rand(4, 9);
+    // Al doble: a este tamano la red de puntos se lee como motivo y no como
+    // ruido de fondo.
+    const size = rand(8, 18);
     const startX = rand(0, Math.max(1, width - size));
     const startY = rand(0, Math.max(1, height - size));
     const pathX: number[] = [];
@@ -310,10 +312,11 @@ export function AuroraBackground({ theme }: { theme: AppTheme }) {
     pathY.push(0);
     return {
       id: i, size, startX, startY, pathX, pathY,
-      duration: rand(5000, 11000),
+      // La mitad de duracion es el doble de velocidad.
+      duration: rand(2500, 5500),
       rotation: rand(0, 360),
       spinDirection: Math.random() < 0.5 ? -1 : 1,
-      spinDuration: rand(6000, 13000),
+      spinDuration: rand(3000, 6500),
     };
   }), [width, height]);
 

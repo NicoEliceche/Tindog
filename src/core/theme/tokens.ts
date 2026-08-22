@@ -13,6 +13,10 @@ export const tokens = {
     accentDark:    '#C9A227',
 
     // ── Glassmorphism & Modern ────────────────────────────────────────────────
+    /** Tinta de los dibujos del fondo. En oscuro son los dorados de siempre. */
+    canvasInk:      '#E8C252',
+    canvasInkLight: '#FFF4C2',
+    canvasInkDeep:  '#B8860B',
     glass:         'rgba(48, 48, 46, 0.78)',
     glassBorder:   'rgba(232, 194, 82, 0.22)',
     glassShadow:   'rgba(0, 0, 0, 0.3)',

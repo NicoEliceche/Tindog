@@ -305,7 +305,13 @@ export function PetFormScreen() {
             </MediaGrid>
 
             <PhotoHint $error={!!photoError}>
-              {photoError || `${photos.length}/${MAX_GALLERY_PHOTOS} fotos · ${PHOTO_HINT}. ${VIDEO_HINT}.`}
+              {photoError || (
+                <>
+                  {photos.length}/{MAX_GALLERY_PHOTOS} fotos · {PHOTO_HINT}.
+                  <br />
+                  {VIDEO_HINT}.
+                </>
+              )}
             </PhotoHint>
           </div>
 

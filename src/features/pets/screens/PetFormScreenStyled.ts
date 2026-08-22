@@ -230,32 +230,50 @@ export const Input = styled.input`
     border-color: ${({ theme }) => theme.color.primary};
     box-shadow: 0 0 0 4px ${({ theme }) => theme.color.primaryFaded};
   }
+
+  /* Los textos de ayuda mas largos no entraban: "Nombre de la Madre"
+     necesitaba 147px en un campo de 124. Con este cuerpo y el interletrado
+     apretado entran los tres peores casos con margen. */
+  &::placeholder {
+    font-size: 13.5px;
+    letter-spacing: -0.3px;
+  }
 `;
 
 export const TextArea = styled(Input).attrs({ as: 'textarea' })`
   height: 100px;
   padding-top: 12px;
   resize: vertical;
+
+  &::placeholder { font-size: 13.5px; letter-spacing: -0.3px; }
 `;
 
 export const SmallInput = styled(Input)`
   height: 40px;
   flex: 1;
+
+  &::placeholder { font-size: 13.5px; letter-spacing: -0.3px; }
 `;
 
 export const DateSmallInput = styled(SmallInput)`
   width: 130px;
   flex: none;
+
+  &::placeholder { font-size: 13.5px; letter-spacing: -0.3px; }
 `;
 
 export const YearInput = styled(SmallInput)`
   width: 80px;
   flex: none;
+
+  &::placeholder { font-size: 13.5px; letter-spacing: -0.3px; }
 `;
 
 export const CoiInput = styled(SmallInput)`
   width: 80px;
   flex: none;
+
+  &::placeholder { font-size: 13.5px; letter-spacing: -0.3px; }
 `;
 
 export const FieldRow = styled.div`
@@ -341,6 +359,8 @@ export const HealthCard = styled(CompetitionCard)`
 export const CardTopInput = styled(SmallInput)`
   margin-bottom: 8px;
   width: 100%;
+
+  &::placeholder { font-size: 13.5px; letter-spacing: -0.3px; }
 `;
 
 export const AddButton = styled.button`
