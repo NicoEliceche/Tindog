@@ -175,7 +175,7 @@ export function SidebarNavigation() {
     <Aside aria-label="Navegación principal">
       <div>
         <Logo href="/discovery">
-          <LogoImage src={withPublicBasePath('/assets/tindog_patita_logo_black.png')} alt="Tindog" width={40} height={40} />
+          <LogoImage src={withPublicBasePath('/assets/tindog_patita_logo_black.png')} alt="Tindog" width={1192} height={1320} />
           <LogoText>Tindog</LogoText>
         </Logo>
 

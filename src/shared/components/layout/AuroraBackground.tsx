@@ -185,6 +185,17 @@ export function AuroraBackground() {
      */
     const isLight = isLightTheme;
 
+    /**
+     * Tope de cuadros por segundo.
+     *
+     * El fondo es decorativo y a 30 se ve igual de fluido, pero libera la
+     * mitad del tiempo de pintado para lo que importa: en la medicion, el
+     * lienzo se llevaba diez segundos de hilo principal y era lo que hundia
+     * la puntuacion de rendimiento en telefono.
+     */
+    const FRAME_BUDGET_MS = 1000 / 30;
+    let lastPaint = 0;
+
     const linkWidth = isLight ? 2 : 1;
     const linkAlpha = isLight ? 0.34 : 0.16;
 
@@ -321,15 +332,61 @@ export function AuroraBackground() {
       frame = requestAnimationFrame(draw);
     };
 
+    /**
+     * Sello de una aurora, pintado una sola vez.
+     *
+     * El degradado depende del radio y del color, no de la posicion, asi que
+     * alcanza con pintarlo una vez y despues copiarlo en cada cuadro.
+     */
+    const stamps = new Map<string, HTMLCanvasElement>();
+
+    function stampFor(a: Drifter): HTMLCanvasElement | null {
+      const color = a.hue === 'primary' ? gold : a.hue === 'accent' ? goldDeep : goldLight;
+      const key = `${color}-${Math.round(a.radius)}`;
+      const cached = stamps.get(key);
+      if (cached) return cached;
+
+      const size = Math.max(2, Math.ceil(a.radius * 2));
+      const off = document.createElement('canvas');
+      off.width = size;
+      off.height = size;
+      const octx = off.getContext('2d');
+      if (!octx) return null;
+
+      const gradient = octx.createRadialGradient(a.radius, a.radius, 0, a.radius, a.radius, a.radius);
+      gradient.addColorStop(0, `${color}55`);
+      gradient.addColorStop(0.55, `${color}1A`);
+      gradient.addColorStop(1, `${color}00`);
+      octx.fillStyle = gradient;
+      octx.beginPath();
+      octx.arc(a.radius, a.radius, a.radius, 0, Math.PI * 2);
+      octx.fill();
+
+      stamps.set(key, off);
+      return off;
+    }
+
     function draw(now = performance.now()) {
       if (!running || !ctx) return;
+
+      // Se salta el cuadro si todavia no paso el presupuesto, pero se sigue
+      // pidiendo el siguiente: asi el ritmo lo marca el reloj y no el
+      // refresco de la pantalla.
+      if (now - lastPaint < FRAME_BUDGET_MS) {
+        frame = requestAnimationFrame(draw);
+        return;
+      }
+      lastPaint = now;
 
       // Paso normalizado: 1 a 60Hz, 0.5 a 120Hz. Se acota a 2 para que una
       // pausa larga -pestana en segundo plano, hilo bloqueado- no dispare
       // las particulas de golpe al volver.
       const elapsed = lastTime ? now - lastTime : 1000 / BASE_FPS;
       lastTime = now;
-      const step = Math.min((elapsed * BASE_FPS) / 1000, 2);
+      // El tope es 4 y no 2: con el limite de 30 cuadros el paso normal ya
+      // vale 2, y cualquier demora extra quedaba recortada, frenando el
+      // fondo en vez de compensar.
+      const step = Math.min((elapsed * BASE_FPS) / 1000, 4);
       // Todo lo que se mueve multiplica por esto, asi que aplicar el paso
       // aca alcanza para que ningun desplazamiento dependa del cuadro.
       const advance = speedScale * step;
@@ -347,15 +404,12 @@ export function AuroraBackground() {
         a.x = wrap(a.x, width, a.radius);
         a.y = wrap(a.y, height, a.radius);
 
-        const color = a.hue === 'primary' ? gold : a.hue === 'accent' ? goldDeep : goldLight;
-        const gradient = ctx.createRadialGradient(a.x, a.y, 0, a.x, a.y, a.radius);
-        gradient.addColorStop(0, `${color}55`);
-        gradient.addColorStop(0.55, `${color}1A`);
-        gradient.addColorStop(1, `${color}00`);
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
-        ctx.fill();
+        // Se copia el sello ya pintado en vez de rehacer el degradado.
+        // Recrearlo por cuadro obligaba a calcular cinco degradados
+        // radiales de pantalla completa sesenta veces por segundo, y era
+        // de lejos lo mas caro del fondo.
+        const stamp = stampFor(a);
+        if (stamp) ctx.drawImage(stamp, a.x - a.radius, a.y - a.radius);
       }
 
       // ── Patitas ────────────────────────────────────────────────────────
