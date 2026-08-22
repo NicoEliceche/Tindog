@@ -20,3 +20,6 @@ export type { ToggleProps } from './Toggle';
 export { PageTransition } from './PageTransition';
 export type { PageTransitionProps } from './PageTransition';
 export { ToastProvider, useToast, type ToastInput, type ToastTone } from './Toast';
+
+export { BrandLogo } from './BrandLogo';
+export type { BrandLogoProps, BrandLogoSize, BrandLogoVariant } from './BrandLogo';

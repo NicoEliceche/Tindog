@@ -149,6 +149,18 @@ function hasSessionHint(): boolean {
   return canUseBrowserStorage() && window.localStorage.getItem(SESSION_HINT_KEY) === '1';
 }
 
+/**
+ * Si hay algo que validar antes de pintar.
+ *
+ * La portada tapaba la pantalla con "Verificando sesión..." mientras
+ * resolvía, incluso para quien nunca inició sesión, que es la mayoría de las
+ * visitas y siempre el caso de un medidor. Con esto se puede pintar de una
+ * y esperar sólo cuando de verdad hay una sesión guardada.
+ */
+export function mayHaveStoredSession(): boolean {
+  return getStoredAuthToken() !== null || hasSessionHint();
+}
+
 export async function restoreAuthSession(): Promise<LoginResponse | null> {
   const token = getStoredAuthToken();
 

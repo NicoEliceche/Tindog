@@ -84,18 +84,28 @@ interface Particle {
   spin: number;
 }
 
-const AURORA_COUNT = 5;
+/**
+ * Cuantos elementos lleva el fondo.
+ *
+ * El fondo se pinta entero en cada cuadro y era el trabajo mas pesado de la
+ * pagina. Las cantidades bajaron a la mitad: el motivo se sigue leyendo -las
+ * huellas, la red de puntos, el halo dorado- pero mas espaciado, y el costo
+ * de pintado cae en la misma proporcion.
+ */
+const AURORA_COUNT = 3;
 
-const PAW_COUNT = 21;
-const PARTICLE_DENSITY = 0.00021;
-const MAX_PARTICLES = 240;
+const PAW_COUNT = 10;
+const PARTICLE_DENSITY = 0.000105;
+const MAX_PARTICLES = 120;
 const LINK_DISTANCE = 118;
 /**
  * Vecinas a comparar por partícula al trazar enlaces (ver nota en draw).
- * Medido con la densidad actual: 36 conserva ~99.9% de los enlaces del
- * bucle completo a ~0.13ms por frame.
+ * Con la densidad de arriba, la simulación da 20 como la mayor distancia de
+ * índice que llega a producir un enlace real; 22 deja margen y no pierde
+ * ninguna línea. Bajó junto con la densidad: mantenerlo en 36 habría seguido
+ * comparando contra vecinas que ya nunca alcanzan.
  */
-const LINK_NEIGHBOURS = 36;
+const LINK_NEIGHBOURS = 22;
 const CURSOR_RADIUS = 180;
 
 /**

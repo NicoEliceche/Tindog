@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { type Variants, motion, useReducedMotion } from 'framer-motion';
 import { Heart, MessagesSquare, PawPrint, ShieldCheck, Sparkles, Users } from 'lucide-react';
 import { withPublicBasePath } from '@core/routing/publicPath';
-import { restoreAuthSession } from '@core/data/services/authService';
+import { mayHaveStoredSession, restoreAuthSession } from '@core/data/services/authService';
 import {
   LoadingScreen, LoadingMessage,
   Page, HeroSection, HeroCopy, LogoWrapper, LogoImage, ContentBox, Eyebrow, Title, Subtitle,
@@ -15,7 +15,7 @@ import {
   ValueGrid, ValueIcon, ValueTitle, ValueDescription,
   Footer, FooterBrand, FooterNote,
 } from './LandingScreenStyled';
-import { Card } from '@shared/components/ui';
+import { BrandLogo, Card } from '@shared/components/ui';
 
 const steps = [
   { Icon: Users, title: 'Creá el perfil de tu perro', description: 'Raza, edad, personalidad y qué tipo de cita buscás: amistad, cría o socialización.' },
@@ -31,25 +31,50 @@ const values = [
 
 // Secuencia de entrada: cada bloque aparece escalonado, y el título se
 // revela palabra por palabra para que la carga se sienta orquestada.
+/**
+ * La entrada del titular.
+ *
+ * El texto ya no arranca invisible. El navegador toma la portada como
+ * cargada recien cuando su bloque mas grande esta pintado, y con el titular
+ * apareciendo de a una palabra ese momento llegaba casi un segundo y medio
+ * tarde: se medi­a la animacion, no la carga.
+ *
+ * Queda el desplazamiento, que es lo que se percibe como entrada, y el
+ * desenfoque desaparecio porque obliga al navegador a rehacer el filtro en
+ * cada cuadro sobre texto ya legible.
+ */
 const containerVariants: Variants = {
   hidden: {},
-  visible: { transition: { delayChildren: 0.25, staggerChildren: 0.09 } },
+  visible: { transition: { staggerChildren: 0.05 } },
 };
 
 const lineVariants: Variants = {
-  hidden: { opacity: 0, y: 18, filter: 'blur(6px)' },
-  visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] } },
+  hidden: { y: 18 },
+  visible: { y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
 };
 
 const wordVariants: Variants = {
-  hidden: { opacity: 0, y: 28, rotateX: -60 },
-  visible: { opacity: 1, y: 0, rotateX: 0, transition: { duration: 0.75, ease: [0.16, 1, 0.3, 1] } },
+  hidden: { y: 28 },
+  visible: { y: 0, transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } },
 };
 
 export function LandingScreen() {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  /**
+   * Sólo se espera cuando hay una sesión guardada que validar.
+   *
+   * Antes la portada arrancaba tapada por "Verificando sesión..." para todo
+   * el mundo. Para quien nunca inició sesión no había nada que verificar, y
+   * el contenido real recién entraba al documento cuando la comprobación
+   * terminaba: era eso, y no las animaciones, lo que retrasaba la carga.
+   *
+   * Se lee en el inicializador y no en un efecto porque en el primer pintado
+   * ya hace falta saberlo. Da `false` en el servidor, donde no hay
+   * almacenamiento, que es justo lo que corresponde: el HTML estático es el
+   * de la portada.
+   */
+  const [isCheckingSession, setIsCheckingSession] = useState(() => mayHaveStoredSession());
 
   useEffect(() => {
     let cancelled = false;
@@ -92,17 +117,8 @@ export function LandingScreen() {
     <Page>
       <HeroSection>
         <HeroCopy>
-          <LogoWrapper
-            initial={{ opacity: 0, scale: 0.6, rotate: -12, filter: 'blur(12px)' }}
-            animate={{ opacity: 1, scale: 1, rotate: 0, filter: 'blur(0px)' }}
-            transition={{ duration: reduceMotion ? 0 : 1, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <LogoImage
-              src={withPublicBasePath('/assets/tindog_patita_logo_black.png')}
-              alt="Tindog Logo"
-              width={1192}
-              height={1320}
-            />
+          <LogoWrapper>
+            <LogoImage alt="Tindog" size="md" />
           </LogoWrapper>
 
           <ContentBox
@@ -130,9 +146,9 @@ export function LandingScreen() {
               onClick={() => router.push('/login')}
               whileHover={reduceMotion ? undefined : { scale: 1.05 }}
               whileTap={reduceMotion ? undefined : { scale: 0.95 }}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: reduceMotion ? 0 : 0.95, duration: reduceMotion ? 0 : 0.6, ease: [0.16, 1, 0.3, 1] }}
+              initial={{ y: 16 }}
+              animate={{ y: 0 }}
+              transition={{ duration: reduceMotion ? 0 : 0.5, ease: [0.16, 1, 0.3, 1] }}
             >
               Empezar aventura
             </Button>
@@ -141,9 +157,9 @@ export function LandingScreen() {
         </HeroCopy>
 
         <HeroMockup
-          initial={{ opacity: 0, x: 60, rotateY: -22, scale: 0.9 }}
-          animate={{ opacity: 1, x: 0, rotateY: 0, scale: 1 }}
-          transition={{ delay: reduceMotion ? 0 : 0.5, duration: reduceMotion ? 0 : 1.1, ease: [0.16, 1, 0.3, 1] }}
+          initial={{ x: 60, rotateY: -22, scale: 0.9 }}
+          animate={{ x: 0, rotateY: 0, scale: 1 }}
+          transition={{ duration: reduceMotion ? 0 : 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
           <MockupGlow />
           <MockupImage src={withPublicBasePath('/assets/home_screen.jpeg')} alt="Vista previa de Tindog" />
@@ -181,7 +197,7 @@ export function LandingScreen() {
 
       <Footer>
         <FooterBrand>
-          <img src={withPublicBasePath('/assets/tindog_patita_logo.png')} alt="" width={28} height={28} />
+          <BrandLogo variant="gold" />
           Tindog
         </FooterBrand>
         <FooterNote>© {new Date().getFullYear()} Tindog. Hecho con cariño para perros y sus humanos.</FooterNote>

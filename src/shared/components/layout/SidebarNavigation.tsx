@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import styled from 'styled-components';
 import { useWebApp } from '@core/providers/WebAppProvider';
 import { withPublicBasePath } from '@core/routing/publicPath';
+import { BrandLogo } from '@shared/components/ui';
 import { logoutCurrentAuthSession } from '@core/data/services/authService';
 import { Avatar } from '@shared/components/ui';
 import { NAV_ITEMS, SECONDARY_NAV_ITEMS, isSidebarHidden } from './navigation.config';
@@ -36,10 +37,15 @@ const Logo = styled(Link)`
   margin-bottom: ${({ theme }) => theme.spacing[8]};
 `;
 
-const LogoImage = styled.img`
+const LogoImage = styled(BrandLogo)`
+  display: block;
   width: 2.5rem;
-  height: auto;
-  border-radius: 50%;
+
+  img {
+    width: 100%;
+    height: auto;
+    border-radius: 50%;
+  }
 `;
 
 const LogoText = styled.span`
@@ -175,7 +181,7 @@ export function SidebarNavigation() {
     <Aside aria-label="Navegación principal">
       <div>
         <Logo href="/discovery">
-          <LogoImage src={withPublicBasePath('/assets/tindog_patita_logo_black.png')} alt="Tindog" width={1192} height={1320} />
+          <LogoImage alt="Tindog" />
           <LogoText>Tindog</LogoText>
         </Logo>
 

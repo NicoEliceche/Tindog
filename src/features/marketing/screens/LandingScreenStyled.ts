@@ -1,6 +1,7 @@
 // src/features/marketing/screens/LandingScreenStyled.ts
 import { motion } from 'framer-motion';
 import styled, { keyframes } from 'styled-components';
+import { BrandLogo } from '@shared/components/ui';
 
 // ── Loading (sin sesión aún resolviendo) ──────────────────────────────────
 export const LoadingScreen = styled.div`
@@ -99,13 +100,18 @@ export const LogoWrapper = styled(motion.div)`
   }
 `;
 
-export const LogoImage = styled.img`
+export const LogoImage = styled(BrandLogo)`
   display: block;
   width: 100%;
-  /* El alto lo fija el archivo (1192x1320). El recorte redondo se come las
-     puntas de la patita, que llega al borde del archivo. */
-  height: auto;
-  border-radius: 50%;
+
+  img {
+    display: block;
+    width: 100%;
+    /* El alto lo fija la proporcion del archivo. El recorte redondo se come
+       las puntas de la patita, que llega al borde del archivo. */
+    height: auto;
+    border-radius: 50%;
+  }
 `;
 
 export const ContentBox = styled(motion.div)`
