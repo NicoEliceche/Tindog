@@ -26,6 +26,9 @@ export const lightTheme = {
     primary: '#C9A227', primaryLight: '#E8C252', primaryDark: '#9A7B14',
     // Los dibujos del fondo van mucho mas oscuros que los acentos: 5.1 y 6.4
     // de contraste contra el fondo, contra el 2.1 que daba el dorado claro.
+    // Un poco mas firme que en oscuro: al 14% sobre marfil el cuadro casi
+    // no se distinguia del fondo de la pagina.
+    actionFill: 'rgba(201, 162, 39, 0.18)',
     canvasInk: '#7D6212', canvasInkLight: '#9A7B14', canvasInkDeep: '#5E4A0E',
     primaryFaded: 'rgba(201, 162, 39, 0.14)',
     accent: '#D4AF37', accentLight: '#F0D98A', accentDark: '#9A7B14',

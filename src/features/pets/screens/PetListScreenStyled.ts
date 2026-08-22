@@ -102,10 +102,16 @@ export const AddPetCard = styled.button`
   border-radius: ${({ theme }) => theme.radius.xl};
   /* Sin fondo propio no se leía como algo pulsable: quedaba como un hueco
      con borde punteado y el color sólo aparecía al pasar el mouse, que en
-     un teléfono no ocurre nunca. */
-  background: ${({ theme }) => theme.color.primaryFaded};
+     un teléfono no ocurre nunca. En claro el relleno va más firme. */
+  background: ${({ theme }) => theme.color.actionFill};
   border: 1px dashed ${({ theme }) => theme.color.borderFocus};
-  color: ${({ theme }) => theme.color.primary};
+  /*
+   * El dorado de acentos sobre este relleno da 1.9 de contraste en modo
+   * claro y el texto se confunde con el fondo. Subir la opacidad del
+   * relleno lo empeora, porque acerca el fondo al color de la letra: lo que
+   * funciona es oscurecer la letra, que en claro sube a 4.5.
+   */
+  color: ${({ theme }) => theme.color.canvasInk};
   font-weight: ${({ theme }) => theme.typography.weight.extrabold};
   transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
 

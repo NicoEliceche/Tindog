@@ -126,13 +126,16 @@ export const PhotoUpload = styled.label`
   width: 120px;
   height: 120px;
   border-radius: ${({ theme }) => theme.radius['2xl']};
-  background: ${({ theme }) => theme.color.primaryFaded};
+  /* Mismo criterio que el cuadro de agregar mascota: en claro el relleno va
+     mas firme y la letra usa la tinta oscura, porque el dorado de acentos
+     sobre marfil se confunde con el fondo. */
+  background: ${({ theme }) => theme.color.actionFill};
   border: 2px dashed ${({ theme }) => theme.color.primary};
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: ${({ theme }) => theme.color.primary};
+  color: ${({ theme }) => theme.color.canvasInk};
   cursor: pointer;
   gap: 4px;
   font-size: 12px;

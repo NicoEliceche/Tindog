@@ -14,6 +14,8 @@ export const tokens = {
 
     // ── Glassmorphism & Modern ────────────────────────────────────────────────
     /** Tinta de los dibujos del fondo. En oscuro son los dorados de siempre. */
+    /** Relleno de los cuadros punteados de accion. */
+    actionFill:     'rgba(232, 194, 82, 0.14)',
     canvasInk:      '#E8C252',
     canvasInkLight: '#FFF4C2',
     canvasInkDeep:  '#B8860B',

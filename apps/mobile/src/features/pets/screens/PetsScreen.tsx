@@ -79,7 +79,7 @@ function createStyles(theme: AppTheme) {
     status: { color: theme.colors.primary, fontSize: 11, fontWeight: '900', marginTop: 8 },
     // Misma tarjeta punteada que en la web: alta, con dorado tenue de fondo
     // y borde discontinuo, en vez de la pastilla dorada solida que era.
-    addButton: { minHeight: 128, marginTop: 12, borderRadius: 24, backgroundColor: theme.colors.primaryFaded, borderWidth: 1, borderStyle: 'dashed', borderColor: theme.colors.primaryBorderStrong, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-    addText: { color: theme.colors.primary, fontSize: 15, fontWeight: '900' },
+    addButton: { minHeight: 128, marginTop: 12, borderRadius: 24, backgroundColor: theme.colors.actionFill, borderWidth: 1, borderStyle: 'dashed', borderColor: theme.colors.primaryBorderStrong, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+    addText: { color: theme.colors.canvasInk, fontSize: 15, fontWeight: '900' },
   });
 }
