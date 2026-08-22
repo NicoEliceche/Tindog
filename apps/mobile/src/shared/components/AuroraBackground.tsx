@@ -8,13 +8,21 @@ import Animated, {
 } from 'react-native-reanimated';
 import type { AppTheme } from '../../core/theme/tokens';
 
-const AURORA_COUNT = 5;
+/**
+ * Cuantos elementos lleva el fondo.
+ *
+ * Acá cada elemento es una vista animada de verdad, no una figura pintada
+ * en un lienzo, así que la cuenta pesa todavía más que en la web. Bajaron a
+ * la mitad, igual que allá: el motivo se sigue leyendo -las huellas, la red
+ * de nodos, el halo dorado- pero más espaciado.
+ */
+const AURORA_COUNT = 3;
 /** Nodos de la red: rombos que giran sobre su eje mientras derivan. */
-const NODE_COUNT = 26;
+const NODE_COUNT = 13;
 /** Distancia bajo la cual dos nodos se unen con una línea. */
 const LINK_DISTANCE = 120;
 /** Cada "paw" dibuja un par de huellas, como un paso. */
-const PAW_COUNT = 18;
+const PAW_COUNT = 9;
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 /** Valor con signo aleatorio, evitando magnitudes casi nulas. */
