@@ -7,7 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ToastProvider } from './src/shared/components/Toast';
 import { logoutCurrentAuthSession, restoreAuthSession } from './src/core/data/services/authService';
 import { AppDataProvider } from './src/core/providers/AppDataProvider';
-import { AppPreferencesProvider, useAppTheme } from './src/core/providers/AppPreferencesProvider';
+import { AppPreferencesProvider, useAppPreferences, useAppTheme } from './src/core/providers/AppPreferencesProvider';
 import { theme as brandTheme } from './src/core/theme/tokens';
 import type { AuthResponse } from './src/core/types/auth.types';
 import { LoginScreen, signOutFromGoogle } from './src/features/auth';
@@ -30,22 +30,37 @@ function AuthenticatedApp({ auth, onLogout }: { auth: AuthResponse; onLogout: ()
   );
 }
 
-export default function App() {
+/**
+ * Todo lo que hay que resolver antes de mostrar nada.
+ *
+ * Son dos lecturas de disco independientes: la sesion y el tema elegido. La
+ * pantalla de arranque se ocultaba en cuanto terminaba la sesion, sin
+ * esperar al tema, asi que si la sesion resolvia primero la aplicacion se
+ * pintaba en oscuro y saltaba al claro un cuadro despues. Con la cache
+ * recien vaciada, que es cuando ambas lecturas tardan mas, el salto se ve.
+ *
+ * Va adentro del proveedor porque necesita leer `hydrated`, que es su
+ * estado.
+ */
+function AppShell() {
+  const { hydrated: preferencesReady } = useAppPreferences();
   const [auth, setAuth] = useState<AuthResponse | null>(null);
-  const [isHydrating, setIsHydrating] = useState(true);
+  const [sessionReady, setSessionReady] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     restoreAuthSession()
       .then((session) => { if (!cancelled) setAuth(session); })
-      .finally(() => { if (!cancelled) setIsHydrating(false); });
+      .finally(() => { if (!cancelled) setSessionReady(true); });
     return () => { cancelled = true; };
   }, []);
 
+  const ready = sessionReady && preferencesReady;
+
   useEffect(() => {
-    if (!isHydrating) SplashScreen.hideAsync().catch(() => undefined);
-  }, [isHydrating]);
+    if (ready) SplashScreen.hideAsync().catch(() => undefined);
+  }, [ready]);
 
   const handleLogout = async () => {
     await Promise.all([logoutCurrentAuthSession(), signOutFromGoogle()]);
@@ -53,25 +68,31 @@ export default function App() {
   };
 
   return (
+    <ToastProvider>
+      {!ready ? (
+        <BootstrapScreen />
+      ) : auth ? (
+        <AuthenticatedApp auth={auth} onLogout={handleLogout} />
+      ) : (
+        <View style={[styles.app, { backgroundColor: brandTheme.colors.background }]}>
+          <StatusBar style="light" />
+          {/* La aplicacion abre en la portada, como la web, y el boton
+              dorado lleva al ingreso. */}
+          {showLogin
+            ? <LoginScreen onAuthenticated={setAuth} />
+            : <LandingScreen onStart={() => setShowLogin(true)} />}
+        </View>
+      )}
+    </ToastProvider>
+  );
+}
+
+export default function App() {
+  return (
     <GestureHandlerRootView style={styles.app}>
       <SafeAreaProvider>
         <AppPreferencesProvider>
-          <ToastProvider>
-          {isHydrating ? (
-            <BootstrapScreen />
-          ) : auth ? (
-            <AuthenticatedApp auth={auth} onLogout={handleLogout} />
-          ) : (
-            <View style={[styles.app, { backgroundColor: brandTheme.colors.background }]}>
-              <StatusBar style="light" />
-              {/* La aplicacion abre en la portada, como la web, y el boton
-                  dorado lleva al ingreso. */}
-              {showLogin
-                ? <LoginScreen onAuthenticated={setAuth} />
-                : <LandingScreen onStart={() => setShowLogin(true)} />}
-            </View>
-          )}
-          </ToastProvider>
+          <AppShell />
         </AppPreferencesProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

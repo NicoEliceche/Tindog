@@ -1,10 +1,14 @@
+import { useMemo } from 'react';
 import { ActivityIndicator, Image, Text, View } from 'react-native';
-import { theme } from '../../../core/theme/tokens';
-import { styles } from './BootstrapScreen.styles';
+import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
+import { createStyles } from './BootstrapScreen.styles';
 
 const logoSource = require('../../../../assets/tindog_patita_logo.png');
 
 export function BootstrapScreen() {
+  const theme = useAppTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   return (
     <View style={styles.screen} accessibilityLabel="Tindog está iniciando">
       <View style={styles.logoFrame}>
