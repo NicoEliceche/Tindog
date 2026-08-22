@@ -415,9 +415,16 @@ export const Modal = styled.div`
 export const TapHint = styled.p`
   margin-top: ${({ theme }) => theme.spacing[2]};
   text-align: center;
-  color: ${({ theme }) => theme.color.primary};
+  /*
+   * El dorado de acentos sobre el marfil del modo claro da 2.1 de contraste
+   * y el texto se pierde. La tinta del lienzo es dorada en oscuro y un tono
+   * profundo en claro, donde sube a 5.1.
+   */
+  color: ${({ theme }) => theme.color.canvasInk};
   font-size: ${({ theme }) => theme.typography.size.xs};
   font-weight: ${({ theme }) => theme.typography.weight.bold};
-  /* Halo blanco: el fondo animado cambia por detrás. */
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+  /* Halo blanco, para despegarlo de los dibujos del fondo. */
+  text-shadow:
+    0 0 6px rgba(255, 255, 255, 0.9),
+    0 0 12px rgba(255, 255, 255, 0.55);
 `;

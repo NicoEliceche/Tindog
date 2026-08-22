@@ -374,11 +374,14 @@ function createStyles(theme: AppTheme) {
     meta: { color: theme.colors.textSecondary, fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
     bio: { color: theme.colors.text, fontSize: 14, lineHeight: 19, marginTop: 3 },
     tapHint: {
-      color: theme.colors.primary, fontSize: 11, fontWeight: '800', textAlign: 'center', marginTop: 8,
-      // Halo blanco: el fondo animado cambia por detras.
-      textShadowColor: 'rgba(255, 255, 255, 0.35)',
+      // El dorado de acentos sobre el marfil del modo claro da 2.1 de
+      // contraste y el texto se pierde. La tinta del lienzo es dorada en
+      // oscuro y un tono profundo en claro, donde sube a 5.1.
+      color: theme.colors.canvasInk, fontSize: 11, fontWeight: '800', textAlign: 'center', marginTop: 8,
+      // Halo blanco, para despegarlo de los dibujos del fondo.
+      textShadowColor: 'rgba(255, 255, 255, 0.9)',
       textShadowOffset: { width: 0, height: 0 },
-      textShadowRadius: 8,
+      textShadowRadius: 7,
     },
     actions: { width: '100%', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-around', paddingTop: theme.spacing.md },
     muted: { color: theme.colors.textSecondary, fontSize: 15, lineHeight: 22, textAlign: 'center' },
