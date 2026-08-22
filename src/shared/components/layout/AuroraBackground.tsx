@@ -191,8 +191,8 @@ export function AuroraBackground() {
       auroras = Array.from({ length: AURORA_COUNT }, (_, i) => ({
         x: rand(0, width),
         y: rand(0, height),
-        vx: drift(0.09, 0.26),
-        vy: drift(0.07, 0.2),
+        vx: drift(0.18, 0.52),
+        vy: drift(0.14, 0.4),
         // Con más manchas conviene achicarlas para que el fondo respire.
         radius: Math.max(width, height) * rand(0.24, 0.4),
         hue: (['primary', 'accent', 'light'] as const)[i % 3],
@@ -203,15 +203,15 @@ export function AuroraBackground() {
       paws = Array.from({ length: PAW_COUNT }, () => ({
         x: rand(0, width),
         y: rand(0, height),
-        vx: drift(0.32, 0.84),
-        vy: drift(0.24, 0.68),
+        vx: drift(0.64, 1.68),
+        vy: drift(0.48, 1.36),
         // El triple en escritorio y el doble en el telefono. La huella es
         // sutil de fondo y a este tamano se lee como motivo de marca; el
         // corte va en el mismo ancho que usa el resto de la aplicacion
         // para pasar a escritorio.
         size: rand(30, 58) * (width >= 1024 ? 3 : 2),
         angle: rand(0, Math.PI * 2),
-        spin: drift(0.0024, 0.009),
+        spin: drift(0.0048, 0.018),
         alpha: rand(0.16, 0.34),
       }));
 
@@ -219,13 +219,13 @@ export function AuroraBackground() {
       particles = Array.from({ length: target }, () => ({
         x: rand(0, width),
         y: rand(0, height),
-        vx: drift(0.1, 0.44),
-        vy: drift(0.1, 0.44),
+        vx: drift(0.2, 0.88),
+        vy: drift(0.2, 0.88),
         // Al doble: a este tamano la red de puntos se lee como motivo y no
         // como ruido de fondo.
         r: rand(1.6, 4.8),
         angle: rand(0, Math.PI * 2),
-        spin: drift(0.008, 0.032),
+        spin: drift(0.016, 0.064),
       }));
     };
 
@@ -268,10 +268,10 @@ export function AuroraBackground() {
       // una casi inmóvil si los signos se cancelan. Se acota por arriba y
       // por abajo para que todas sigan viajando.
       const speed = Math.hypot(b.vx, b.vy);
-      // Al doble, como las velocidades iniciales: con el tope viejo los
-      // rebotes iban frenando las particulas hasta el ritmo anterior.
-      const MAX = 3;
-      const MIN = 0.16;
+      // El tope acompana a las velocidades iniciales: si se queda corto, los
+      // rebotes van frenando las particulas hasta el ritmo anterior.
+      const MAX = 6;
+      const MIN = 0.32;
       if (speed > MAX) { b.vx = (b.vx / speed) * MAX; b.vy = (b.vy / speed) * MAX; }
       else if (speed < MIN) {
         const a = Math.random() * Math.PI * 2;

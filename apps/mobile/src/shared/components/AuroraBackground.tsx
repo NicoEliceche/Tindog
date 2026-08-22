@@ -258,7 +258,7 @@ export function AuroraBackground({ theme }: { theme: AppTheme }) {
       startY: rand(-size * 0.35, height - size * 0.4),
       dx: signed(width * 0.18, width * 0.42),
       dy: signed(height * 0.12, height * 0.3),
-      duration: rand(9000, 17000),
+      duration: rand(4500, 8500),
       colorKey: (['glow', 'glowSoft', 'primaryFaded'] as const)[i % 3],
     };
   }), [width, height]);
@@ -288,10 +288,10 @@ export function AuroraBackground({ theme }: { theme: AppTheme }) {
       pathX,
       pathY,
       // El doble de rápido que antes, y fijo: menos milisegundos por vuelta.
-      duration: rand(2100, 4500),
+      duration: rand(1050, 2250),
       rotation: rand(0, 360),
       spinDirection: Math.random() < 0.5 ? -1 : 1,
-      spinDuration: rand(4500, 9000),
+      spinDuration: rand(2250, 4500),
       opacity: rand(0.14, 0.28),
     };
   }), [width, height]);
@@ -313,10 +313,10 @@ export function AuroraBackground({ theme }: { theme: AppTheme }) {
     return {
       id: i, size, startX, startY, pathX, pathY,
       // La mitad de duracion es el doble de velocidad.
-      duration: rand(2500, 5500),
+      duration: rand(1250, 2750),
       rotation: rand(0, 360),
       spinDirection: Math.random() < 0.5 ? -1 : 1,
-      spinDuration: rand(3000, 6500),
+      spinDuration: rand(1500, 3250),
     };
   }), [width, height]);
 
