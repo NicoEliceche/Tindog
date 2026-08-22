@@ -6,6 +6,7 @@ import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleShe
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { pickProfilePhoto } from '../../../core/data/services/profilePhotoPicker';
 import { useAppData } from '../../../core/providers/AppDataProvider';
+import { useToast } from '../../../shared/components/Toast';
 import { GoldHeading } from '../../../shared/components/GoldHeading';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
@@ -15,9 +16,17 @@ export function ProfileScreen({ onLogout }: { onLogout: () => Promise<void> }) {
   const theme = useAppTheme(); const styles = useMemo(() => createStyles(theme), [theme]); const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { profile, updateProfileAvatar, updateProfile } = useAppData();
+  const toast = useToast();
   const [loggingOut, setLoggingOut] = useState(false); const [editing, setEditing] = useState(false); const [draftName, setDraftName] = useState(profile.name);
+  // La zona tambien se edita, como en la web. Es el area aproximada que ven
+  // otros: nunca el domicilio exacto.
+  const [editingZone, setEditingZone] = useState(false);
+  const [draftZone, setDraftZone] = useState(profile.zone ?? 'Palermo, Buenos Aires');
+  const zone = profile.zone ?? 'Palermo, Buenos Aires';
 
-  const changePhoto = async () => { const uri = await pickProfilePhoto(); if (!uri) { Alert.alert('Foto sin cambios', 'Elegí una imagen y permití el acceso a tus fotos para actualizarla.'); return; } updateProfileAvatar(uri); };
+  const saveZone = () => { const clean = draftZone.trim(); if (clean.length >= 3) { updateProfile({ zone: clean }); setEditingZone(false); } };
+
+  const changePhoto = async () => { const uri = await pickProfilePhoto(); if (!uri) { toast({ title: 'Foto sin cambios', body: 'Elegí una imagen y permití el acceso a tus fotos.' }); return; } updateProfileAvatar(uri); };
   const logout = async () => { setLoggingOut(true); try { await onLogout(); } finally { setLoggingOut(false); } };
   const saveName = () => { const name = draftName.trim(); if (name.length >= 2) { updateProfile({ name }); setEditing(false); } };
 
@@ -31,7 +40,7 @@ export function ProfileScreen({ onLogout }: { onLogout: () => Promise<void> }) {
     <Text style={styles.section}>Datos personales</Text>
     <Pressable accessibilityRole="button" onPress={() => { setDraftName(profile.name); setEditing(true); }} style={styles.row}><Ionicons name="person-outline" size={22} color={theme.colors.primary} /><View style={{ flex: 1 }}><Text style={styles.rowTitle}>Nombre visible</Text><Text style={styles.rowDetail}>{profile.name}</Text></View><Ionicons name="create-outline" size={19} color={theme.colors.textMuted} /></Pressable>
     <View style={styles.row}><Ionicons name="mail-outline" size={22} color={theme.colors.primary} /><View style={{ flex: 1 }}><Text style={styles.rowTitle}>Email</Text><Text style={styles.rowDetail}>{profile.email} · administrado por Google</Text></View><Ionicons name="lock-closed" size={17} color={theme.colors.textMuted} /></View>
-    <View style={styles.row}><Ionicons name="location-outline" size={22} color={theme.colors.primary} /><View style={{ flex: 1 }}><Text style={styles.rowTitle}>Zona general</Text><Text style={styles.rowDetail}>Palermo, Buenos Aires · nunca mostramos tu domicilio</Text></View><Ionicons name="chevron-forward" size={19} color={theme.colors.textMuted} /></View>
+    <Pressable accessibilityRole="button" onPress={() => { setDraftZone(zone); setEditingZone(true); }} style={styles.row}><Ionicons name="location-outline" size={22} color={theme.colors.primary} /><View style={{ flex: 1 }}><Text style={styles.rowTitle}>Zona general</Text><Text style={styles.rowDetail}>{zone} · nunca mostramos tu domicilio</Text></View><Ionicons name="create-outline" size={19} color={theme.colors.textMuted} /></Pressable>
     <Text style={styles.section}>Cuenta</Text>
     <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Requests')} style={styles.row}><Ionicons name="person-add-outline" size={22} color={theme.colors.primary} /><View style={{ flex: 1 }}><Text style={styles.rowTitle}>Solicitudes</Text><Text style={styles.rowDetail}>Conexiones recibidas y enviadas</Text></View><Ionicons name="chevron-forward" size={19} color={theme.colors.textMuted} /></Pressable>
     <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Saved')} style={styles.row}><Ionicons name="bookmark-outline" size={22} color={theme.colors.primary} /><View style={{ flex: 1 }}><Text style={styles.rowTitle}>Guardados</Text><Text style={styles.rowDetail}>Perfiles que apartaste para después</Text></View><Ionicons name="chevron-forward" size={19} color={theme.colors.textMuted} /></Pressable>
@@ -39,6 +48,7 @@ export function ProfileScreen({ onLogout }: { onLogout: () => Promise<void> }) {
     <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Settings')} style={styles.row}><Ionicons name="options-outline" size={22} color={theme.colors.primary} /><View style={{ flex: 1 }}><Text style={styles.rowTitle}>Privacidad y configuración</Text><Text style={styles.rowDetail}>Apariencia, avisos, descubrimiento y seguridad</Text></View><Ionicons name="chevron-forward" size={19} color={theme.colors.textMuted} /></Pressable>
     <Pressable accessibilityRole="button" disabled={loggingOut} onPress={logout} style={styles.logout}>{loggingOut ? <ActivityIndicator color={theme.colors.danger} /> : <Ionicons name="log-out-outline" size={21} color={theme.colors.danger} />}<Text style={styles.logoutText}>Cerrar sesión</Text></Pressable>
   </ScrollView>
+  <Modal visible={editingZone} transparent animationType="fade" onRequestClose={() => setEditingZone(false)}><View style={styles.backdrop}><View style={styles.modal}><Text style={styles.modalTitle}>Editar zona general</Text><Text style={styles.rowDetail}>Es el área aproximada que ven otros usuarios. Nunca mostramos tu domicilio exacto.</Text><TextInput value={draftZone} onChangeText={setDraftZone} autoFocus maxLength={80} placeholder="Barrio, ciudad" placeholderTextColor={theme.colors.textMuted} style={styles.nameInput} /><View style={styles.modalActions}><Pressable onPress={() => setEditingZone(false)} style={styles.modalSecondary}><Text style={styles.modalSecondaryText}>Cancelar</Text></Pressable><Pressable onPress={saveZone} style={styles.modalPrimary}><Text style={styles.modalPrimaryText}>Guardar</Text></Pressable></View></View></View></Modal>
   <Modal visible={editing} transparent animationType="fade" onRequestClose={() => setEditing(false)}><View style={styles.backdrop}><View style={styles.modal}><Text style={styles.modalTitle}>Editar nombre visible</Text><TextInput value={draftName} onChangeText={setDraftName} autoFocus maxLength={60} style={styles.nameInput} /><View style={styles.modalActions}><Pressable onPress={() => setEditing(false)} style={styles.modalSecondary}><Text style={styles.modalSecondaryText}>Cancelar</Text></Pressable><Pressable onPress={saveName} style={styles.modalPrimary}><Text style={styles.modalPrimaryText}>Guardar</Text></Pressable></View></View></View></Modal>
   </View>;
 }

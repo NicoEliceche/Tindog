@@ -1,9 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useMemo, useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { requestPushPermission } from '../../../core/data/services/pushNotifications';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
+import { useToast } from '../../../shared/components/Toast';
+import type { RootStackParamList } from '../../../navigation/types';
 import type { AppTheme, ThemeMode } from '../../../core/theme/tokens';
 import type { AppPreferences } from '../../../core/types/preferences.types';
 
@@ -11,12 +15,19 @@ export function SettingsScreen() {
   const { theme, preferences, updatePreference } = useAppPreferences();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
+  const toast = useToast();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  // Borrar la cuenta pide escribir ELIMINAR, igual que en la web: es
+  // irreversible y un toque de mas no deberia alcanzar.
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
 
   const togglePush = async (key: 'pushMessages' | 'pushRequests' | 'pushAppointments', value: boolean) => {
     if (!value) { updatePreference(key, false); return; }
     const granted = await requestPushPermission().catch(() => false);
     if (granted) updatePreference(key, true);
-    else Alert.alert('Notificaciones desactivadas', 'Podés habilitarlas más adelante desde los ajustes del teléfono.');
+    else toast({ title: 'Notificaciones desactivadas', body: 'Podés habilitarlas más adelante desde los ajustes del teléfono.' });
   };
 
   return <ScrollView style={styles.screen} contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, 12) + 16 }]} showsVerticalScrollIndicator={false}>
@@ -33,7 +44,7 @@ export function SettingsScreen() {
       <ToggleRow icon="radio-outline" title="Estado en línea" detail="Está oculto de forma predeterminada" value={preferences.showOnlineStatus} theme={theme} onChange={(value) => updatePreference('showOnlineStatus', value)} />
       <ToggleRow icon="checkmark-done-outline" title="Confirmaciones de lectura" detail="También dejarás de ver las de otros" value={preferences.readReceipts} theme={theme} onChange={(value) => updatePreference('readReceipts', value)} />
       <ActionRow icon="medkit-outline" title="Visibilidad de salud" detail={preferences.healthVisibility === 'connections' ? 'Sólo conexiones aceptadas' : 'Sólo vos'} theme={theme} onPress={() => updatePreference('healthVisibility', preferences.healthVisibility === 'connections' ? 'private' : 'connections')} />
-      <ActionRow icon="ban-outline" title="Personas bloqueadas" detail="Revisá y administrá bloqueos" theme={theme} onPress={() => Alert.alert('Personas bloqueadas', 'No tenés personas bloqueadas.')} />
+      <ActionRow icon="ban-outline" title="Personas bloqueadas" detail="Revisá y administrá bloqueos" theme={theme} onPress={() => toast({ title: 'Sin bloqueos', body: 'No tenés personas bloqueadas.' })} />
     </Section>
     <Section title="Notificaciones" theme={theme}>
       <ToggleRow icon="chatbubble-outline" title="Mensajes" detail="Nuevos mensajes de chats aceptados" value={preferences.pushMessages} theme={theme} onChange={(value) => togglePush('pushMessages', value)} />
@@ -43,17 +54,67 @@ export function SettingsScreen() {
     </Section>
     <Section title="Seguridad de citas" theme={theme}>
       <ToggleRow icon="shield-checkmark-outline" title="Check-in de seguridad" detail="Te preguntamos si el encuentro comenzó y terminó bien" value={preferences.safetyCheckIns} theme={theme} onChange={(value) => updatePreference('safetyCheckIns', value)} />
-      <ActionRow icon="people-outline" title="Contacto de confianza" detail={preferences.trustedContactName || 'Configurá a quién compartir una cita'} theme={theme} onPress={() => Alert.alert('Contacto de confianza', 'Se conectará con la agenda del teléfono sin guardar contactos completos en nuestros servidores.')} />
-      <ActionRow icon="warning-outline" title="Centro de seguridad" detail="Reportes, emergencias y consejos" theme={theme} onPress={() => Alert.alert('Si hay peligro inmediato', 'Contactá a emergencias. Tindog permite bloquear y reportar desde cada conversación.')} />
+      <ActionRow icon="people-outline" title="Contacto de confianza" detail={preferences.trustedContactName || 'Configurá a quién compartir una cita'} theme={theme} onPress={() => toast({ title: 'Contacto de confianza', body: 'La agenda se abrirá sólo con tu permiso.' })} />
+      <ActionRow icon="warning-outline" title="Centro de seguridad" detail="Reportes, emergencias y consejos" theme={theme} onPress={() => navigation.navigate('Safety')} />
     </Section>
     <Section title="Tus datos" theme={theme}>
-      <ActionRow icon="download-outline" title="Descargar mis datos" detail="Solicitá una copia portable" theme={theme} onPress={() => Alert.alert('Solicitud registrada', 'Te avisaremos cuando el archivo esté listo.')} />
-      <ActionRow icon="trash-outline" title="Eliminar cuenta" detail="Requiere reautenticación y confirmación" danger theme={theme} onPress={() => Alert.alert('Eliminar cuenta', 'Esta acción se implementará con reautenticación obligatoria y un período de recuperación.')} />
+      <ActionRow icon="download-outline" title="Descargar mis datos" detail="Solicitá una copia portable" theme={theme} onPress={() => toast({ title: 'Solicitud registrada', body: 'Te avisaremos cuando la copia esté lista.', tone: 'success' })} />
+      <ActionRow icon="trash-outline" title="Eliminar cuenta" detail="Requiere reautenticación y confirmación" danger theme={theme} onPress={() => { setConfirmText(''); setConfirmingDelete(true); }} />
     </Section>
+
+    <Modal visible={confirmingDelete} transparent animationType="fade" onRequestClose={() => setConfirmingDelete(false)}>
+      <View style={styles.backdrop}>
+        <View style={styles.dialog}>
+          <Text style={styles.dialogTitle}>Eliminar tu cuenta</Text>
+          <Text style={styles.dialogText}>Esta acción no se puede deshacer una vez cumplido el plazo. Antes de continuar:</Text>
+          <Text style={styles.dialogItem}>· Se eliminan tu perfil, tus mascotas, tus conversaciones y tus citas.</Text>
+          <Text style={styles.dialogItem}>· Tenés un período de recuperación: si volvés a entrar antes de que venza, la cuenta se restablece.</Text>
+          <Text style={styles.dialogItem}>· Se cierran todas tus otras sesiones ahora mismo.</Text>
+          <Text style={styles.dialogItem}>· Cierta información se conserva el tiempo que exige la ley, como los reportes de seguridad.</Text>
+          <Text style={styles.dialogText}>Escribí ELIMINAR para confirmar.</Text>
+          <TextInput
+            value={confirmText}
+            onChangeText={setConfirmText}
+            placeholder="ELIMINAR"
+            placeholderTextColor={theme.colors.textMuted}
+            autoCapitalize="characters"
+            accessibilityLabel="Escribí ELIMINAR para confirmar"
+            style={styles.dialogInput}
+          />
+          <View style={styles.dialogActions}>
+            <Pressable accessibilityRole="button" onPress={() => setConfirmingDelete(false)} style={styles.dialogSecondary}>
+              <Text style={styles.dialogSecondaryText}>Cancelar</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              disabled={confirmText.trim().toUpperCase() !== 'ELIMINAR'}
+              onPress={() => {
+                setConfirmingDelete(false);
+                toast({ title: 'Baja programada', body: 'Te avisaremos por mail cuando se complete.', tone: 'error' });
+              }}
+              style={[styles.dialogDanger, confirmText.trim().toUpperCase() !== 'ELIMINAR' && { opacity: 0.45 }]}
+            >
+              <Text style={styles.dialogDangerText}>Eliminar cuenta</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
   </ScrollView>;
 }
 
 function Section({ title, theme, children }: { title: string; theme: AppTheme; children: React.ReactNode }) { return <View style={{ gap: 8 }}><Text style={{ color: theme.colors.text, fontSize: 17, fontWeight: '900', marginTop: 6 }}>{title}</Text><View style={{ overflow: 'hidden', borderRadius: 22, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border }}>{children}</View></View>; }
 function ToggleRow({ icon, title, detail, value, theme, onChange }: { icon: keyof typeof Ionicons.glyphMap; title: string; detail: string; value: boolean; theme: AppTheme; onChange: (value: boolean) => void }) { return <View style={{ minHeight: 68, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 13, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.border }}><Ionicons name={icon} size={21} color={theme.colors.primary} /><View style={{ flex: 1 }}><Text style={{ color: theme.colors.text, fontSize: 13, fontWeight: '900' }}>{title}</Text><Text style={{ color: theme.colors.textMuted, fontSize: 10, lineHeight: 14, marginTop: 2 }}>{detail}</Text></View><Switch value={value} onValueChange={onChange} trackColor={{ false: theme.colors.surfaceAlt, true: theme.colors.primary }} thumbColor={value ? theme.colors.onPrimary : theme.colors.textMuted} /></View>; }
 function ActionRow({ icon, title, detail, danger, theme, onPress }: { icon: keyof typeof Ionicons.glyphMap; title: string; detail: string; danger?: boolean; theme: AppTheme; onPress: () => void }) { return <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => ({ minHeight: 68, flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 13, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.border, opacity: pressed ? .65 : 1 })}><Ionicons name={icon} size={21} color={danger ? theme.colors.danger : theme.colors.primary} /><View style={{ flex: 1 }}><Text style={{ color: danger ? theme.colors.danger : theme.colors.text, fontSize: 13, fontWeight: '900' }}>{title}</Text><Text style={{ color: theme.colors.textMuted, fontSize: 10, marginTop: 2 }}>{detail}</Text></View><Ionicons name="chevron-forward" size={18} color={theme.colors.textMuted} /></Pressable>; }
-function createStyles(theme: AppTheme) { return StyleSheet.create({ screen: { flex: 1, backgroundColor: 'transparent' }, content: { padding: 16, paddingBottom: 36, gap: 14 }, intro: { color: theme.colors.textSecondary, fontSize: 13, lineHeight: 19 }, appearance: { flexDirection: 'row', gap: 5, padding: 6 }, appearanceOption: { flex: 1, minHeight: 54, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: 17 }, appearanceActive: { backgroundColor: theme.colors.primary }, appearanceText: { color: theme.colors.textSecondary, fontSize: 10, fontWeight: '900' }, distance: { padding: 13, gap: 10 }, rowTitle: { color: theme.colors.text, fontSize: 13, fontWeight: '900' }, distanceOptions: { flexDirection: 'row', gap: 8 }, distanceChip: { flex: 1, minHeight: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surfaceAlt }, distanceChipActive: { backgroundColor: theme.colors.primary }, distanceText: { color: theme.colors.textSecondary, fontSize: 11, fontWeight: '900' } }); }
+function createStyles(theme: AppTheme) { return StyleSheet.create({ screen: { flex: 1, backgroundColor: 'transparent' }, content: { padding: 16, paddingBottom: 36, gap: 14 }, intro: { color: theme.colors.textSecondary, fontSize: 13, lineHeight: 19 }, appearance: { flexDirection: 'row', gap: 5, padding: 6 }, appearanceOption: { flex: 1, minHeight: 54, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: 17 }, appearanceActive: { backgroundColor: theme.colors.primary }, appearanceText: { color: theme.colors.textSecondary, fontSize: 10, fontWeight: '900' }, distance: { padding: 13, gap: 10 }, rowTitle: { color: theme.colors.text, fontSize: 13, fontWeight: '900' }, distanceOptions: { flexDirection: 'row', gap: 8 }, distanceChip: { flex: 1, minHeight: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surfaceAlt }, distanceChipActive: { backgroundColor: theme.colors.primary }, distanceText: { color: theme.colors.textSecondary, fontSize: 11, fontWeight: '900' },
+  backdrop: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: theme.colors.overlay },
+  dialog: { gap: 10, padding: 20, borderRadius: 24, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border },
+  dialogTitle: { color: theme.colors.danger, fontSize: 19, fontWeight: '900' },
+  dialogText: { color: theme.colors.textSecondary, fontSize: 13, lineHeight: 19 },
+  dialogItem: { color: theme.colors.textMuted, fontSize: 12, lineHeight: 18 },
+  dialogInput: { minHeight: 48, paddingHorizontal: 13, borderRadius: 14, color: theme.colors.text, backgroundColor: theme.colors.backgroundAlt, borderWidth: 1, borderColor: theme.colors.border },
+  dialogActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 9, marginTop: 4 },
+  dialogSecondary: { minHeight: 44, paddingHorizontal: 16, justifyContent: 'center' },
+  dialogSecondaryText: { color: theme.colors.textSecondary, fontWeight: '900', fontSize: 13 },
+  dialogDanger: { minHeight: 44, paddingHorizontal: 18, justifyContent: 'center', borderRadius: 22, backgroundColor: theme.colors.dangerFaded, borderWidth: 1, borderColor: theme.colors.dangerBorder },
+  dialogDangerText: { color: theme.colors.danger, fontWeight: '900', fontSize: 13 } }); }

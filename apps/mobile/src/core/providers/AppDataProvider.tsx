@@ -34,7 +34,7 @@ interface AppDataContextValue {
   updateAppointmentStatus: (appointmentId: string, status: AppointmentStatus) => void;
   addLocationReview: (locationId: string, review: Omit<SafeLocationReview, 'id' | 'createdAt' | 'verifiedAttendance'>) => void;
   updateProfileAvatar: (uri: string) => void;
-  updateProfile: (updates: Partial<Pick<AuthUser, 'name' | 'avatar'>>) => void;
+  updateProfile: (updates: Partial<Pick<AuthUser, 'name' | 'avatar' | 'zone'>>) => void;
 }
 
 /**

@@ -5,6 +5,8 @@ export interface AuthUser {
   name: string;
   email: string;
   avatar?: string;
+  /** Area aproximada que ven otros usuarios: nunca el domicilio exacto. */
+  zone?: string;
 }
 
 export interface AuthResponse {
