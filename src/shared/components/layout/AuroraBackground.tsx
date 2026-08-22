@@ -1,7 +1,7 @@
 // src/shared/components/layout/AuroraBackground.tsx
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import styled, { useTheme } from 'styled-components';
 import { getPawPath } from './pawGlyph';
@@ -31,15 +31,30 @@ const Canvas = styled.canvas`
 `;
 
 // Velo que baja el contraste del fondo para que el contenido siga legible.
-const Veil = styled.div`
+/**
+ * Velo que baja el contraste del fondo para que el contenido se lea.
+ *
+ * En claro va mucho mas suave: con las mismas opacidades que en oscuro
+ * tapaba los dibujos con hasta un 85% de marfil y desaparecian, que era
+ * justo lo que se veia mal. El texto igual se apoya en las tarjetas, que
+ * tienen su propio fondo.
+ */
+const Veil = styled.div<{ $light: boolean }>`
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    ${({ theme }) => theme.color.background}B3 0%,
-    ${({ theme }) => theme.color.background}66 40%,
-    ${({ theme }) => theme.color.background}D9 100%
-  );
+  background: ${({ theme, $light }) => ($light
+    ? `linear-gradient(
+        to bottom,
+        ${theme.color.background}40 0%,
+        ${theme.color.background}1A 40%,
+        ${theme.color.background}59 100%
+      )`
+    : `linear-gradient(
+        to bottom,
+        ${theme.color.background}B3 0%,
+        ${theme.color.background}66 40%,
+        ${theme.color.background}D9 100%
+      )`)};
 `;
 
 interface Drifter {
@@ -138,6 +153,18 @@ export function AuroraBackground() {
   // Al cambiar de tema hay que releer los dorados y repintar.
   const theme = useTheme();
 
+  /**
+   * Modo claro, deducido del brillo del fondo del tema: el theme de la web
+   * no trae una bandera propia.
+   */
+  const isLightTheme = useMemo(() => {
+    const bg = theme.color.background;
+    const rgb = bg.startsWith('#')
+      ? [1, 3, 5].map((i) => parseInt(bg.slice(i, i + 2), 16))
+      : (bg.match(/\d+/g) ?? ['0', '0', '0']).map(Number);
+    return (rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114) > 140;
+  }, [theme.color.background]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const root = rootRef.current;
@@ -152,17 +179,11 @@ export function AuroraBackground() {
     const goldDeep = styles.getPropertyValue('--tindog-gold-deep').trim() || '#B8860B';
 
     /**
-     * Modo claro, deducido del brillo del fondo del tema.
-     *
      * Las lineas que unen los puntos son finas y muy tenues: sobre el fondo
      * oscuro se leen, pero sobre el claro desaparecen. En claro van mas
      * gruesas y con mas cuerpo.
      */
-    const bg = theme.color.background;
-    const rgb = bg.startsWith('#')
-      ? [1, 3, 5].map((i) => parseInt(bg.slice(i, i + 2), 16))
-      : (bg.match(/\d+/g) ?? ['0', '0', '0']).map(Number);
-    const isLight = (rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114) > 140;
+    const isLight = isLightTheme;
 
     const linkWidth = isLight ? 2 : 1;
     const linkAlpha = isLight ? 0.34 : 0.16;
@@ -447,12 +468,12 @@ export function AuroraBackground() {
       window.removeEventListener('pointerleave', onPointerLeave);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [reduceMotion, theme]);
+  }, [isLightTheme, reduceMotion, theme]);
 
   return (
     <Root ref={rootRef} aria-hidden="true">
       <Canvas ref={canvasRef} />
-      <Veil />
+      <Veil $light={isLightTheme} />
     </Root>
   );
 }
