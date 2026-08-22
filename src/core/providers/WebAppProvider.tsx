@@ -151,13 +151,49 @@ const WebAppContext = createContext<WebAppValue | null>(null);
 const PREFERENCES_STORAGE_KEY = 'tindog.web.preferences.v2';
 
 export function WebAppProvider({ children }: { children: React.ReactNode }) {
-  const [preferences, setPreferences] = useState<WebPreferences>(() => {
-    if (typeof window === 'undefined') return defaultPreferences;
+  /**
+   * El primer render tiene que dar exactamente lo mismo que el HTML.
+   *
+   * Antes esto leía `localStorage` acá mismo, durante el render. El sitio se
+   * exporta estático: el HTML se arma en el build, sin `window`, siempre con
+   * el oscuro. Si el cliente arranca con otro valor, el primer render no
+   * coincide con el HTML recibido, y React resuelve esa discrepancia
+   * quedándose con el HTML del servidor. El estado quedaba en claro pero la
+   * pantalla seguía en oscuro: por eso se veía media aplicación de cada
+   * color y el selector marcaba "Oscuro" aunque lo guardado dijera "light".
+   *
+   * Ahora se arranca siempre en el valor del build y lo guardado se aplica
+   * abajo, ya montado, donde un cambio de estado sí repinta.
+   */
+  const [preferences, setPreferences] = useState<WebPreferences>(defaultPreferences);
+  const [systemDark, setSystemDark] = useState(true);
+
+  /**
+   * Releer la preferencia guardada una vez montado.
+   *
+   * Es el segundo paso de lo anterior: el render inicial copia al HTML, y
+   * acá —ya montado, con la hidratación resuelta— se aplica lo que el
+   * usuario tenga elegido. Un cambio de estado en este punto sí repinta.
+   */
+  useEffect(() => {
     const stored = window.localStorage.getItem(PREFERENCES_STORAGE_KEY);
-    if (!stored) return defaultPreferences;
-    try { return { ...defaultPreferences, ...JSON.parse(stored) }; } catch { return defaultPreferences; }
-  });
-  const [systemDark, setSystemDark] = useState(() => typeof window === 'undefined' || window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (!stored) return;
+
+    try {
+      const saved = JSON.parse(stored) as Partial<WebPreferences>;
+      setPreferences((current) => {
+        const next = { ...current, ...saved };
+        // Si no cambió nada, se devuelve el objeto anterior: uno nuevo con
+        // los mismos valores volvería a renderizar toda la aplicación al
+        // pedo en cada carga.
+        const changed = (Object.keys(next) as (keyof WebPreferences)[])
+          .some((key) => next[key] !== current[key]);
+        return changed ? next : current;
+      });
+    } catch {
+      // Un valor corrupto no puede dejar la aplicación sin preferencias.
+    }
+  }, []);
   const [profile, setProfile] = useState<{ name: string; email: string; avatar?: string; zone: string }>({ name: 'Nico Eliceche', email: 'nico@tindog.app', zone: 'Palermo, Buenos Aires' });
   const [discoveryPets, setDiscoveryPets] = useState(pets); const [requests, setRequests] = useState<WebConnectionRequest[]>([
     { id: 'req-1', direction: 'incoming', status: 'pending', ownerName: 'Laura Martínez', pet: pets[0], avatar: pets[0].photos[0], createdAt: '2026-08-11T14:20:00Z' },
@@ -174,6 +210,11 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)'); const sync = () => setSystemDark(media.matches); media.addEventListener('change', sync);
+    // Por lo mismo que las preferencias: el HTML se generó sin poder
+    // consultar al sistema, así que el valor real recién se conoce una vez
+    // montado. Sin esto, el modo "Sistema" se quedaba en oscuro en un
+    // equipo configurado en claro.
+    sync();
     restoreAuthSession().then((auth) => { const user = auth?.user; if (user) setProfile((current) => ({ ...current, name: user.name, email: user.email, avatar: user.avatar })); }).catch(() => undefined);
     return () => media.removeEventListener('change', sync);
   }, []);
