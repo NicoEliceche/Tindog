@@ -1,6 +1,7 @@
 // src/features/discovery/screens/DiscoveryScreenStyled.ts
 import { motion } from 'framer-motion';
 import styled, { keyframes } from 'styled-components';
+import { isLightBackground } from '@core/theme/isLight';
 
 export const Page = styled.section`
   min-height: 100dvh;
@@ -76,7 +77,10 @@ export const Brand = styled.div`
     white-space: nowrap;
     /* Se lee sobre el fondo animado, que cambia por detrás: el halo lo
        despega de las partículas. */
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+    /* Solo en claro: sobre el fondo oscuro el halo blanco ensucia la letra. */
+    text-shadow: ${({ theme }) => (isLightBackground(theme.color.background)
+      ? '0 0 8px rgba(255, 255, 255, 0.35)'
+      : 'none')};
   }
 
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
@@ -423,8 +427,9 @@ export const TapHint = styled.p`
   color: ${({ theme }) => theme.color.canvasInk};
   font-size: ${({ theme }) => theme.typography.size.xs};
   font-weight: ${({ theme }) => theme.typography.weight.bold};
-  /* Halo blanco, para despegarlo de los dibujos del fondo. */
-  text-shadow:
-    0 0 6px rgba(255, 255, 255, 0.9),
-    0 0 12px rgba(255, 255, 255, 0.55);
+  /* Halo blanco solo en claro: en oscuro la letra dorada ya se despega del
+     fondo y el halo la ensucia. */
+  text-shadow: ${({ theme }) => (isLightBackground(theme.color.background)
+    ? '0 0 6px rgba(255, 255, 255, 0.9), 0 0 12px rgba(255, 255, 255, 0.55)'
+    : 'none')};
 `;

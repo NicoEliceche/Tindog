@@ -5,7 +5,7 @@ import { CalendarDays, Check, Clock, MapPin, Star, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { WebContent, WebHeading, WebScreen, WebSubtitle } from '@shared/components/layout/WebScreen';
-import { Modal } from '@shared/components/ui';
+import { Modal, useToast } from '@shared/components/ui';
 import { Actions, Card, CardTop, ConfirmBody, Details, Empty, Grid, Pill, ReviewBody, Segment, Stars } from './AppointmentListScreenStyled';
 
 const labels: Record<WebAppointmentStatus, string> = { scheduled: 'Agendada', in_progress: 'En progreso', completed: 'Finalizada', cancelled: 'Cancelada' };
@@ -13,6 +13,7 @@ const labels: Record<WebAppointmentStatus, string> = { scheduled: 'Agendada', in
 export function AppointmentListScreen() {
   const router = useRouter();
   const { appointments, setAppointmentStatus, addReview } = useWebApp();
+  const toast = useToast();
   const [tab, setTab] = useState<'upcoming' | 'history'>('upcoming');
   // Cancelar es irreversible, asi que se confirma antes. Antes bastaba un
   // clic para deshacer una cita ya coordinada con otra persona.
@@ -27,7 +28,10 @@ export function AppointmentListScreen() {
 
   const submitReview = () => {
     const appointment = appointments.find((item) => item.id === reviewing);
-    if (appointment) addReview(appointment.location.id, rating, comment.trim());
+    if (appointment) {
+      addReview(appointment.location.id, rating, comment.trim());
+      toast({ title: 'Gracias por tu reseña.', tone: 'success' });
+    }
     closeReview();
   };
   const visible = appointments.filter((item) => (tab === 'upcoming' ? ['scheduled', 'in_progress'].includes(effectiveStatus(item)) : ['completed', 'cancelled'].includes(item.status)));
@@ -125,7 +129,9 @@ export function AppointmentListScreen() {
             <button
               className="danger"
               onClick={() => {
+                const cita = appointments.find((item) => item.id === pendingCancel);
                 if (pendingCancel) setAppointmentStatus(pendingCancel, 'cancelled');
+                if (cita) toast({ title: `Cita con ${cita.ownerName} cancelada.`, tone: 'error' });
                 setPendingCancel(null);
               }}
             >

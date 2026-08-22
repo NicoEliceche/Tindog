@@ -337,10 +337,10 @@ function createStyles(theme: AppTheme) {
     // el tamano de fuente del sistema agrandado.
     tagline: {
       color: theme.colors.textMuted, fontSize: 12, fontWeight: '900', letterSpacing: 0.8,
-      // Mismo halo que en la web: el fondo animado cambia por detras.
-      textShadowColor: 'rgba(255, 255, 255, 0.35)',
+      // Solo en claro, igual que en la web.
+      textShadowColor: theme.dark ? 'transparent' : 'rgba(255, 255, 255, 0.35)',
       textShadowOffset: { width: 0, height: 0 },
-      textShadowRadius: 8,
+      textShadowRadius: theme.dark ? 0 : 8,
     },
     avatar: { width: 38, height: 38, borderRadius: 19 },
     initial: { width: 38, height: 38, borderRadius: 19, textAlign: 'center', textAlignVertical: 'center', color: theme.colors.primary, backgroundColor: theme.colors.primaryFaded, fontWeight: '900' },
@@ -378,10 +378,11 @@ function createStyles(theme: AppTheme) {
       // contraste y el texto se pierde. La tinta del lienzo es dorada en
       // oscuro y un tono profundo en claro, donde sube a 5.1.
       color: theme.colors.canvasInk, fontSize: 11, fontWeight: '800', textAlign: 'center', marginTop: 8,
-      // Halo blanco, para despegarlo de los dibujos del fondo.
-      textShadowColor: 'rgba(255, 255, 255, 0.9)',
+      // Halo blanco solo en claro: en oscuro la letra dorada ya se despega
+      // del fondo y el halo la ensucia.
+      textShadowColor: theme.dark ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
       textShadowOffset: { width: 0, height: 0 },
-      textShadowRadius: 7,
+      textShadowRadius: theme.dark ? 0 : 7,
     },
     actions: { width: '100%', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-around', paddingTop: theme.spacing.md },
     muted: { color: theme.colors.textSecondary, fontSize: 15, lineHeight: 22, textAlign: 'center' },

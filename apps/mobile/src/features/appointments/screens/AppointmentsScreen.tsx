@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppData } from '../../../core/providers/AppDataProvider';
+import { useToast } from '../../../shared/components/Toast';
 import { GoldHeading } from '../../../shared/components/GoldHeading';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
@@ -17,6 +18,7 @@ export function AppointmentsScreen() {
   const theme = useAppTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
+  const toast = useToast();
   const navigation = useNavigation<NativeStackNavigationProp<AppointmentsStackParamList & RootStackParamList>>();
   const { appointments, updateAppointmentStatus, addLocationReview, profile } = useAppData();
   const [filter, setFilter] = useState<Filter>('upcoming');
@@ -41,12 +43,16 @@ export function AppointmentsScreen() {
         rating,
         comment: comment.trim(),
       });
+      toast({ title: 'Gracias por tu reseña.', tone: 'success' });
     }
     closeReview();
   };
 
   const confirmCancel = () => {
-    if (pendingCancel) updateAppointmentStatus(pendingCancel.id, 'cancelled');
+    if (pendingCancel) {
+      updateAppointmentStatus(pendingCancel.id, 'cancelled');
+      toast({ title: `Cita con ${pendingCancel.ownerName} cancelada.`, tone: 'error' });
+    }
     setPendingCancel(null);
   };
 
