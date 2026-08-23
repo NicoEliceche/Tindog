@@ -144,7 +144,7 @@ export function SettingsScreen() {
                   <div className="copy"><strong>Visibilidad de salud</strong><small>{preferences.healthVisibility === 'connections' ? 'Sólo conexiones aceptadas' : 'Sólo vos'}</small></div>
                   <ChevronRight />
                 </Action>
-                <Action onClick={() => toast({ title: 'Sin bloqueos', body: 'No tenés personas bloqueadas.' })}>
+                <Action onClick={() => router.push('/safety')}>
                   <Ban />
                   <div className="copy"><strong>Personas bloqueadas</strong><small>Revisá y administrá bloqueos</small></div>
                   <ChevronRight />

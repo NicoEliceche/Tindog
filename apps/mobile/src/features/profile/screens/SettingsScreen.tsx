@@ -44,7 +44,7 @@ export function SettingsScreen() {
       <ToggleRow icon="radio-outline" title="Estado en línea" detail="Está oculto de forma predeterminada" value={preferences.showOnlineStatus} theme={theme} onChange={(value) => updatePreference('showOnlineStatus', value)} />
       <ToggleRow icon="checkmark-done-outline" title="Confirmaciones de lectura" detail="También dejarás de ver las de otros" value={preferences.readReceipts} theme={theme} onChange={(value) => updatePreference('readReceipts', value)} />
       <ActionRow icon="medkit-outline" title="Visibilidad de salud" detail={preferences.healthVisibility === 'connections' ? 'Sólo conexiones aceptadas' : 'Sólo vos'} theme={theme} onPress={() => updatePreference('healthVisibility', preferences.healthVisibility === 'connections' ? 'private' : 'connections')} />
-      <ActionRow icon="ban-outline" title="Personas bloqueadas" detail="Revisá y administrá bloqueos" theme={theme} onPress={() => toast({ title: 'Sin bloqueos', body: 'No tenés personas bloqueadas.' })} />
+      <ActionRow icon="ban-outline" title="Personas bloqueadas" detail="Revisá y administrá bloqueos" theme={theme} onPress={() => navigation.navigate('Safety')} />
     </Section>
     <Section title="Notificaciones" theme={theme}>
       <ToggleRow icon="chatbubble-outline" title="Mensajes" detail="Nuevos mensajes de chats aceptados" value={preferences.pushMessages} theme={theme} onChange={(value) => togglePush('pushMessages', value)} />
