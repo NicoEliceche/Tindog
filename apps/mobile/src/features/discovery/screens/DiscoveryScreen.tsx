@@ -14,7 +14,7 @@ import { fetchDiscoveryPets } from '../../../core/data/services/petService';
 import { NotificationBell } from '../../../shared/components/NotificationBell';
 import { PetDetailSheet } from '../components/PetDetailSheet';
 import { useAppData } from '../../../core/providers/AppDataProvider';
-import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
+import { useAppPreferences, useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { Pet } from '../../../core/types/pet.types';
 import { useToast } from '../../../shared/components/Toast';
@@ -35,6 +35,7 @@ export function DiscoveryScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { width, height } = useWindowDimensions();
   const { profile, sendConnectionRequest, requests, savePet, blockedOwners, cancelRequest } = useAppData();
+  const { preferences } = useAppPreferences();
   const toast = useToast();
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,9 +50,20 @@ export function DiscoveryScreen() {
 
   // Los tutores bloqueados no vuelven a aparecer en el mazo; sin esto,
   // bloquear a alguien desde Seguridad no tenia ningun efecto visible.
+  /**
+   * Lo que se muestra en la pila.
+   *
+   * Al bloqueo se suma el radio elegido en la configuración, que hasta ahora
+   * se guardaba y no filtraba nada. Una mascota sin distancia conocida se
+   * deja pasar: esconderla sería peor que mostrarla, porque el dato falta
+   * del lado del servidor y no por estar lejos.
+   */
   const visiblePets = useMemo(
-    () => pets.filter((item) => !blockedOwners.includes(`Tutor de ${item.name}`)),
-    [blockedOwners, pets],
+    () => pets.filter((item) => (
+      !blockedOwners.includes(`Tutor de ${item.name}`)
+      && (item.distanceKm === undefined || item.distanceKm <= preferences.maxDistanceKm)
+    )),
+    [blockedOwners, pets, preferences.maxDistanceKm],
   );
   const currentPet = visiblePets[0];
   const nextPet = visiblePets[1];
@@ -125,10 +137,13 @@ export function DiscoveryScreen() {
   // contra el backend real. Con el mock local vuelve el mismo set, así que
   // el recorrido no se corta nunca ni queda una pantalla muerta.
   useEffect(() => {
-    if (loading || visiblePets.length > 0) return;
+    // Se mira la lista sin filtrar: si quedan perfiles y el radio los deja a
+    // todos afuera, recargar traeria los mismos y volveria a vaciarse, una y
+    // otra vez cada 650 ms. Ese caso se resuelve avisando, no recargando.
+    if (loading || pets.length > 0) return;
     const timer = setTimeout(() => { void reload(); }, 650);
     return () => clearTimeout(timer);
-  }, [loading, reload, visiblePets.length]);
+  }, [loading, pets.length, reload]);
 
   const handleSwiped = useCallback((direction: 'left' | 'right') => {
     if (direction === 'right') connect();
@@ -298,9 +313,19 @@ export function DiscoveryScreen() {
             </>
           ) : (
             <View style={styles.center}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-              <Text style={styles.emptyTitle}>Buscando más perfiles</Text>
-              <Text style={styles.muted}>Estamos trayendo perros compatibles cerca tuyo…</Text>
+              {pets.length > 0 ? (
+                <>
+                  <Ionicons name="location-outline" size={40} color={theme.colors.primary} />
+                  <Text style={styles.emptyTitle}>Nada dentro de {preferences.maxDistanceKm} km</Text>
+                  <Text style={styles.muted}>Ampliá la distancia máxima en Ajustes para ver más perros.</Text>
+                </>
+              ) : (
+                <>
+                  <ActivityIndicator size="large" color={theme.colors.primary} />
+                  <Text style={styles.emptyTitle}>Buscando más perfiles</Text>
+                  <Text style={styles.muted}>Estamos trayendo perros compatibles cerca tuyo…</Text>
+                </>
+              )}
             </View>
           )}
         </View>

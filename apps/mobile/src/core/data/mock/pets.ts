@@ -106,6 +106,7 @@ export const discoveryPets: Pet[] = [
     is_competitor: false,
     breeding_preferences: { looking_for_pair: true },
     coi_percentage: 5.2,
+    distanceKm: 12.5,
   },
   {
     id: '5',
@@ -125,6 +126,7 @@ export const discoveryPets: Pet[] = [
     breeding_preferences: { looking_for_pair: true },
     coi_percentage: 3.1,
     is_verified_breeder_pet: true,
+    distanceKm: 18.3,
   },
   {
     id: '6',
@@ -142,6 +144,7 @@ export const discoveryPets: Pet[] = [
     is_competitor: false,
     breeding_preferences: { looking_for_pair: false },
     coi_percentage: 4.7,
+    distanceKm: 27.4,
   },
   {
     id: '7',
@@ -158,6 +161,7 @@ export const discoveryPets: Pet[] = [
     is_competitor: false,
     breeding_preferences: { looking_for_pair: true },
     coi_percentage: 7.3,
+    distanceKm: 33.1,
   },
   {
     id: '8',
@@ -175,6 +179,7 @@ export const discoveryPets: Pet[] = [
     is_competitor: false,
     breeding_preferences: { looking_for_pair: true },
     coi_percentage: 5.8,
+    distanceKm: 8.7,
   },
   {
     id: '9',
@@ -191,6 +196,7 @@ export const discoveryPets: Pet[] = [
     is_competitor: false,
     breeding_preferences: { looking_for_pair: false },
     coi_percentage: 8.4,
+    distanceKm: 6.4,
   },
   {
     id: '10',
@@ -208,6 +214,7 @@ export const discoveryPets: Pet[] = [
     is_competitor: false,
     breeding_preferences: { looking_for_pair: true },
     coi_percentage: 4.1,
+    distanceKm: 3.3,
   },
   {
     id: '11',
@@ -227,6 +234,7 @@ export const discoveryPets: Pet[] = [
     breeding_preferences: { looking_for_pair: true },
     coi_percentage: 2.9,
     is_verified_breeder_pet: true,
+    distanceKm: 0.9,
   },
 ];
 

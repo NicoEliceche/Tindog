@@ -4,7 +4,7 @@ import { useWebApp } from '@core/providers/WebAppProvider';
 import { useRouter } from 'next/navigation';
 import { useMotionValue, useTransform } from 'framer-motion';
 import { NotificationBell } from '@shared/components/notifications/NotificationBell';
-import { Bookmark, Loader2, MessageCircle, Undo2, X } from 'lucide-react';
+import { MapPin, Bookmark, Loader2, MessageCircle, Undo2, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Pet } from '@core/types/pet.types';
 import { PetDetailSheet } from '../components/PetDetailSheet';
@@ -18,7 +18,7 @@ import { useToast } from '@shared/components/ui';
 
 export function DiscoveryScreen() {
   const router = useRouter();
-  const { profile, discoveryPets, dismissPet, resetDiscovery, restorePet, sendRequest, savePet, blockedOwners, requests, cancelRequest } = useWebApp();
+  const { profile, discoveryPets, dismissPet, resetDiscovery, restorePet, sendRequest, savePet, blockedOwners, requests, cancelRequest, preferences } = useWebApp();
   const toast = useToast();
 
   const [lastDismissed, setLastDismissed] = useState<Pet | null>(null);
@@ -34,7 +34,18 @@ export function DiscoveryScreen() {
   const stackOpacity = useTransform(dragProgress, (value) => 0.6 + Math.min(1, Math.abs(value)) * 0.4);
 
   // Los tutores bloqueados no vuelven a aparecer en el mazo.
-  const visiblePets = discoveryPets.filter((item) => !blockedOwners.includes(`Tutor de ${item.name}`));
+  /**
+   * Lo que se muestra en la pila.
+   *
+   * Al bloqueo se suma el radio elegido en la configuración, que hasta ahora
+   * se guardaba y no filtraba nada. Una mascota sin distancia conocida se
+   * deja pasar: esconderla sería peor que mostrarla, porque el dato falta
+   * del lado del servidor y no por estar lejos.
+   */
+  const visiblePets = discoveryPets.filter((item) => (
+    !blockedOwners.includes(`Tutor de ${item.name}`)
+    && (item.distanceKm === undefined || item.distanceKm <= preferences.maxDistanceKm)
+  ));
   const pet = visiblePets[0];
   const nextPet = visiblePets[1];
 
@@ -125,7 +136,7 @@ export function DiscoveryScreen() {
           <SidePanel>
             <SidePanelTitle>Tu actividad</SidePanelTitle>
             <StatsCard>
-              <b>{discoveryPets.length}</b>
+              <b>{visiblePets.length}</b>
               <span>Perfiles por descubrir</span>
             </StatsCard>
           </SidePanel>
@@ -163,11 +174,22 @@ export function DiscoveryScreen() {
               </>
             ) : (
               <Empty>
-                <div>
-                  <Loader2 size={40} className="spin" />
-                  <h2>Buscando más perfiles</h2>
-                  <p>Estamos trayendo perros compatibles cerca tuyo…</p>
-                </div>
+                {/* Si quedan perfiles pero el radio los deja a todos afuera,
+                    esperar no sirve de nada: hay que decir que el filtro es
+                    el que vacia la pila, y no quedarse girando. */}
+                {discoveryPets.length > 0 ? (
+                  <div>
+                    <MapPin size={40} />
+                    <h2>Nada dentro de {preferences.maxDistanceKm} km</h2>
+                    <p>Ampliá la distancia máxima en Ajustes para ver más perros.</p>
+                  </div>
+                ) : (
+                  <div>
+                    <Loader2 size={40} className="spin" />
+                    <h2>Buscando más perfiles</h2>
+                    <p>Estamos trayendo perros compatibles cerca tuyo…</p>
+                  </div>
+                )}
               </Empty>
             )}
           </CenterColumn>
