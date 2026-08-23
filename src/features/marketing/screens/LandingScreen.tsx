@@ -64,20 +64,25 @@ export function LandingScreen() {
   /**
    * Sólo se espera cuando hay una sesión guardada que validar.
    *
-   * Antes la portada arrancaba tapada por "Verificando sesión..." para todo
-   * el mundo. Para quien nunca inició sesión no había nada que verificar, y
-   * el contenido real recién entraba al documento cuando la comprobación
-   * terminaba: era eso, y no las animaciones, lo que retrasaba la carga.
+   * Arranca en `false` siempre, también en el navegador, y recién después de
+   * montar se consulta si hay sesión. Leerlo durante el render parecía más
+   * directo, pero el sitio se exporta estático: el HTML se arma en el build,
+   * sin `window`, siempre con la portada. Si el navegador rendereaba la
+   * pantalla de carga en su lugar, los dos árboles no coincidían y React
+   * avisaba del desajuste al hidratar.
    *
-   * Se lee en el inicializador y no en un efecto porque en el primer pintado
-   * ya hace falta saberlo. Da `false` en el servidor, donde no hay
-   * almacenamiento, que es justo lo que corresponde: el HTML estático es el
-   * de la portada.
+   * Que arranque en la portada es además lo correcto para quien no tiene
+   * sesión, que es la mayoría de las visitas: ve el contenido de una.
    */
-  const [isCheckingSession, setIsCheckingSession] = useState(() => mayHaveStoredSession());
+  const [isCheckingSession, setIsCheckingSession] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+
+    // Nada guardado: no hay nada que validar ni que esperar.
+    if (!mayHaveStoredSession()) return;
+
+    setIsCheckingSession(true);
 
     const checkSession = async () => {
       const session = await restoreAuthSession();
