@@ -13,6 +13,7 @@ const STATUS_LABEL: Record<ConnectionRequest['status'], string> = {
   pending: 'Esperando respuesta',
   accepted: 'Aceptada',
   declined: 'Rechazada',
+  cancelled: 'Cancelada',
 };
 
 /**

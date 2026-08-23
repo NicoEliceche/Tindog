@@ -18,7 +18,7 @@ import { useToast } from '@shared/components/ui';
 
 export function DiscoveryScreen() {
   const router = useRouter();
-  const { profile, discoveryPets, dismissPet, resetDiscovery, restorePet, sendRequest, savePet, blockedOwners } = useWebApp();
+  const { profile, discoveryPets, dismissPet, resetDiscovery, restorePet, sendRequest, savePet, blockedOwners, requests, cancelRequest } = useWebApp();
   const toast = useToast();
 
   const [lastDismissed, setLastDismissed] = useState<Pet | null>(null);
@@ -60,11 +60,25 @@ export function DiscoveryScreen() {
     else pass(target);
   }, [connect, dragProgress, pass]);
 
+  /**
+   * Deshacer el último descarte.
+   *
+   * Si la tarjeta se había ido con "Conectar", además se retira la solicitud
+   * enviada: antes sólo volvía la tarjeta y la solicitud quedaba viva del
+   * otro lado, así que deshacer no deshacía nada de lo que importaba.
+   */
   const undo = useCallback(() => {
     if (!lastDismissed) return;
+    const pendiente = requests.find((item) => (
+      item.direction === 'outgoing' && item.status === 'pending' && item.pet.id === lastDismissed.id
+    ));
+    if (pendiente) {
+      cancelRequest(pendiente.id);
+      toast({ title: `Se retiró la solicitud a ${lastDismissed.name}.` });
+    }
     restorePet(lastDismissed);
     setLastDismissed(null);
-  }, [lastDismissed, restorePet]);
+  }, [cancelRequest, lastDismissed, requests, restorePet, toast]);
 
   // Cuando se acaban los perfiles cargamos la siguiente tanda sola, como
   // haría la app contra el backend real. En dev el mock devuelve el mismo

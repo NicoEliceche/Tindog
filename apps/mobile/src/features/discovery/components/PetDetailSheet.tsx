@@ -3,7 +3,7 @@ import type React from 'react';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Image, Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions,
+  Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
@@ -91,11 +91,25 @@ export function PetDetailSheet({ pet, onClose }: PetDetailSheetProps) {
     ['Abuelos maternos', [pet.maternal_grandfather_id, pet.maternal_grandmother_id].filter(Boolean).join(' · ')],
   ] as const;
 
+  /*
+   * Capa absoluta y no un Modal.
+   *
+   * El Modal de React Native se monta en una ventana aparte que se queda con
+   * todos los toques de la pantalla, así que la barra de pestañas se veía
+   * por el hueco de abajo pero no respondía: había que cerrar la ficha para
+   * poder navegar. Como capa dentro de la pantalla, lo que queda fuera de
+   * ella —la barra— se sigue tocando, igual que en la web, donde la ficha es
+   * un div que termina arriba de la barra.
+   */
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      {/* La capa deja libre la barra de pestañas: desde la ficha se sigue
-          navegando sin tener que cerrarla. */}
-      <View style={[styles.screen, { marginBottom: 60 + insets.bottom }]}>
+    <View
+      style={[
+        StyleSheet.absoluteFill,
+        styles.overlay,
+        { bottom: 60 + insets.bottom },
+      ]}
+    >
+      <View style={styles.screen}>
         <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 8) + 6 }]}>
           <Pressable accessibilityRole="button" accessibilityLabel="Cerrar ficha" onPress={onClose} style={styles.close}>
             <Ionicons name="close" size={24} color={theme.colors.text} />
@@ -267,12 +281,15 @@ export function PetDetailSheet({ pet, onClose }: PetDetailSheetProps) {
           <Text style={styles.footnote}>Los datos los carga quien tiene la mascota.</Text>
         </ScrollView>
       </View>
-    </Modal>
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    // Por encima de las tarjetas, y por debajo de nada: la barra de
+    // pestanas vive fuera de esta pantalla y no la tapa.
+    overlay: { zIndex: 50, elevation: 50 },
     screen: { flex: 1, backgroundColor: theme.colors.background },
     topBar: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 10, paddingBottom: 4 },
     close: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },

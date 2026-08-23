@@ -1,6 +1,7 @@
 import type { Pet } from './pet.types';
 
-export type ConnectionRequestStatus = 'pending' | 'accepted' | 'declined';
+// 'cancelled' es la que retira quien la envio, y ya existia en la web.
+export type ConnectionRequestStatus = 'pending' | 'accepted' | 'declined' | 'cancelled';
 export type ConnectionRequestDirection = 'incoming' | 'outgoing';
 
 export interface ConnectionRequest {

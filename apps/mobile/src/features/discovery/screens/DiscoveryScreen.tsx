@@ -34,7 +34,7 @@ export function DiscoveryScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { width, height } = useWindowDimensions();
-  const { profile, sendConnectionRequest, requests, savePet, blockedOwners } = useAppData();
+  const { profile, sendConnectionRequest, requests, savePet, blockedOwners, cancelRequest } = useAppData();
   const toast = useToast();
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,11 +94,25 @@ export function DiscoveryScreen() {
     next();
   }, [currentPet, next]);
 
+  /**
+   * Deshacer el último descarte.
+   *
+   * Si la tarjeta se había ido con "Conectar", además se retira la solicitud
+   * enviada: antes sólo volvía la tarjeta y la solicitud quedaba viva del
+   * otro lado, así que deshacer no deshacía lo que importaba.
+   */
   const undo = useCallback(() => {
     if (!lastDismissed) return;
+    const pendiente = requests.find((item) => (
+      item.direction === 'outgoing' && item.status === 'pending' && item.pet.id === lastDismissed.id
+    ));
+    if (pendiente) {
+      cancelRequest(pendiente.id);
+      toast({ title: `Se retiró la solicitud a ${lastDismissed.name}.` });
+    }
     setPets((current) => (current.some((p) => p.id === lastDismissed.id) ? current : [lastDismissed, ...current]));
     setLastDismissed(null);
-  }, [lastDismissed]);
+  }, [cancelRequest, lastDismissed, requests, toast]);
 
   const reload = useCallback(async () => {
     setLoading(true);

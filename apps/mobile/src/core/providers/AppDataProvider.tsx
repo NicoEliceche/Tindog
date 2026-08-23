@@ -29,6 +29,8 @@ interface AppDataContextValue {
   markNotificationUnread: (notificationId: string) => void;
   sendConnectionRequest: (pet: Pet) => ConnectionRequest;
   respondToRequest: (requestId: string, accept: boolean) => void;
+  /** Retira una solicitud propia que todavia esta pendiente. */
+  cancelRequest: (requestId: string) => void;
   sendMessage: (conversationId: string, body: string) => void;
   scheduleAppointment: (conversationId: string, locationId: string, startAt: string) => Appointment | null;
   updateAppointmentStatus: (appointmentId: string, status: AppointmentStatus) => void;
@@ -157,6 +159,20 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
     };
     setRequests((current) => [request, ...current]);
     return request;
+  };
+
+  /**
+   * Retira una solicitud enviada que sigue pendiente.
+   *
+   * Existia en la web y faltaba aca: sin esto, "Deshacer" devolvia la
+   * tarjeta pero la solicitud quedaba viva del otro lado.
+   */
+  const cancelRequest = (requestId: string) => {
+    setRequests((current) => current.map((item) => (
+      item.id === requestId && item.status === 'pending'
+        ? { ...item, status: 'cancelled' as const }
+        : item
+    )));
   };
 
   const respondToRequest = (requestId: string, accept: boolean) => {
@@ -297,7 +313,7 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
 
   const value = useMemo<AppDataContextValue>(() => ({
     profile, requests, conversations, messages, appointments, locations, myPets,
-    sendConnectionRequest, respondToRequest, sendMessage, scheduleAppointment, createPet, updatePet, adoptRemotePets,
+    sendConnectionRequest, respondToRequest, cancelRequest, sendMessage, scheduleAppointment, createPet, updatePet, adoptRemotePets,
     savedPets, savePet, unsavePet, blockedOwners, blockOwner, unblockOwner,
     notifications, unreadNotifications, markNotificationsRead, markNotificationUnread,
     updateAppointmentStatus, addLocationReview,
