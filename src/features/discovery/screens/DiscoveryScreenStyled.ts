@@ -373,49 +373,6 @@ export const Empty = styled.div`
   }
 `;
 
-export const Backdrop = styled.div`
-  position: fixed;
-  inset: 0;
-  z-index: 3000;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: ${({ theme }) => theme.color.overlay};
-`;
-
-export const Modal = styled.div`
-  width: min(100%, 420px);
-  padding: 24px;
-  border-radius: 28px;
-  text-align: center;
-  background: ${({ theme }) => theme.color.surface};
-  border: 1px solid ${({ theme }) => theme.color.borderFocus};
-
-  h2 {
-    color: ${({ theme }) => theme.color.primary};
-    font-size: 1.7rem;
-  }
-
-  p {
-    color: ${({ theme }) => theme.color.textSecondary};
-    line-height: 1.5;
-    margin: 10px 0 18px;
-  }
-
-  button {
-    min-height: 48px;
-    padding: 0 24px;
-    border-radius: 999px;
-    background: ${({ theme }) => theme.color.primary};
-    color: ${({ theme }) => theme.color.textInverse};
-    font-weight: 900;
-  }
-`;
-
-/**
- * Aviso de que la tarjeta se puede tocar. Va entre la tarjeta y los botones,
- * que es donde la vista ya está cuando termina de mirar la foto.
- */
 export const TapHint = styled.p`
   margin-top: ${({ theme }) => theme.spacing[2]};
   text-align: center;

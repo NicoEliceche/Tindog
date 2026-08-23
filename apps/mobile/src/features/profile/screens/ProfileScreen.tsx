@@ -24,11 +24,11 @@ export function ProfileScreen({ onLogout }: { onLogout: () => Promise<void> }) {
   const [draftZone, setDraftZone] = useState(profile.zone ?? 'Palermo, Buenos Aires');
   const zone = profile.zone ?? 'Palermo, Buenos Aires';
 
-  const saveZone = () => { const clean = draftZone.trim(); if (clean.length >= 3) { updateProfile({ zone: clean }); setEditingZone(false); } };
+  const saveZone = () => { const clean = draftZone.trim(); if (clean.length >= 3) { updateProfile({ zone: clean }); toast({ title: 'Zona actualizada', body: clean, tone: 'success' }); setEditingZone(false); } };
 
-  const changePhoto = async () => { const uri = await pickProfilePhoto(); if (!uri) { toast({ title: 'Foto sin cambios', body: 'Elegí una imagen y permití el acceso a tus fotos.' }); return; } updateProfileAvatar(uri); };
+  const changePhoto = async () => { const uri = await pickProfilePhoto(); if (!uri) { toast({ title: 'Foto sin cambios', body: 'Elegí una imagen y permití el acceso a tus fotos.' }); return; } updateProfileAvatar(uri); toast({ title: 'Foto actualizada', tone: 'success' }); };
   const logout = async () => { setLoggingOut(true); try { await onLogout(); } finally { setLoggingOut(false); } };
-  const saveName = () => { const name = draftName.trim(); if (name.length >= 2) { updateProfile({ name }); setEditing(false); } };
+  const saveName = () => { const name = draftName.trim(); if (name.length >= 2) { updateProfile({ name }); toast({ title: 'Nombre actualizado', body: name, tone: 'success' }); setEditing(false); } };
 
   return <View style={styles.screen}><ScrollView contentContainerStyle={[styles.content, { paddingTop: Math.max(insets.top + 16, 24) }]} showsVerticalScrollIndicator={false}>
     <View style={styles.header}><GoldHeading style={styles.title}>Perfil</GoldHeading><Pressable accessibilityRole="button" accessibilityLabel="Abrir configuración" onPress={() => navigation.navigate('Settings')} style={styles.settings}><Ionicons name="settings-outline" size={23} color={theme.colors.primary} /></Pressable></View>

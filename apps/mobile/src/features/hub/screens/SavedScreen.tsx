@@ -108,7 +108,7 @@ export function SavedScreen() {
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`Quitar a ${pet.name} de guardados`}
-                    onPress={() => unsavePet(pet.id)}
+                    onPress={() => { unsavePet(pet.id); toast({ title: `${pet.name} salió de Guardados.` }); }}
                     style={styles.ghost}
                   >
                     <Text style={styles.ghostText}>Quitar</Text>

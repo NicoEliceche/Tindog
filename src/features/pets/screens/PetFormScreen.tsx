@@ -20,6 +20,7 @@ import {
   PhotoUpload, PhotoHint, RevealGroup, SectionBody, SectionNav,
   SectionNavLink, SmallInput, SubmitBar, SubmitButton, SwitchContainer, TextArea, YearInput,
 } from './PetFormScreenStyled';
+import { useToast } from '@shared/components/ui';
 
 const SECTIONS = [
   { id: 'basic', label: 'Datos básicos' },
@@ -34,6 +35,7 @@ export function PetFormScreen() {
   const router = useRouter();
   const params = useSearchParams();
   const { myPets, createPet, updatePet } = useWebApp();
+  const toast = useToast();
   // Con ?petId la pantalla edita una mascota existente; sin el, da de alta
   // una nueva. Es el mismo formulario porque los campos son identicos.
   const editing = myPets.find((pet) => pet.id === params.get('petId'));
@@ -213,8 +215,13 @@ export function PetFormScreen() {
         : ['https://images.unsplash.com/photo-1517849845537-4d257902454a?q=80&w=500'],
       media,
     };
-    if (editing) updatePet(editing.id, draft);
-    else createPet(draft);
+    if (editing) {
+      updatePet(editing.id, draft);
+      toast({ title: 'Perfil actualizado', body: `Guardamos los cambios de ${draft.name}.`, tone: 'success' });
+    } else {
+      createPet(draft);
+      toast({ title: 'Perfil guardado', body: `${draft.name} ya aparece en tus perros.`, tone: 'success' });
+    }
     router.push('/pets');
   };
 

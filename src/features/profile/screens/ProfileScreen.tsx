@@ -13,19 +13,33 @@ import {
   Layout, LeftColumn, RightColumn, Header, Owner, AvatarButton, OwnerName, Email, Verified, Stats,
   Section, Row, LogoutButton, ModalForm,
 } from './ProfileScreenStyled';
+import { useToast } from '@shared/components/ui';
 
 export function ProfileScreen() {
   const router = useRouter();
   const { profile, updateProfile } = useWebApp();
+  const toast = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(profile.name);
 
   const handlePhoto = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !file.type.startsWith('image/') || file.size > 5_000_000) return;
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'No pudimos usarla', body: 'El archivo tiene que ser una imagen.', tone: 'error' });
+      return;
+    }
+    if (file.size > 5_000_000) {
+      toast({ title: 'La foto pesa demasiado', body: 'El máximo son 5 MB.', tone: 'error' });
+      return;
+    }
     const reader = new FileReader();
-    reader.onload = () => typeof reader.result === 'string' && updateProfile({ avatar: reader.result });
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') return;
+      updateProfile({ avatar: reader.result });
+      toast({ title: 'Foto actualizada', tone: 'success' });
+    };
     reader.readAsDataURL(file);
   };
 
@@ -41,12 +55,18 @@ export function ProfileScreen() {
 
   const handleSaveZone = () => {
     const clean = zone.trim();
-    if (clean.length >= 3) updateProfile({ zone: clean });
+    if (clean.length >= 3) {
+      updateProfile({ zone: clean });
+      toast({ title: 'Zona actualizada', body: clean, tone: 'success' });
+    }
     setEditingZone(false);
   };
 
   const handleSaveName = () => {
-    if (name.trim().length >= 2) updateProfile({ name: name.trim() });
+    if (name.trim().length >= 2) {
+      updateProfile({ name: name.trim() });
+      toast({ title: 'Nombre actualizado', body: name.trim(), tone: 'success' });
+    }
     setEditing(false);
   };
 

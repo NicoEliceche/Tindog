@@ -91,7 +91,7 @@ export function SafetyScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Bloquear a ${item.name}`}
-            onPress={() => { blockOwner(item.name); toast({ title: 'Contacto bloqueado', body: `${item.name} ya no puede verte ni escribirte.` }); }}
+            onPress={() => { blockOwner(item.name); toast({ title: 'Contacto bloqueado', body: `${item.name} ya no puede verte ni escribirte.`, tone: 'error' }); }}
             style={styles.danger}
           >
             <Text style={styles.dangerText}>Bloquear</Text>

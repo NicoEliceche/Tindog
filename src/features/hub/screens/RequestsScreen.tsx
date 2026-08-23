@@ -13,6 +13,7 @@ import {
   BackButton,
   Page, Shell, Header, Section, SectionTitle, List, Card, Thumb, Copy, Row, Action, IconAction, Empty,
 } from './HubStyled';
+import { useToast } from '@shared/components/ui';
 
 const STATUS_LABEL: Record<WebConnectionRequest['status'], string> = {
   pending: 'Esperando respuesta',
@@ -31,6 +32,21 @@ const STATUS_LABEL: Record<WebConnectionRequest['status'], string> = {
 export function RequestsScreen() {
   const router = useRouter();
   const { requests, respondRequest, cancelRequest } = useWebApp();
+  const toast = useToast();
+
+  // Mismo aviso que en el telefono y en la lista de mensajes.
+  const respond = (requestId: string, ownerName: string, accept: boolean) => {
+    respondRequest(requestId, accept);
+    toast({
+      title: `Solicitud de ${ownerName} ${accept ? 'aceptada' : 'rechazada'}.`,
+      tone: accept ? 'success' : 'error',
+    });
+  };
+
+  const cancel = (requestId: string, petName: string) => {
+    cancelRequest(requestId);
+    toast({ title: `Solicitud a ${petName} cancelada.`, tone: 'error' });
+  };
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
 
   /** Aplica búsqueda, ventana de fecha y orden, y agrupa por mes. */
@@ -98,8 +114,8 @@ export function RequestsScreen() {
                     </Copy>
                     {request.status === 'pending' ? (
                       <Row>
-                        <Action $variant="primary" onClick={() => respondRequest(request.id, true)}>Aceptar</Action>
-                        <Action $variant="ghost" onClick={() => respondRequest(request.id, false)}>Ahora no</Action>
+                        <Action $variant="primary" onClick={() => respond(request.id, request.ownerName, true)}>Aceptar</Action>
+                        <Action $variant="ghost" onClick={() => respond(request.id, request.ownerName, false)}>Ahora no</Action>
                       </Row>
                     ) : (
                       <Row><Action $variant="ghost" disabled>{STATUS_LABEL[request.status]}</Action></Row>
@@ -135,7 +151,7 @@ export function RequestsScreen() {
                     {request.status === 'pending' ? (
                       <Row>
                         <IconAction
-                          onClick={() => cancelRequest(request.id)}
+                          onClick={() => cancel(request.id, request.pet.name)}
                           aria-label={`Cancelar la solicitud enviada a ${request.pet.name}`}
                           title="Cancelar solicitud"
                         >

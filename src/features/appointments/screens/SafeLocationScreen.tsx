@@ -8,6 +8,7 @@ import {
   Screen, Header, DesktopLayout, MapColumn, ContentColumn, MapBox, MapSelectionBadge, Content, DateSlots,
   LocationCard, ReviewArea, ReviewItem, Footer, DesktopFooter, ScheduledWhen,
 } from './SafeLocationScreenStyled';
+import { useToast } from '@shared/components/ui';
 
 function slots() {
   const now = new Date();
@@ -23,6 +24,7 @@ export function SafeLocationScreen() {
   const router = useRouter();
   const params = useSearchParams();
   const { locations, appointments, scheduleAppointment, addReview } = useWebApp();
+  const toast = useToast();
   const appointment = appointments.find((item) => item.id === params.get('appointment'));
   const chatId = params.get('chat');
 
@@ -50,7 +52,12 @@ export function SafeLocationScreen() {
   const confirm = () => {
     if (!chatId || !selected) return;
     const created = scheduleAppointment(chatId, selected.id, startAt);
-    if (created) router.push('/appointments');
+    if (!created) {
+      toast({ title: 'No pudimos agendar', body: 'Probá de nuevo en un momento.', tone: 'error' });
+      return;
+    }
+    toast({ title: 'Cita agendada', body: `${selected.name}, ${new Date(startAt).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}.`, tone: 'success' });
+    router.push('/appointments');
   };
 
   const locate = () => navigator.geolocation?.getCurrentPosition(() => setLocated(true), () => setLocated(false), { maximumAge: 120000, timeout: 8000 });
@@ -59,6 +66,7 @@ export function SafeLocationScreen() {
     if (!selected || !canReview || comment.trim().length < 10) return;
     addReview(selected.id, rating, comment.trim());
     setComment('');
+    toast({ title: 'Gracias por tu reseña.', tone: 'success' });
   };
 
   return (

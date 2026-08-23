@@ -9,6 +9,7 @@ import {
   BackButton,
   Page, Shell, Header, Section, SectionTitle, Grid, Card, Thumb, Copy, Row, Action, Empty, Notice,
 } from './HubStyled';
+import { useToast } from '@shared/components/ui';
 
 /**
  * Centro de seguridad.
@@ -21,6 +22,7 @@ import {
 export function SafetyScreen() {
   const router = useRouter();
   const { conversations, blockedOwners, blockOwner, unblockOwner } = useWebApp();
+  const toast = useToast();
   const [justBlocked, setJustBlocked] = useState('');
 
   // Se puede bloquear a cualquiera con quien haya una conversación abierta.
@@ -60,7 +62,7 @@ export function SafetyScreen() {
                     <p>No puede verte ni escribirte.</p>
                   </Copy>
                   <Row>
-                    <Action $variant="ghost" onClick={() => unblockOwner(name)}>Desbloquear</Action>
+                    <Action $variant="ghost" onClick={() => { unblockOwner(name); toast({ title: 'Contacto desbloqueado', body: `${name} vuelve a poder escribirte.` }); }}>Desbloquear</Action>
                   </Row>
                 </Card>
               ))}
@@ -87,7 +89,11 @@ export function SafetyScreen() {
                   <Row>
                     <Action
                       $variant="danger"
-                      onClick={() => { blockOwner(item.name); setJustBlocked(item.name); }}
+                      onClick={() => {
+                        blockOwner(item.name);
+                        setJustBlocked(item.name);
+                        toast({ title: 'Contacto bloqueado', body: `${item.name} ya no puede verte ni escribirte.`, tone: 'error' });
+                      }}
                     >
                       Bloquear
                     </Action>

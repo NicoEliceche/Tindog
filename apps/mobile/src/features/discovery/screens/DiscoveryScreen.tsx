@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   interpolate, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming,
@@ -17,7 +17,7 @@ import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { Pet } from '../../../core/types/pet.types';
-import { PrimaryButton } from '../../../shared/components/PrimaryButton';
+import { useToast } from '../../../shared/components/Toast';
 
 const fallbackPetPhoto = 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=1200';
 
@@ -35,9 +35,9 @@ export function DiscoveryScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { width, height } = useWindowDimensions();
   const { profile, sendConnectionRequest, requests, savePet, blockedOwners } = useAppData();
+  const toast = useToast();
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
-  const [notice, setNotice] = useState<{ title: string; body: string } | null>(null);
   const [lastDismissed, setLastDismissed] = useState<Pet | null>(null);
   const compact = height < 740;
 
@@ -81,9 +81,10 @@ export function DiscoveryScreen() {
     if (!currentPet) return;
     sendConnectionRequest(currentPet);
     setLastDismissed(currentPet);
-    setNotice({
+    toast({
       title: 'Solicitud enviada',
       body: `El tutor de ${currentPet.name} recibió tu solicitud. El chat se habilitará únicamente si la acepta.`,
+      tone: 'success',
     });
     next();
   }, [currentPet, next, sendConnectionRequest]);
@@ -268,7 +269,7 @@ export function DiscoveryScreen() {
               <View style={styles.actions}>
                 <Action icon="close" label="Pasar" theme={theme} onPress={pass} />
                 <Action icon="chatbubble-ellipses" label="Conectar" theme={theme} primary disabled={pendingPetIds.includes(currentPet.id)} onPress={connect} />
-                <Action icon="bookmark" label="Guardar" theme={theme} onPress={() => { savePet(currentPet); setNotice({ title: 'Perfil guardado', body: `${currentPet.name} quedó en Guardados, dentro de Perfil.` }); pass(); }} />
+                <Action icon="bookmark" label="Guardar" theme={theme} onPress={() => { savePet(currentPet); toast({ title: 'Perfil guardado', body: `${currentPet.name} quedó en Guardados, dentro de Perfil.`, tone: 'success' }); pass(); }} />
               </View>
               <Pressable
                 accessibilityRole="button"
@@ -290,9 +291,6 @@ export function DiscoveryScreen() {
           )}
         </View>
       </View>
-      <Modal visible={Boolean(notice)} transparent animationType="fade" onRequestClose={() => setNotice(null)}>
-        <View style={styles.backdrop}><View style={styles.modal}><Text style={styles.modalTitle}>{notice?.title}</Text><Text style={styles.modalBody}>{notice?.body}</Text><PrimaryButton label="Entendido" icon="checkmark" onPress={() => setNotice(null)} /></View></View>
-      </Modal>
     </View>
   );
 }
@@ -387,9 +385,5 @@ function createStyles(theme: AppTheme) {
     actions: { width: '100%', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-around', paddingTop: theme.spacing.md },
     muted: { color: theme.colors.textSecondary, fontSize: 15, lineHeight: 22, textAlign: 'center' },
     emptyTitle: { color: theme.colors.text, fontSize: 24, fontWeight: '900', textAlign: 'center' },
-    backdrop: { flex: 1, backgroundColor: theme.colors.overlay, justifyContent: 'center', padding: theme.spacing.xl },
-    modal: { backgroundColor: theme.colors.surface, borderRadius: 28, padding: theme.spacing.xl, gap: theme.spacing.md, borderWidth: 1, borderColor: theme.colors.borderStrong },
-    modalTitle: { color: theme.colors.primary, fontSize: 26, fontWeight: '900', textAlign: 'center' },
-    modalBody: { color: theme.colors.textSecondary, fontSize: 16, lineHeight: 23, textAlign: 'center' },
   });
 }

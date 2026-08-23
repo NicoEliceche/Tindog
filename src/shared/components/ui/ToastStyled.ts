@@ -9,9 +9,14 @@ import styled from 'styled-components';
  */
 export const Stack = styled.div`
   position: fixed;
-  /* Abajo a la derecha en todos los tamanos, apoyado sobre la barra fija:
-     64px de barra, el area segura y 5px de aire. */
-  bottom: calc(64px + env(safe-area-inset-bottom) + 5px);
+  /* Abajo a la derecha, apoyado sobre la barra inferior donde la hay: 64px
+     de barra, el area segura y 5px de aire. La altura se calcula con una
+     variable para que la consulta de escritorio la cambie a 0 en vez de
+     reescribir bottom: dos reglas con el mismo peso dependen del orden en
+     que styled-components las inyecte, y en escritorio ganaba la de
+     telefono, dejando el aviso 45px mas arriba de lo que debia. */
+  --tindog-toast-bar: calc(64px + env(safe-area-inset-bottom));
+  bottom: calc(var(--tindog-toast-bar) + 5px);
   left: 12px;
   right: 12px;
   z-index: 4000;
@@ -30,6 +35,7 @@ export const Stack = styled.div`
 
   /* En escritorio no hay barra inferior: el aviso baja al borde. */
   @media (min-width: ${({ theme }) => theme.breakpoints.lg}) {
+    --tindog-toast-bar: 0px;
     bottom: ${({ theme }) => theme.spacing[6]};
   }
 `;

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Constants from 'expo-constants';
 import { useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useToast } from '../../../shared/components/Toast';
 import { requestForegroundCoordinates } from '../../../core/data/services/foregroundLocation';
@@ -39,6 +39,17 @@ function buildSlots() {
 export function SafeLocationsScreen({ route, navigation }: Props) {
   const theme = useAppTheme(); const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  /**
+   * Alto del mapa, en pixeles y no en porcentaje.
+   *
+   * Estaba en 30%, y un porcentaje dentro de un ScrollView se mide contra un
+   * contenedor que no tiene alto propio: el mapa quedaba de un tamano
+   * indefinido y el scroll no llegaba al final, asi que el boton de
+   * confirmar no se alcanzaba. Es la misma cuenta que hace la web:
+   * un tercio de la pantalla, con tope y piso.
+   */
+  const mapHeight = Math.max(190, Math.min(windowHeight * 0.33, 290));
   const toast = useToast();
   const { locations, appointments, scheduleAppointment } = useAppData();
   const appointment = appointments.find((item) => item.id === route.params?.appointmentId);
@@ -94,7 +105,7 @@ export function SafeLocationsScreen({ route, navigation }: Props) {
       contentContainerStyle={[styles.bodyContent, { paddingBottom: 18 + 60 + Math.max(insets.bottom, 0) }]}
       showsVerticalScrollIndicator={false}
     >
-    <View style={styles.mapWrap}>
+    <View style={[styles.mapWrap, { height: mapHeight }]}>
       {mapsConfigured ? <SafeMap locations={locations} selectedId={selectedId} userCoordinates={coordinates} onSelect={setSelectedId} /> : <View style={styles.mapFallback}><Ionicons name="map" size={40} color={theme.colors.primary} /><Text style={styles.mapTitle}>Mapa listo para configurar</Text><Text style={styles.mapText}>La lista funciona ahora. Para ver Google Maps agregá las claves nativas restringidas y generá un nuevo development build.</Text></View>}
       <Pressable accessibilityRole="button" accessibilityLabel="Usar mi ubicación" disabled={locating} onPress={locate} style={styles.locate}><Ionicons name={locating ? 'hourglass-outline' : 'locate'} size={20} color={theme.colors.primary} /></Pressable>
     </View>
@@ -218,7 +229,7 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
   body: { flex: 1 },
   bodyContent: { paddingBottom: 18 },
   slotsBlock: { gap: 9, paddingHorizontal: 16, paddingTop: 16 },
-  reviewsBlock: { gap: 9, paddingHorizontal: 16, paddingTop: 16 },
+  reviewsBlock: { gap: 9, paddingHorizontal: 16, paddingTop: 14 },
 
   // La fecha de una cita ya agendada, en el lugar de los horarios elegibles.
   scheduledWhen: {
@@ -261,7 +272,7 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
   radioActive: { borderColor: theme.colors.onPrimary },
   radioDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: theme.colors.onPrimary },
   slotTitle: { color: theme.colors.text, fontSize: 14, fontWeight: '900', textTransform: 'capitalize' },
-  slotTime: { color: theme.colors.textSecondary, fontSize: 12, marginTop: 3 }, mapWrap: { height: '30%', minHeight: 176, position: 'relative', overflow: 'hidden', backgroundColor: theme.colors.surfaceAlt }, mapFallback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 35 }, mapTitle: { color: theme.colors.text, fontSize: 16, fontWeight: '900' }, mapText: { color: theme.colors.textSecondary, fontSize: 11, lineHeight: 16, textAlign: 'center' }, locate: { position: 'absolute', right: 13, bottom: 13, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border, elevation: 5 }, header: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 14 }, title: {
+  slotTime: { color: theme.colors.textSecondary, fontSize: 12, marginTop: 3 }, mapWrap: { position: 'relative', overflow: 'hidden', backgroundColor: theme.colors.surfaceAlt }, mapFallback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 35 }, mapTitle: { color: theme.colors.text, fontSize: 16, fontWeight: '900' }, mapText: { color: theme.colors.textSecondary, fontSize: 11, lineHeight: 16, textAlign: 'center' }, locate: { position: 'absolute', right: 13, bottom: 13, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border, elevation: 5 }, header: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 14 }, title: {
     color: theme.colors.text, fontSize: 18, fontWeight: '900',
     textShadowColor: 'rgba(255, 255, 255, 0.35)',
     textShadowOffset: { width: 0, height: 0 },
@@ -271,7 +282,7 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
     textShadowColor: 'rgba(255, 255, 255, 0.35)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 6,
-  }, list: { padding: 14, paddingBottom: 18 }, footer: { minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 14, marginTop: 6, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 20, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border }, selectedLabel: { color: theme.colors.primary, fontSize: 13, fontWeight: '900' }, selectedName: { color: theme.colors.text, fontSize: 14, fontWeight: '800', marginTop: 2 }, confirm: { minHeight: 46, paddingHorizontal: 16, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.primary }, confirmText: { color: theme.colors.onPrimary, fontSize: 13, fontWeight: '900' },
+  }, list: { padding: 14, paddingBottom: 0 }, footer: { minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 14, marginTop: 6, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 20, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border }, selectedLabel: { color: theme.colors.primary, fontSize: 13, fontWeight: '900' }, selectedName: { color: theme.colors.text, fontSize: 14, fontWeight: '800', marginTop: 2 }, confirm: { minHeight: 46, paddingHorizontal: 16, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.primary }, confirmText: { color: theme.colors.onPrimary, fontSize: 13, fontWeight: '900' },
     backdrop: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: theme.colors.overlay },
     modal: { padding: 20, gap: 12, borderRadius: 24, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border },
     modalTitle: { color: theme.colors.primary, fontSize: 20, fontWeight: '900' },

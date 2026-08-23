@@ -12,13 +12,15 @@ import { SwipeCard, type SwipeDirection } from '../components/SwipeCard';
 import {
   Page, Shell, Header, Brand, BrandCopy, HeaderActions, Avatar, DesktopLayout, SidePanel, SidePanelTitle,
   NextPreviewCard, StatsCard, CenterColumn, CardStack, BackdropCard, UndoButton, Actions, Action,
-  Empty, Backdrop, Modal, TapHint,
+  Empty, TapHint,
 } from './DiscoveryScreenStyled';
+import { useToast } from '@shared/components/ui';
 
 export function DiscoveryScreen() {
   const router = useRouter();
   const { profile, discoveryPets, dismissPet, resetDiscovery, restorePet, sendRequest, savePet, blockedOwners } = useWebApp();
-  const [notice, setNotice] = useState<{ title: string; body: string } | null>(null);
+  const toast = useToast();
+
   const [lastDismissed, setLastDismissed] = useState<Pet | null>(null);
   /** Mascota abierta en la ficha completa. */
   const [detail, setDetail] = useState<Pet | null>(null);
@@ -40,11 +42,12 @@ export function DiscoveryScreen() {
     sendRequest(target);
     dismissPet(target.id);
     setLastDismissed(target);
-    setNotice({
+    toast({
       title: 'Solicitud enviada',
       body: `El tutor de ${target.name} recibió tu solicitud. El chat se habilitará únicamente si la acepta.`,
+      tone: 'success',
     });
-  }, [dismissPet, sendRequest]);
+  }, [dismissPet, sendRequest, toast]);
 
   const pass = useCallback((target: Pet) => {
     dismissPet(target.id);
@@ -138,7 +141,7 @@ export function DiscoveryScreen() {
                 <Actions>
                   <Action onClick={() => pass(pet)} aria-label="Pasar perfil"><i><X /></i>Pasar</Action>
                   <Action $primary onClick={() => connect(pet)} aria-label="Enviar solicitud de conexión"><i><MessageCircle /></i>Conectar</Action>
-                  <Action onClick={() => { savePet(pet); pass(pet); setNotice({ title: 'Perfil guardado', body: `${pet.name} quedó en tus favoritos.` }); }} aria-label="Guardar perfil"><i><Bookmark /></i>Guardar</Action>
+                  <Action onClick={() => { savePet(pet); pass(pet); toast({ title: 'Perfil guardado', body: `${pet.name} quedó en tus favoritos.`, tone: 'success' }); }} aria-label="Guardar perfil"><i><Bookmark /></i>Guardar</Action>
                 </Actions>
                 <UndoButton onClick={undo} disabled={!lastDismissed} aria-label="Deshacer el último swipe">
                   <Undo2 size={14} /> Deshacer
@@ -171,15 +174,6 @@ export function DiscoveryScreen() {
 
         <PetDetailSheet pet={detail} onClose={() => setDetail(null)} />
 
-        {notice ? (
-          <Backdrop role="dialog" aria-modal="true">
-            <Modal>
-              <h2>{notice.title}</h2>
-              <p>{notice.body}</p>
-              <button onClick={() => setNotice(null)}>Entendido</button>
-            </Modal>
-          </Backdrop>
-        ) : null}
       </Shell>
     </Page>
   );

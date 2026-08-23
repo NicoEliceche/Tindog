@@ -13,6 +13,7 @@ import {
   BackButton,
   Page, Shell, Header, Section, Grid, Card, Thumb, Copy, Row, Action, Empty,
 } from './HubStyled';
+import { useToast } from '@shared/components/ui';
 
 /**
  * Perfiles guardados desde Discovery.
@@ -24,6 +25,7 @@ import {
 export function SavedScreen() {
   const router = useRouter();
   const { savedPets, unsavePet, sendRequest, restorePet } = useWebApp();
+  const toast = useToast();
   const [sent, setSent] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
 
@@ -54,6 +56,12 @@ export function SavedScreen() {
     if (!saved) return;
     sendRequest(saved.pet);
     setSent((current) => [...current, id]);
+    // Mismo texto que en el telefono.
+    toast({
+      title: 'Solicitud enviada',
+      body: `El tutor de ${saved.pet.name} decide si se abre el chat.`,
+      tone: 'success',
+    });
   };
 
   return (
@@ -88,7 +96,11 @@ export function SavedScreen() {
                       </Action>
                       <Action
                         $variant="ghost"
-                        onClick={() => { restorePet(pet); unsavePet(pet.id); }}
+                        onClick={() => {
+                          restorePet(pet);
+                          unsavePet(pet.id);
+                          toast({ title: `${pet.name} salió de Guardados.` });
+                        }}
                         title="Devolver al mazo de Discovery"
                       >
                         Al mazo
