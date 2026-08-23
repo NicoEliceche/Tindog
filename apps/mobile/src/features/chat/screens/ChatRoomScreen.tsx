@@ -16,7 +16,7 @@ export function ChatRoomScreen({ route, navigation }: Props) {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<ChatMessage>>(null);
-  const { conversations, messages, sendMessage, appointments } = useAppData();
+  const { conversations, messages, sendMessage, appointments, blockedOwners } = useAppData();
   const conversation = conversations.find((item) => item.id === route.params.conversationId);
   const data = messages[route.params.conversationId] ?? [];
   const [draft, setDraft] = useState('');
@@ -30,7 +30,9 @@ export function ChatRoomScreen({ route, navigation }: Props) {
       </Pressable>
     </View>
   );
-  const submit = () => { sendMessage(conversation.id, draft); setDraft(''); setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50); };
+  /** A quien esta bloqueado no se le escribe: el campo queda inhabilitado. */
+  const blocked = blockedOwners.includes(conversation.ownerName);
+  const submit = () => { if (blocked) return; sendMessage(conversation.id, draft); setDraft(''); setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50); };
 
   return (
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={90}>
@@ -54,7 +56,21 @@ export function ChatRoomScreen({ route, navigation }: Props) {
           sumarla aca dejaba un hueco entre el campo y la barra. */}
       <View style={styles.composerArea}>
         <Pressable accessibilityRole="button" accessibilityLabel="Agendar encuentro" onPress={() => navigation.navigate('SafeLocations', { conversationId: conversation.id })} style={styles.calendar}><Ionicons name="calendar-outline" size={22} color={theme.colors.primary} /></Pressable>
-        <View style={styles.composer}><TextInput value={draft} onChangeText={setDraft} placeholder="Escribí un mensaje…" placeholderTextColor={theme.colors.textMuted} style={styles.input} multiline maxLength={1000} /><Pressable accessibilityRole="button" accessibilityLabel="Enviar mensaje" disabled={!draft.trim()} onPress={submit} style={[styles.send, !draft.trim() && { opacity: 0.4 }]}><Ionicons name="send" size={19} color={theme.colors.onPrimary} /></Pressable></View>
+        <View style={[styles.composer, blocked && styles.composerBlocked]}>
+          <TextInput
+            value={draft}
+            onChangeText={setDraft}
+            editable={!blocked}
+            placeholder={blocked ? 'Bloqueaste a esta persona' : 'Escribí un mensaje…'}
+            placeholderTextColor={theme.colors.textMuted}
+            style={styles.input}
+            multiline
+            maxLength={1000}
+          />
+          <Pressable accessibilityRole="button" accessibilityLabel="Enviar mensaje" disabled={blocked || !draft.trim()} onPress={submit} style={[styles.send, (blocked || !draft.trim()) && { opacity: 0.4 }]}>
+            <Ionicons name="send" size={19} color={theme.colors.onPrimary} />
+          </Pressable>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -72,5 +88,6 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
   safety: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: theme.colors.primaryFaded }, safetyText: { flex: 1, color: theme.colors.textSecondary, fontSize: 10, lineHeight: 14 },
   appointmentBanner: { minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, backgroundColor: theme.colors.primary }, appointmentText: { flex: 1, color: theme.colors.onPrimary, fontSize: 11, fontWeight: '900' },
   messages: { flexGrow: 1, justifyContent: 'flex-end', gap: 9, padding: 14 }, composerArea: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 10, paddingTop: 8, paddingBottom: 8, backgroundColor: theme.colors.surface, borderTopWidth: 1, borderTopColor: theme.colors.border }, calendar: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.primaryFaded },
+  composerBlocked: { opacity: 0.55 },
   composer: { flex: 1, minHeight: 46, maxHeight: 110, flexDirection: 'row', alignItems: 'flex-end', gap: 6, paddingLeft: 14, paddingRight: 5, paddingVertical: 5, borderRadius: 24, backgroundColor: theme.colors.backgroundAlt, borderWidth: 1, borderColor: theme.colors.border }, input: { flex: 1, minHeight: 34, color: theme.colors.text, fontSize: 14, paddingTop: 4, paddingBottom: 8, textAlignVertical: 'center' }, send: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.primary },
 }); }

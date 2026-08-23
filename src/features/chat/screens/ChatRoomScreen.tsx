@@ -14,7 +14,7 @@ export interface ChatRoomScreenProps {
 
 export function ChatRoomScreen({ chatId, panelMode = false, onBack }: ChatRoomScreenProps) {
   const router = useRouter();
-  const { conversations, messages, sendMessage, appointments } = useWebApp();
+  const { conversations, messages, sendMessage, appointments, blockedOwners } = useWebApp();
   const conversation = conversations.find((item) => item.id === chatId) ?? conversations[0];
   const listRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState('');
@@ -27,8 +27,12 @@ export function ChatRoomScreen({ chatId, panelMode = false, onBack }: ChatRoomSc
 
   if (!conversation) return null;
 
+  /** A quien esta bloqueado no se le escribe: el campo queda inhabilitado. */
+  const blocked = blockedOwners.includes(conversation.ownerName);
+
   const submit = (event: FormEvent) => {
     event.preventDefault();
+    if (blocked) return;
     sendMessage(conversation.id, draft);
     setDraft('');
   };
@@ -71,8 +75,14 @@ export function ChatRoomScreen({ chatId, panelMode = false, onBack }: ChatRoomSc
           <CalendarDays size={21} />
         </button>
         <div className="input">
-          <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Escribí un mensaje…" maxLength={1000} />
-          <button className="send" aria-label="Enviar" disabled={!draft.trim()}><Send size={17} /></button>
+          <input
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            disabled={blocked}
+            placeholder={blocked ? 'Bloqueaste a esta persona' : 'Escribí un mensaje…'}
+            maxLength={1000}
+          />
+          <button className="send" aria-label="Enviar" disabled={blocked || !draft.trim()}><Send size={17} /></button>
         </div>
       </Composer>
     </Screen>

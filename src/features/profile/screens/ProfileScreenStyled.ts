@@ -36,6 +36,14 @@ export const Header = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  /* Queda a la vista al bajar, como en el telefono: la tuerca de
+     configuracion tiene que estar siempre al alcance. El fondo tapa lo que
+     pasa por debajo, que si no se ve a traves del titulo. */
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding-block: ${({ theme }) => theme.spacing[2]};
+  background: ${({ theme }) => theme.color.background};
 
   .settings {
     width: 46px;
