@@ -18,6 +18,9 @@ const contentSecurityPolicy = [
   `script-src ${scriptSources}`,
   "style-src 'self' 'unsafe-inline' https://accounts.google.com",
   "img-src 'self' data: blob: https://images.unsplash.com https://lh3.googleusercontent.com",
+  // Los videos de las mascotas se sirven desde el propio sitio. Sin esta
+  // linea caian en default-src y el reproductor quedaba en negro.
+  "media-src 'self' blob:",
   "font-src 'self' data:",
   "connect-src 'self' https://accounts.google.com https://*.onrender.com",
   "frame-src https://accounts.google.com https://www.google.com",

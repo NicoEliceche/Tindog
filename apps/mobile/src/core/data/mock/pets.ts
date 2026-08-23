@@ -1,5 +1,16 @@
+import { Image } from 'react-native';
 import type { Conversation } from '../../types/chat.types';
 import type { Pet } from '../../types/pet.types';
+
+/**
+ * El video de muestra viaja dentro de la aplicación, no se descarga.
+ *
+ * El reproductor espera una ruta, así que hay que resolver el recurso
+ * empaquetado a su URI local. `resolveAssetSource` viene con React Native y
+ * hace justo eso, sin sumar una dependencia sólo para esto. En la web el
+ * mismo archivo se sirve desde /assets.
+ */
+const demoVideoUri = Image.resolveAssetSource(require('../../../../assets/luna-demo.mp4')).uri;
 
 export const discoveryPets: Pet[] = [
   {
@@ -25,6 +36,7 @@ export const discoveryPets: Pet[] = [
       { id: '1-m1', kind: 'photo', url: 'https://images.unsplash.com/photo-1507146426996-ef05306b995a?auto=format&fit=crop&q=80&w=900' },
       { id: '1-m2', kind: 'photo', url: 'https://images.unsplash.com/photo-1503256207526-0d5d80fa2f47?auto=format&fit=crop&q=80&w=900' },
       { id: '1-m3', kind: 'photo', url: 'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?auto=format&fit=crop&q=80&w=900' },
+      { id: '1-m4', kind: 'video', url: demoVideoUri, poster: 'https://images.unsplash.com/photo-1507146426996-ef05306b995a?auto=format&fit=crop&q=80&w=900' },
     ],
     caregivers: [{ id: 'u-1', name: 'Laura Martínez', zone: 'Palermo, Buenos Aires', role: 'owner', memberSince: '2024-03-01', bio: 'Adiestradora de agility. Salgo temprano casi todos los días.', verified: true }],
     nearby: true,

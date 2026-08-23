@@ -73,6 +73,14 @@ export function createStyles(theme: AppTheme) {
       borderWidth: 1,
       borderColor: theme.colors.border,
     },
+    // Campo obligatorio que quedo vacio: el borde rojo hace de lo que en la
+    // web hace el navegador con `required`.
+    inputMissing: {
+      borderColor: theme.colors.danger,
+      borderWidth: 2,
+      backgroundColor: theme.colors.dangerFaded,
+    },
+
     textArea: { minHeight: 104, textAlignVertical: 'top' },
 
     row: { flexDirection: 'row', gap: 10 },

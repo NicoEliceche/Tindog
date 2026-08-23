@@ -67,6 +67,14 @@ export function PetFormScreen() {
   const photos = media.filter((item) => item.kind === 'photo');
   const video = media.find((item) => item.kind === 'video');
   const [error, setError] = useState('');
+  /**
+   * Campos obligatorios que quedaron vacios al intentar guardar.
+   *
+   * En la web el navegador los marca solo, porque llevan `required`. Aca no
+   * existe ese mecanismo: sin esto el unico aviso era un renglon de texto al
+   * pie, y no se veia cual de los tres faltaba.
+   */
+  const [missing, setMissing] = useState<string[]>([]);
 
   const addPhotos = async () => {
     const room = MAX_GALLERY_PHOTOS - photos.length;
@@ -128,20 +136,31 @@ export function PetFormScreen() {
   const handleSubmit = () => {
     // Nombre, raza y edad son los tres campos que la web marca como
     // obligatorios; sin ellos la tarjeta queda incompleta en la lista.
-    if (!name.trim() || !breed.trim() || !age.trim()) {
+    const faltan = [
+      !name.trim() && 'name',
+      !breed.trim() && 'breed',
+      !age.trim() && 'age',
+    ].filter(Boolean) as string[];
+
+    if (faltan.length > 0) {
+      setMissing(faltan);
       setError('Completá nombre, raza y edad para guardar el perfil.');
+      toast({ title: 'Faltan datos', body: 'Completá los campos marcados en rojo.', tone: 'error' });
       scrollRef.current?.scrollTo({ y: 0, animated: true });
       return;
     }
 
     const parsedAge = Number.parseInt(age, 10);
     if (Number.isNaN(parsedAge)) {
+      setMissing(['age']);
       setError('La edad tiene que ser un número.');
+      toast({ title: 'Edad inválida', body: 'La edad tiene que ser un número.', tone: 'error' });
       scrollRef.current?.scrollTo({ y: 0, animated: true });
       return;
     }
 
     setError('');
+    setMissing([]);
     const draft = {
       name: name.trim(),
       breed: breed.trim(),
@@ -253,7 +272,7 @@ export function PetFormScreen() {
         <View style={styles.group}>
           <Text style={styles.label}>Nombre del Perro</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, missing.includes('name') && styles.inputMissing]}
             value={name}
             onChangeText={setName}
             placeholder="Ej: Firulais"
@@ -262,7 +281,7 @@ export function PetFormScreen() {
 
           <Text style={styles.label}>Raza</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, missing.includes('breed') && styles.inputMissing]}
             value={breed}
             onChangeText={setBreed}
             placeholder="Ej: Golden Retriever"
@@ -273,7 +292,7 @@ export function PetFormScreen() {
             <View style={styles.rowItem}>
               <Text style={styles.label}>Edad</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, missing.includes('age') && styles.inputMissing]}
                 value={age}
                 onChangeText={setAge}
                 keyboardType="number-pad"

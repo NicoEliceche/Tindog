@@ -4,7 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, {
-  Easing, cancelAnimation, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withSequence, withTiming,
+  Easing, cancelAnimation, useAnimatedProps, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withSequence, withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
 import type { AppTheme } from '../../core/theme/tokens';
 
@@ -130,16 +131,24 @@ function PawPrint({ size, color }: { size: number; color: string }) {
  * Nodo de la red. Es un cuadrado rotado 45 grados —un rombo— porque en un
  * círculo el giro sobre el propio eje sería invisible.
  */
-function FloatingNode({ spec, color, disabled }: { spec: NodeSpec; color: string; disabled: boolean }) {
-  const tx = useSharedValue(0);
-  const ty = useSharedValue(0);
+/**
+ * Un nodo de la red.
+ *
+ * El desplazamiento se recibe desde afuera en vez de crearlo acá: las
+ * líneas que unen los nodos tienen que leer las mismas posiciones para
+ * seguirlos. Antes cada nodo movía valores propios y las líneas se
+ * calculaban una sola vez sobre las posiciones iniciales, así que los
+ * rombos se iban y las líneas quedaban flotando sueltas. En la web las
+ * líneas se redibujan en cada cuadro junto con los puntos, y así se ve.
+ */
+function FloatingNode({ spec, color, disabled, tx, ty }: {
+  spec: NodeSpec; color: string; disabled: boolean;
+  tx: SharedValue<number>; ty: SharedValue<number>;
+}) {
   const spin = useSharedValue(0);
 
   useEffect(() => {
     if (disabled) return;
-    const leg = (v: number) => withTiming(v, { duration: spec.duration, easing: Easing.inOut(Easing.sin) });
-    tx.value = withRepeat(withSequence(...spec.pathX.map(leg)), -1, false);
-    ty.value = withRepeat(withSequence(...spec.pathY.map(leg)), -1, false);
     // Una vuelta exacta por ciclo. El signo decide el sentido y la duración
     // la velocidad, que queda fija: con un destino de varias vueltas, cada
     // repetición reiniciaba desde cero hacia un ángulo mayor y el giro se
@@ -149,8 +158,8 @@ function FloatingNode({ spec, color, disabled }: { spec: NodeSpec; color: string
       -1,
       false,
     );
-    return () => { cancelAnimation(tx); cancelAnimation(ty); cancelAnimation(spin); };
-  }, [disabled, spec, tx, ty, spin]);
+    return () => { cancelAnimation(spin); };
+  }, [disabled, spec, spin]);
 
   const style = useAnimatedStyle(() => ({
     transform: [
@@ -250,6 +259,70 @@ function FloatingPaw({ spec, color, disabled }: { spec: PawSpec; color: string; 
  * rondan girando. Corre en el hilo de UI vía Reanimated y respeta la
  * preferencia de movimiento reducido del sistema.
  */
+/**
+ * El desplazamiento de cada nodo, en un solo lugar.
+ *
+ * Los rombos y las líneas tienen que leer exactamente los mismos valores
+ * para moverse juntos, así que viven acá y no dentro de cada rombo. La
+ * cantidad es una constante, de modo que la lista de hooks no cambia entre
+ * renders.
+ */
+function useNodeMotion(nodes: NodeSpec[], disabled: boolean) {
+  const motion = Array.from({ length: NODE_COUNT }, () => ({
+    // eslint-disable-next-line react-hooks/rules-of-hooks -- NODE_COUNT es fijo.
+    tx: useSharedValue(0),
+    // eslint-disable-next-line react-hooks/rules-of-hooks -- NODE_COUNT es fijo.
+    ty: useSharedValue(0),
+  }));
+
+  useEffect(() => {
+    if (disabled) return;
+    nodes.forEach((spec, i) => {
+      const leg = (v: number) => withTiming(v, { duration: spec.duration, easing: Easing.inOut(Easing.sin) });
+      motion[i].tx.value = withRepeat(withSequence(...spec.pathX.map(leg)), -1, false);
+      motion[i].ty.value = withRepeat(withSequence(...spec.pathY.map(leg)), -1, false);
+    });
+    return () => {
+      motion.forEach(({ tx, ty }) => { cancelAnimation(tx); cancelAnimation(ty); });
+    };
+    // `motion` se recrea en cada render pero envuelve los mismos valores.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [disabled, nodes]);
+
+  return motion;
+}
+
+const AnimatedLine = Animated.createAnimatedComponent(Line);
+
+/**
+ * Una línea de la red, atada a los dos nodos que une.
+ *
+ * Lee los mismos valores que mueven a los rombos, así que los sigue cuadro
+ * a cuadro sin volver al hilo de JavaScript. Es lo que hace la web, que
+ * recalcula los enlaces dentro del bucle de dibujo.
+ */
+function NodeLink({ a, b, motion, stroke, width, opacity }: {
+  a: NodeSpec; b: NodeSpec;
+  motion: Array<{ tx: SharedValue<number>; ty: SharedValue<number> }>;
+  stroke: string; width: number; opacity: number;
+}) {
+  const props = useAnimatedProps(() => ({
+    x1: a.startX + a.size / 2 + motion[a.id].tx.value,
+    y1: a.startY + a.size / 2 + motion[a.id].ty.value,
+    x2: b.startX + b.size / 2 + motion[b.id].tx.value,
+    y2: b.startY + b.size / 2 + motion[b.id].ty.value,
+  }));
+
+  return (
+    <AnimatedLine
+      animatedProps={props}
+      stroke={stroke}
+      strokeWidth={width}
+      strokeOpacity={opacity}
+    />
+  );
+}
+
 export function AuroraBackground({ theme }: { theme: AppTheme }) {
   const { width, height } = useWindowDimensions();
   const reduceMotion = useReducedMotion();
@@ -266,7 +339,7 @@ export function AuroraBackground({ theme }: { theme: AppTheme }) {
       startY: rand(-size * 0.35, height - size * 0.4),
       dx: signed(width * 0.18, width * 0.42),
       dy: signed(height * 0.12, height * 0.3),
-      duration: rand(4500, 8500),
+      duration: rand(6000, 11333),
       colorKey: (['glow', 'glowSoft', 'primaryFaded'] as const)[i % 3],
     };
   }), [width, height]);
@@ -296,10 +369,10 @@ export function AuroraBackground({ theme }: { theme: AppTheme }) {
       pathX,
       pathY,
       // El doble de rápido que antes, y fijo: menos milisegundos por vuelta.
-      duration: rand(1050, 2250),
+      duration: rand(1400, 3000),
       rotation: rand(0, 360),
       spinDirection: Math.random() < 0.5 ? -1 : 1,
-      spinDuration: rand(2250, 4500),
+      spinDuration: rand(3000, 6000),
       opacity: rand(0.14, 0.28),
     };
   }), [width, height]);
@@ -321,29 +394,30 @@ export function AuroraBackground({ theme }: { theme: AppTheme }) {
     return {
       id: i, size, startX, startY, pathX, pathY,
       // La mitad de duracion es el doble de velocidad.
-      duration: rand(1250, 2750),
+      duration: rand(1667, 3667),
       rotation: rand(0, 360),
       spinDirection: Math.random() < 0.5 ? -1 : 1,
-      spinDuration: rand(1500, 3250),
+      spinDuration: rand(2000, 4333),
     };
   }), [width, height]);
 
+  const nodeMotion = useNodeMotion(nodes, reduceMotion);
+
   /**
-   * Enlaces entre nodos cercanos. Se calculan una vez sobre las posiciones
-   * iniciales y no siguen el movimiento: recalcularlos por frame obligaría a
-   * traer las posiciones del hilo de UI al de JavaScript en cada cuadro, que
-   * es justo lo que Reanimated evita. Como red de fondo, la trama estática
-   * cumple el mismo papel visual.
+   * Qué nodos están lo bastante cerca como para unirse.
+   *
+   * Se guardan los nodos y no sus coordenadas: la línea las lee del
+   * movimiento en cada cuadro. Antes se congelaban las posiciones iniciales
+   * y los rombos se alejaban dejando las líneas sueltas.
    */
   const links = useMemo(() => {
-    const result: Array<{ x1: number; y1: number; x2: number; y2: number }> = [];
+    const result: Array<{ a: NodeSpec; b: NodeSpec }> = [];
     for (let i = 0; i < nodes.length; i += 1) {
       for (let j = i + 1; j < nodes.length; j += 1) {
         const a = nodes[i];
         const b = nodes[j];
-        const distance = Math.hypot(a.startX - b.startX, a.startY - b.startY);
-        if (distance < LINK_DISTANCE) {
-          result.push({ x1: a.startX, y1: a.startY, x2: b.startX, y2: b.startY });
+        if (Math.hypot(a.startX - b.startX, a.startY - b.startY) < LINK_DISTANCE) {
+          result.push({ a, b });
         }
       }
     }
@@ -363,23 +437,22 @@ export function AuroraBackground({ theme }: { theme: AppTheme }) {
       ))}
       <Svg style={[StyleSheet.absoluteFill]} pointerEvents="none">
         {links.map((link, index) => (
-          <Line
+          <NodeLink
             key={index}
-            x1={link.x1}
-            y1={link.y1}
-            x2={link.x2}
-            y2={link.y2}
+            a={link.a}
+            b={link.b}
+            motion={nodeMotion}
             // Sobre el fondo claro la linea fina y tenue desaparece: va mas
             // gruesa y con mas cuerpo, y con la tinta oscura del tema.
             stroke={theme.colors.canvasInk}
-            strokeWidth={theme.dark ? 1 : 2}
-            strokeOpacity={theme.dark ? 0.16 : 0.34}
+            width={theme.dark ? 1 : 2}
+            opacity={theme.dark ? 0.16 : 0.34}
           />
         ))}
       </Svg>
 
       {nodes.map((spec) => (
-        <FloatingNode key={`node-${spec.id}`} spec={spec} color={theme.colors.canvasInk} disabled={reduceMotion} />
+        <FloatingNode key={`node-${spec.id}`} spec={spec} color={theme.colors.canvasInk} disabled={reduceMotion} tx={nodeMotion[spec.id].tx} ty={nodeMotion[spec.id].ty} />
       ))}
 
       {paws.map((spec) => (
