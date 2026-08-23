@@ -66,6 +66,18 @@ export function SafeLocationsScreen({ route, navigation }: Props) {
 
   const agendando = Boolean(route.params?.conversationId);
 
+  /** Fecha de la cita ya agendada, partida en dos renglones para mostrarla. */
+  const appointmentWhen = useMemo(() => {
+    if (!appointment) return null;
+    const when = new Date(appointment.startAt);
+    return {
+      // Solo la primera letra: `capitalize` de RN sube cada palabra y
+      // dejaba "Domingo, 2 De Agosto".
+      date: (() => { const d = when.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }); return d.charAt(0).toUpperCase() + d.slice(1); })(),
+      time: when.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
+    };
+  }, [appointment]);
+
   return <View style={styles.screen}>
     {/* Mismo encabezado que la web: flecha y titulo dorado en linea. */}
     <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 8) + 6 }]}>
@@ -79,16 +91,30 @@ export function SafeLocationsScreen({ route, navigation }: Props) {
 
     <ScrollView
       style={styles.body}
-      contentContainerStyle={styles.bodyContent}
+      contentContainerStyle={[styles.bodyContent, { paddingBottom: 18 + 60 + Math.max(insets.bottom, 0) }]}
       showsVerticalScrollIndicator={false}
     >
     <View style={styles.mapWrap}>
       {mapsConfigured ? <SafeMap locations={locations} selectedId={selectedId} userCoordinates={coordinates} onSelect={setSelectedId} /> : <View style={styles.mapFallback}><Ionicons name="map" size={40} color={theme.colors.primary} /><Text style={styles.mapTitle}>Mapa listo para configurar</Text><Text style={styles.mapText}>La lista funciona ahora. Para ver Google Maps agregá las claves nativas restringidas y generá un nuevo development build.</Text></View>}
       <Pressable accessibilityRole="button" accessibilityLabel="Usar mi ubicación" disabled={locating} onPress={locate} style={styles.locate}><Ionicons name={locating ? 'hourglass-outline' : 'locate'} size={20} color={theme.colors.primary} /></Pressable>
     </View>
+    <View style={styles.slotsBlock}>
+      <Text style={styles.sectionTitle}>Fecha y hora</Text>
+      {!agendando ? (
+        /* Mirando una cita ya agendada no hay nada que elegir: se muestra la
+           fecha que quedó, que antes había que ir a buscar a la pantalla
+           anterior. */
+        <View style={styles.scheduledWhen}>
+          <View style={styles.scheduledIcon}><Ionicons name="calendar-clear" size={18} color={theme.colors.primary} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.scheduledDate}>{appointmentWhen?.date ?? 'Sin fecha'}</Text>
+            <Text style={styles.scheduledTime}>{appointmentWhen?.time ?? ''}</Text>
+          </View>
+        </View>
+      ) : null}
+    </View>
     {agendando ? (
       <View style={styles.slotsBlock}>
-        <Text style={styles.sectionTitle}>Fecha y hora</Text>
         {slots.map((slot) => {
           const iso = slot.toISOString();
           const active = startAt === iso;
@@ -113,6 +139,30 @@ export function SafeLocationsScreen({ route, navigation }: Props) {
         </View>
       ))}
     </View>
+
+    {selected ? (
+      <View style={styles.reviewsBlock}>
+        <Text style={styles.sectionTitle}>Experiencias verificadas</Text>
+        {selected.reviews.length === 0 ? (
+          <Text style={styles.disclaimer}>Todavía no hay reseñas de este punto.</Text>
+        ) : null}
+        {selected.reviews.map((review) => (
+          <View key={review.id} style={styles.reviewCard}>
+            <View style={styles.reviewTop}>
+              <Text style={styles.reviewAuthor}>{review.authorName}</Text>
+              <Text style={styles.reviewStars}>{'★'.repeat(review.rating)}</Text>
+            </View>
+            {review.verifiedAttendance ? (
+              <View style={styles.reviewVerified}>
+                <Ionicons name="checkmark-circle" size={13} color={theme.colors.success} />
+                <Text style={styles.reviewVerifiedText}>Asistencia verificada</Text>
+              </View>
+            ) : null}
+            <Text style={styles.reviewBody}>{review.comment}</Text>
+          </View>
+        ))}
+      </View>
+    ) : null}
 
     {route.params?.conversationId ? (
       <View style={styles.footer}>
@@ -157,21 +207,66 @@ function LocationCard({ item, selected, theme, onSelect, onReviews }: { item: Sa
   </Pressable>;
 }
 
-function createStyles(theme: AppTheme) { return StyleSheet.create({ screen: { flex: 1, backgroundColor: theme.colors.background },
+function createStyles(theme: AppTheme) { return StyleSheet.create({
+  // Sin color propio: asi se ve el lienzo animado que se dibuja detras de
+  // todas las pantallas, igual que en la web. Con el fondo opaco esta era
+  // la unica pantalla que lo tapaba.
+  screen: { flex: 1, backgroundColor: 'transparent' },
   topBar: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 10, paddingBottom: 10 },
   back: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
   topTitle: { fontSize: 22, fontWeight: '800' },
   body: { flex: 1 },
   bodyContent: { paddingBottom: 18 },
   slotsBlock: { gap: 9, paddingHorizontal: 16, paddingTop: 16 },
-  sectionTitle: { color: theme.colors.text, fontSize: 16, fontWeight: '900' },
+  reviewsBlock: { gap: 9, paddingHorizontal: 16, paddingTop: 16 },
+
+  // La fecha de una cita ya agendada, en el lugar de los horarios elegibles.
+  scheduledWhen: {
+    flexDirection: 'row', alignItems: 'center', gap: 11,
+    padding: 12, borderRadius: 18,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1, borderColor: theme.colors.border,
+  },
+  scheduledIcon: {
+    width: 38, height: 38, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: theme.colors.primaryFaded,
+  },
+  // El dia viene en minuscula del formateador.
+  scheduledDate: { color: theme.colors.text, fontSize: 15, fontWeight: '800' },
+  scheduledTime: { color: theme.colors.textSecondary, fontSize: 12, marginTop: 2 },
+
+  reviewCard: {
+    padding: 14, borderRadius: 20,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1, borderColor: theme.colors.border,
+  },
+  reviewTop: { flexDirection: 'row', justifyContent: 'space-between' },
+  reviewAuthor: { color: theme.colors.text, fontWeight: '900' },
+  reviewStars: { color: theme.colors.primary, fontWeight: '900' },
+  reviewVerified: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
+  reviewVerifiedText: { color: theme.colors.success, fontSize: 10, fontWeight: '800' },
+  reviewBody: { color: theme.colors.textSecondary, fontSize: 13, lineHeight: 19, marginTop: 8 },
+  // Estos titulos quedan sobre el fondo animado, sin tarjeta detras: el halo
+  // los despega de las particulas, con el mismo valor que usa la web.
+  sectionTitle: {
+    color: theme.colors.text, fontSize: 16, fontWeight: '900',
+    textShadowColor: 'rgba(255, 255, 255, 0.35)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+  },
   slot: { minHeight: 66, flexDirection: 'row', alignItems: 'center', gap: 11, padding: 12, borderRadius: 19, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border },
   slotActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
   radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: theme.colors.textMuted, alignItems: 'center', justifyContent: 'center' },
   radioActive: { borderColor: theme.colors.onPrimary },
   radioDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: theme.colors.onPrimary },
   slotTitle: { color: theme.colors.text, fontSize: 14, fontWeight: '900', textTransform: 'capitalize' },
-  slotTime: { color: theme.colors.textSecondary, fontSize: 12, marginTop: 3 }, mapWrap: { height: '30%', minHeight: 176, position: 'relative', overflow: 'hidden', backgroundColor: theme.colors.surfaceAlt }, mapFallback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 35 }, mapTitle: { color: theme.colors.text, fontSize: 16, fontWeight: '900' }, mapText: { color: theme.colors.textSecondary, fontSize: 11, lineHeight: 16, textAlign: 'center' }, locate: { position: 'absolute', right: 13, bottom: 13, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border, elevation: 5 }, header: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 14 }, title: { color: theme.colors.text, fontSize: 18, fontWeight: '900' }, disclaimer: {
+  slotTime: { color: theme.colors.textSecondary, fontSize: 12, marginTop: 3 }, mapWrap: { height: '30%', minHeight: 176, position: 'relative', overflow: 'hidden', backgroundColor: theme.colors.surfaceAlt }, mapFallback: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 35 }, mapTitle: { color: theme.colors.text, fontSize: 16, fontWeight: '900' }, mapText: { color: theme.colors.textSecondary, fontSize: 11, lineHeight: 16, textAlign: 'center' }, locate: { position: 'absolute', right: 13, bottom: 13, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border, elevation: 5 }, header: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 14 }, title: {
+    color: theme.colors.text, fontSize: 18, fontWeight: '900',
+    textShadowColor: 'rgba(255, 255, 255, 0.35)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+  }, disclaimer: {
     color: theme.colors.warning, fontSize: 11, marginTop: 3,
     textShadowColor: 'rgba(255, 255, 255, 0.35)',
     textShadowOffset: { width: 0, height: 0 },

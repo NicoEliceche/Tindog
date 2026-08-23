@@ -253,6 +253,55 @@ export const Content = styled.div`
   }
 `;
 
+/**
+ * La fecha de una cita ya agendada.
+ *
+ * Ocupa el lugar de los botones de horario cuando no hay nada que elegir, y
+ * lleva tarjeta propia como el resto de los bloques con dato: sobre el fondo
+ * animado, el texto suelto se ensucia.
+ */
+export const ScheduledWhen = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+
+  .icon {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    color: ${({ theme }) => theme.color.primary};
+    background: ${({ theme }) => theme.color.primaryFaded};
+  }
+
+  .copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  strong {
+    color: ${({ theme }) => theme.color.text};
+    font-size: 0.94rem;
+    font-weight: 800;
+    /* Solo la primera letra: capitalize sube cada palabra y dejaba
+       "Domingo, 2 De Agosto". */
+    &::first-letter { text-transform: uppercase; }
+  }
+
+  span {
+    color: ${({ theme }) => theme.color.textSecondary};
+    font-size: 0.78rem;
+  }
+`;
+
 export const DateSlots = styled.div`
   display: flex;
   gap: 7px;

@@ -1,12 +1,12 @@
 'use client';
 
 import { useWebApp } from '@core/providers/WebAppProvider';
-import { ArrowLeft, CheckCircle, LocateFixed, Map, MapPin, ShieldCheck, Star } from 'lucide-react';
+import { ArrowLeft, CalendarClock, CheckCircle, LocateFixed, Map, MapPin, ShieldCheck, Star } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import {
   Screen, Header, DesktopLayout, MapColumn, ContentColumn, MapBox, MapSelectionBadge, Content, DateSlots,
-  LocationCard, ReviewArea, ReviewItem, Footer, DesktopFooter,
+  LocationCard, ReviewArea, ReviewItem, Footer, DesktopFooter, ScheduledWhen,
 } from './SafeLocationScreenStyled';
 
 function slots() {
@@ -34,6 +34,16 @@ export function SafeLocationScreen() {
   const [located, setLocated] = useState(false);
 
   const selected = locations.find((item) => item.id === selectedId) ?? locations[0];
+
+  /** Fecha de la cita ya agendada, partida para mostrarla en dos renglones. */
+  const appointmentWhen = useMemo(() => {
+    if (!appointment) return null;
+    const when = new Date(appointment.startAt);
+    return {
+      date: when.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' }),
+      time: when.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
+    };
+  }, [appointment]);
   const embedKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY;
   const canReview = appointment?.status === 'completed' && appointment.checkedIn && !appointment.reviewSubmitted;
 
@@ -106,19 +116,28 @@ export function SafeLocationScreen() {
 
         <ContentColumn>
           <Content>
+            <h2>Fecha y hora</h2>
             {chatId ? (
-              <>
-                <h2>Fecha y hora</h2>
-                <DateSlots>
-                  {dateSlots.map((slot) => (
-                    <button key={slot.toISOString()} className={startAt === slot.toISOString() ? 'active' : ''} onClick={() => setStartAt(slot.toISOString())}>
-                      <strong>{slot.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric' })}</strong>
-                      {slot.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
-                    </button>
-                  ))}
-                </DateSlots>
-              </>
-            ) : null}
+              <DateSlots>
+                {dateSlots.map((slot) => (
+                  <button key={slot.toISOString()} className={startAt === slot.toISOString() ? 'active' : ''} onClick={() => setStartAt(slot.toISOString())}>
+                    <strong>{slot.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric' })}</strong>
+                    {slot.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                  </button>
+                ))}
+              </DateSlots>
+            ) : (
+              /* Mirando una cita ya agendada no hay nada que elegir: se
+                 muestra la fecha que quedó, que hasta ahora había que ir a
+                 buscar a la pantalla anterior. */
+              <ScheduledWhen>
+                <div className="icon"><CalendarClock size={18} /></div>
+                <div className="copy">
+                  <strong>{appointmentWhen?.date ?? 'Sin fecha'}</strong>
+                  <span>{appointmentWhen?.time ?? ''}</span>
+                </div>
+              </ScheduledWhen>
+            )}
 
             <div>
               <h2>Puntos públicos recomendados</h2>
@@ -141,9 +160,15 @@ export function SafeLocationScreen() {
               </LocationCard>
             ))}
 
-            {appointment && selected ? (
+            {/* Las reseñas del punto elegido valen igual al agendar: son
+                justamente lo que ayuda a decidir entre un punto y otro, y
+                antes sólo se veían cuando la cita ya estaba hecha. */}
+            {selected ? (
               <>
                 <h2>Experiencias verificadas</h2>
+                {selected.reviews.length === 0 ? (
+                  <p className="warning">Todavía no hay reseñas de este punto.</p>
+                ) : null}
                 {selected.reviews.map((review) => (
                   <ReviewItem key={review.id}>
                     <div className="top">
@@ -169,7 +194,7 @@ export function SafeLocationScreen() {
                     <textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Iluminación, movimiento, acceso…" maxLength={500} />
                     <button className="submit" onClick={publish} disabled={comment.trim().length < 10}>Publicar reseña</button>
                   </ReviewArea>
-                ) : appointment.status === 'cancelled' ? (
+                ) : appointment?.status === 'cancelled' ? (
                   <ReviewArea>
                     <ShieldCheck />
                     <h3>La cita fue cancelada</h3>
