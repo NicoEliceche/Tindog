@@ -104,8 +104,25 @@ export const Messages = styled.div`
   gap: 9px;
 `;
 
+/**
+ * La fila que ocupa un mensaje, de borde a borde.
+ *
+ * Existe para que el hueco al costado de la burbuja pertenezca a ese
+ * mensaje: doble clic ahi responde, que es el equivalente en escritorio del
+ * arrastre hacia la derecha del telefono. Sin la fila, ese espacio era del
+ * contenedor y no habia forma de saber a que mensaje correspondia.
+ */
+export const MessageRow = styled.div<{ $mine?: boolean; $system?: boolean }>`
+  display: flex;
+  justify-content: ${({ $mine, $system }) => ($system ? 'center' : $mine ? 'flex-end' : 'flex-start')};
+  /* El doble clic no tiene que dejar texto seleccionado a su paso. */
+  user-select: none;
+
+  /* La burbuja si deja copiar su texto a mano. */
+  > * { user-select: text; }
+`;
+
 export const Bubble = styled.div<{ $mine?: boolean; $system?: boolean }>`
-  align-self: ${({ $mine, $system }) => ($system ? 'center' : $mine ? 'flex-end' : 'flex-start')};
   max-width: ${({ $system }) => ($system ? '90%' : '82%')};
   padding: ${({ $system }) => ($system ? '9px 12px' : '10px 14px')};
   border-radius: 19px;

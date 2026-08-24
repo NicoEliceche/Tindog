@@ -4,7 +4,7 @@ import { effectiveStatus, useWebApp, type WebMessage } from '@core/providers/Web
 import { ArrowLeft, CalendarDays, Check, ChevronRight, Copy, CornerUpLeft, Pencil, Send, ShieldCheck, Trash2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useRef, useState } from 'react';
-import { AppointmentBanner, Bubble, BubbleMeta, Composer, ContextBar, Header, MessageMenu, Messages, Quote, Safety, Screen } from './ChatRoomScreenStyled';
+import { AppointmentBanner, Bubble, BubbleMeta, Composer, ContextBar, Header, MessageMenu, MessageRow, Messages, Quote, Safety, Screen } from './ChatRoomScreenStyled';
 import { useToast } from '@shared/components/ui';
 
 export interface ChatRoomScreenProps {
@@ -113,8 +113,19 @@ export function ChatRoomScreen({ chatId, panelMode = false, onBack }: ChatRoomSc
           const deleted = Boolean(message.deletedAt);
           const mine = message.sender === 'me';
           return (
-            <Bubble
+            <MessageRow
               key={message.id}
+              $mine={mine}
+              $system={message.sender === 'system'}
+              /* Doble clic responde, igual que arrastrar en el telefono.
+                 Va en la fila y no en la burbuja para que tambien funcione
+                 en el hueco de al lado, que es donde no molesta al leer. */
+              onDoubleClick={() => {
+                if (message.sender === 'system' || message.deletedAt) return;
+                startReply(message);
+              }}
+            >
+            <Bubble
               $mine={mine}
               $system={message.sender === 'system'}
               onContextMenu={(event) => {
@@ -145,6 +156,7 @@ export function ChatRoomScreen({ chatId, panelMode = false, onBack }: ChatRoomSc
                 </BubbleMeta>
               ) : null}
             </Bubble>
+            </MessageRow>
           );
         })}
       </Messages>
