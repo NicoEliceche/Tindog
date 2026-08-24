@@ -39,7 +39,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Tindog usa tu ubicación mientras elegís puntos públicos de encuentro cercanos."
+          "locationWhenInUsePermission": "Tindog usa tu zona aproximada para mostrarte perros cerca tuyo y puntos públicos de encuentro. Nunca guardamos tu dirección exacta."
         }
       ],
       [

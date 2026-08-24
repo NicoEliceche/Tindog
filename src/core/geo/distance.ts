@@ -50,3 +50,40 @@ export function formatDistance(km: number): string {
 export function isWithinRadius(from: LatLng, to: LatLng, radiusKm: number): boolean {
   return distanceKm(from, to) <= radiusKm;
 }
+
+/**
+ * Cuantos decimales se guardan de una coordenada.
+ *
+ * A la latitud de Buenos Aires, dos decimales arman una celda de unos 900 x
+ * 1100 metros: alcanza para decir "esta a 8 km" con sentido, y no alcanza
+ * para dar con la casa de nadie. Con tres decimales la celda baja a 100
+ * metros, que ya es media cuadra y senala el domicilio.
+ *
+ * Es la misma promesa que hace el perfil: se comparte la zona general,
+ * nunca la direccion exacta.
+ */
+const COARSE_DECIMALS = 2;
+
+/**
+ * Lleva un punto exacto al centro de su celda de zona.
+ *
+ * Se guarda esto y no lo que devuelve el GPS. Redondear al mostrar no
+ * serviria: el dato fino ya habria quedado en la base, y ahi es donde
+ * importa que no este.
+ */
+export function toCoarseZone(point: LatLng): LatLng {
+  const factor = 10 ** COARSE_DECIMALS;
+  return {
+    lat: Math.round(point.lat * factor) / factor,
+    lng: Math.round(point.lng * factor) / factor,
+  };
+}
+
+/**
+ * El error que introduce el redondeo, en kilometros.
+ *
+ * Sirve para no prometer mas precision de la que hay: si la distancia
+ * calculada es 8 km, la real esta entre 7,3 y 8,7. Por eso las distancias
+ * se muestran redondeadas y con "aprox.".
+ */
+export const COARSE_ERROR_KM = 0.7;

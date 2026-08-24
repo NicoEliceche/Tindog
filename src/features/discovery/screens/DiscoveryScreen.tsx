@@ -18,8 +18,17 @@ import { useToast } from '@shared/components/ui';
 
 export function DiscoveryScreen() {
   const router = useRouter();
-  const { profile, discoveryPets, dismissPet, resetDiscovery, restorePet, sendRequest, savePet, blockedOwners, requests, cancelRequest, preferences } = useWebApp();
+  const { profile, discoveryPets, dismissPet, resetDiscovery, restorePet, sendRequest, savePet, blockedOwners, requests, cancelRequest, preferences, userZone, locationDenied, requestLocation } = useWebApp();
   const toast = useToast();
+
+  // Sin ubicacion no hay distancia contra la que filtrar. Se pide al entrar
+  // y una sola vez: si dicen que no, la pantalla lo explica y sigue andando.
+  const askedLocation = useRef(false);
+  useEffect(() => {
+    if (askedLocation.current || userZone) return;
+    askedLocation.current = true;
+    void requestLocation();
+  }, [requestLocation, userZone]);
 
   const [lastDismissed, setLastDismissed] = useState<Pet | null>(null);
   /** Mascota abierta en la ficha completa. */
@@ -177,7 +186,14 @@ export function DiscoveryScreen() {
                 {/* Si quedan perfiles pero el radio los deja a todos afuera,
                     esperar no sirve de nada: hay que decir que el filtro es
                     el que vacia la pila, y no quedarse girando. */}
-                {discoveryPets.length > 0 ? (
+                {locationDenied ? (
+                  <div>
+                    <MapPin size={40} />
+                    <h2>Sin tu ubicación no podemos medir distancias</h2>
+                    <p>Activá el permiso en el navegador para filtrar por cercanía. Igual podés seguir viendo perfiles.</p>
+                    <button onClick={() => void requestLocation()}>Probar de nuevo</button>
+                  </div>
+                ) : discoveryPets.length > 0 ? (
                   <div>
                     <MapPin size={40} />
                     <h2>Nada dentro de {preferences.maxDistanceKm} km</h2>

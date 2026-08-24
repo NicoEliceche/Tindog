@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -15,6 +15,8 @@ import { NotificationBell } from '../../../shared/components/NotificationBell';
 import { PetDetailSheet } from '../components/PetDetailSheet';
 import { useAppData } from '../../../core/providers/AppDataProvider';
 import { useAppPreferences, useAppTheme } from '../../../core/providers/AppPreferencesProvider';
+import { distanceKm, type LatLng } from '../../../core/geo/distance';
+import { requestCoarseLocation } from '../../../core/geo/deviceLocation';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { Pet } from '../../../core/types/pet.types';
 import { useToast } from '../../../shared/components/Toast';
@@ -36,6 +38,25 @@ export function DiscoveryScreen() {
   const { width, height } = useWindowDimensions();
   const { profile, sendConnectionRequest, requests, savePet, blockedOwners, cancelRequest } = useAppData();
   const { preferences } = useAppPreferences();
+
+  /**
+   * Zona aproximada de quien usa la aplicación.
+   *
+   * Se pide una vez al entrar. Sin esto no hay distancia contra la que
+   * comparar, y el filtro por radio no tendría con qué medir.
+   */
+  const [userZone, setUserZone] = useState<LatLng | null>(null);
+  const [locationDenied, setLocationDenied] = useState(false);
+  const askedLocation = useRef(false);
+
+  useEffect(() => {
+    if (askedLocation.current) return;
+    askedLocation.current = true;
+    void requestCoarseLocation().then(({ zone, failure }) => {
+      if (zone) setUserZone(zone);
+      else setLocationDenied(failure === 'denied');
+    });
+  }, []);
   const toast = useToast();
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,12 +79,26 @@ export function DiscoveryScreen() {
    * deja pasar: esconderla sería peor que mostrarla, porque el dato falta
    * del lado del servidor y no por estar lejos.
    */
+  /**
+   * Lo que se muestra en la pila.
+   *
+   * La distancia se calcula acá contra la zona del usuario; no viene escrita
+   * en el dato. Sin ubicación queda sin definir y el filtro deja pasar a
+   * todas: es preferible mostrar de más que esconder por un permiso que
+   * nadie dio.
+   */
   const visiblePets = useMemo(
-    () => pets.filter((item) => (
-      !blockedOwners.includes(`Tutor de ${item.name}`)
-      && (item.distanceKm === undefined || item.distanceKm <= preferences.maxDistanceKm)
-    )),
-    [blockedOwners, pets, preferences.maxDistanceKm],
+    () => pets
+      .map((item) => (
+        userZone && item.zone
+          ? { ...item, distanceKm: distanceKm(userZone, item.zone) }
+          : { ...item, distanceKm: undefined }
+      ))
+      .filter((item) => (
+        !blockedOwners.includes(`Tutor de ${item.name}`)
+        && (item.distanceKm === undefined || item.distanceKm <= preferences.maxDistanceKm)
+      )),
+    [blockedOwners, pets, preferences.maxDistanceKm, userZone],
   );
   const currentPet = visiblePets[0];
   const nextPet = visiblePets[1];
@@ -313,7 +348,13 @@ export function DiscoveryScreen() {
             </>
           ) : (
             <View style={styles.center}>
-              {pets.length > 0 ? (
+              {locationDenied ? (
+                <>
+                  <Ionicons name="location-outline" size={40} color={theme.colors.primary} />
+                  <Text style={styles.emptyTitle}>Sin tu ubicación no podemos medir distancias</Text>
+                  <Text style={styles.muted}>Activá el permiso desde los ajustes del teléfono para filtrar por cercanía.</Text>
+                </>
+              ) : pets.length > 0 ? (
                 <>
                   <Ionicons name="location-outline" size={40} color={theme.colors.primary} />
                   <Text style={styles.emptyTitle}>Nada dentro de {preferences.maxDistanceKm} km</Text>

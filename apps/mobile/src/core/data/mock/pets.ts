@@ -40,7 +40,6 @@ export const discoveryPets: Pet[] = [
     ],
     caregivers: [{ id: 'u-1', name: 'Laura Martínez', zone: 'Palermo, Buenos Aires', role: 'owner', memberSince: '2024-03-01', bio: 'Adiestradora de agility. Salgo temprano casi todos los días.', verified: true }],
     nearby: true,
-    distanceKm: 1.2,
   },
   {
     id: '2',
@@ -65,7 +64,6 @@ export const discoveryPets: Pet[] = [
     ],
     caregivers: [{ id: 'u-2', name: 'Diego Sosa', zone: 'Villa Crespo, Buenos Aires', role: 'owner', memberSince: '2023-11-12', bio: 'Trabajo desde casa, así que tiene compañía todo el día.', verified: false }],
     nearby: false,
-    distanceKm: 4.8,
   },
   {
     id: '3',
@@ -88,7 +86,6 @@ export const discoveryPets: Pet[] = [
     ],
     caregivers: [{ id: 'u-3', name: 'Sofía Pereyra', zone: 'Caballito, Buenos Aires', role: 'owner', memberSince: '2025-01-20', bio: 'Nos gustan las plazas grandes y los amigos tranquilos.', verified: true }],
     nearby: true,
-    distanceKm: 2.1,
   },
   {
     id: '4',
@@ -106,7 +103,7 @@ export const discoveryPets: Pet[] = [
     is_competitor: false,
     breeding_preferences: { looking_for_pair: true },
     coi_percentage: 5.2,
-    distanceKm: 12.5,
+    zone: { lat: -34.6, lng: -58.51 },
   },
   {
     id: '5',
@@ -126,7 +123,7 @@ export const discoveryPets: Pet[] = [
     breeding_preferences: { looking_for_pair: true },
     coi_percentage: 3.1,
     is_verified_breeder_pet: true,
-    distanceKm: 18.3,
+    zone: { lat: -34.47, lng: -58.51 },
   },
   {
     id: '6',
@@ -144,7 +141,7 @@ export const discoveryPets: Pet[] = [
     is_competitor: false,
     breeding_preferences: { looking_for_pair: false },
     coi_percentage: 4.7,
-    distanceKm: 27.4,
+    zone: { lat: -34.54, lng: -58.46 },
   },
   {
     id: '7',
@@ -161,7 +158,7 @@ export const discoveryPets: Pet[] = [
     is_competitor: false,
     breeding_preferences: { looking_for_pair: true },
     coi_percentage: 7.3,
-    distanceKm: 33.1,
+    zone: { lat: -34.92, lng: -57.95 },
   },
   {
     id: '8',
@@ -179,7 +176,7 @@ export const discoveryPets: Pet[] = [
     is_competitor: false,
     breeding_preferences: { looking_for_pair: true },
     coi_percentage: 5.8,
-    distanceKm: 8.7,
+    zone: { lat: -34.63, lng: -58.46 },
   },
   {
     id: '9',
@@ -196,7 +193,7 @@ export const discoveryPets: Pet[] = [
     is_competitor: false,
     breeding_preferences: { looking_for_pair: false },
     coi_percentage: 8.4,
-    distanceKm: 6.4,
+    zone: { lat: -34.56, lng: -58.45 },
   },
   {
     id: '10',
@@ -214,7 +211,7 @@ export const discoveryPets: Pet[] = [
     is_competitor: false,
     breeding_preferences: { looking_for_pair: true },
     coi_percentage: 4.1,
-    distanceKm: 3.3,
+    zone: { lat: -34.59, lng: -58.39 },
   },
   {
     id: '11',
@@ -234,7 +231,7 @@ export const discoveryPets: Pet[] = [
     breeding_preferences: { looking_for_pair: true },
     coi_percentage: 2.9,
     is_verified_breeder_pet: true,
-    distanceKm: 0.9,
+    zone: { lat: -34.61, lng: -58.42 },
   },
 ];
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { distanceKm, formatDistance, isWithinRadius } from './distance';
+import { COARSE_ERROR_KM, distanceKm, formatDistance, isWithinRadius, toCoarseZone } from './distance';
 
 // Puntos reales de Buenos Aires, que es donde vive el mock de la aplicacion.
 const OBELISCO = { lat: -34.6037, lng: -58.3816 };
@@ -52,5 +52,36 @@ describe('isWithinRadius', () => {
   it('incluye el borde exacto del radio', () => {
     const d = distanceKm(OBELISCO, PARQUE_LAS_HERAS);
     expect(isWithinRadius(OBELISCO, PARQUE_LAS_HERAS, d)).toBe(true);
+  });
+});
+
+describe('toCoarseZone', () => {
+  it('borra la precision fina de una coordenada', () => {
+    // Una direccion exacta cualquiera de Palermo.
+    const exacta = { lat: -34.583912, lng: -58.409387 };
+    expect(toCoarseZone(exacta)).toEqual({ lat: -34.58, lng: -58.41 });
+  });
+
+  it('manda a la misma celda dos casas de la misma cuadra', () => {
+    const casaA = { lat: -34.58391, lng: -58.40938 };
+    const casaB = { lat: -34.58402, lng: -58.40951 };
+    expect(toCoarseZone(casaA)).toEqual(toCoarseZone(casaB));
+  });
+
+  it('no mueve el punto mas alla del error declarado', () => {
+    const exacta = { lat: -34.589999, lng: -58.414999 };
+    expect(distanceKm(exacta, toCoarseZone(exacta))).toBeLessThanOrEqual(COARSE_ERROR_KM);
+  });
+
+  it('es estable: redondear lo ya redondeado no cambia nada', () => {
+    const zona = toCoarseZone({ lat: -34.583912, lng: -58.409387 });
+    expect(toCoarseZone(zona)).toEqual(zona);
+  });
+
+  it('sigue sirviendo para separar barrios distintos', () => {
+    // Palermo y Caballito, a unos 5 km: la zona los mantiene separados.
+    const palermo = toCoarseZone({ lat: -34.5839, lng: -58.4094 });
+    const caballito = toCoarseZone({ lat: -34.6190, lng: -58.4370 });
+    expect(distanceKm(palermo, caballito)).toBeGreaterThan(3);
   });
 });

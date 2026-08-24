@@ -59,7 +59,19 @@ export interface Pet {
   caregivers?: PetCaregiver[];
   /** Si esta cerca de quien mira, para mostrarlo en el detalle. */
   nearby?: boolean;
+  /**
+   * Distancia hasta quien mira, ya calculada.
+   *
+   * La calcula la aplicacion contra `zone`, no viene escrita: queda sin
+   * definir mientras no se sepa donde esta el usuario.
+   */
   distanceKm?: number;
+  /**
+   * Zona aproximada de la mascota, redondeada a una celda de un kilometro.
+   *
+   * Nunca el domicilio: ver `toCoarseZone` en core/geo.
+   */
+  zone?: { lat: number; lng: number };
   owner_ids: string[];
   personality_traits: string[];
   has_papers: boolean;

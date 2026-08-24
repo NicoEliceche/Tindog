@@ -16,6 +16,21 @@ model User {
   name                       String?
   avatarUrl                  String?
   googleSub                  String?                  @unique
+
+  // Zona aproximada, para poder decir "esta a 8 km" sin saber donde vive.
+  //
+  // Se guarda ya redondeada a dos decimales, que a esta latitud es una celda
+  // de unos 900 x 1100 metros: alcanza para filtrar por radio y no para dar
+  // con una direccion. El redondeo se hace antes de guardar, no al mostrar:
+  // si entrara el dato fino, ya estaria en la base y ahi es donde importa
+  // que no este. Es la misma promesa que hace el perfil, que muestra la zona
+  // general y nunca el domicilio.
+  zoneLat                    Float?
+  zoneLng                    Float?
+  // Nombre legible de la zona, el que el usuario escribe en su perfil.
+  zoneLabel                  String?
+  zoneUpdatedAt              DateTime?
+
   authAccounts               AuthAccount[]
   sessions                   AuthSession[]
   pets                       Pet[]                    @relation("PetOriginalOwner")
