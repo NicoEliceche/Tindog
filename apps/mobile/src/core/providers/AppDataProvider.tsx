@@ -31,7 +31,10 @@ interface AppDataContextValue {
   respondToRequest: (requestId: string, accept: boolean) => void;
   /** Retira una solicitud propia que todavia esta pendiente. */
   cancelRequest: (requestId: string) => void;
-  sendMessage: (conversationId: string, body: string) => void;
+  /** Envia un mensaje; `replyTo` cita a otro. */
+  sendMessage: (conversationId: string, body: string, replyTo?: string) => void;
+  editMessage: (conversationId: string, messageId: string, body: string) => void;
+  deleteMessage: (conversationId: string, messageId: string) => void;
   scheduleAppointment: (conversationId: string, locationId: string, startAt: string) => Appointment | null;
   updateAppointmentStatus: (appointmentId: string, status: AppointmentStatus) => void;
   addLocationReview: (locationId: string, review: Omit<SafeLocationReview, 'id' | 'createdAt' | 'verifiedAttendance'>) => void;
@@ -198,12 +201,49 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
     }));
   };
 
-  const sendMessage = (conversationId: string, body: string) => {
+  const sendMessage = (conversationId: string, body: string, replyTo?: string) => {
     const trimmed = body.trim();
     if (!trimmed) return;
-    const message: ChatMessage = { id: `message-${Date.now()}`, conversationId, sender: 'me', kind: 'text', body: trimmed, sentAt: new Date().toISOString() };
+    const message: ChatMessage = { id: `message-${Date.now()}`, conversationId, sender: 'me', kind: 'text', body: trimmed, sentAt: new Date().toISOString(), ...(replyTo ? { replyTo } : {}) };
     setMessages((current) => ({ ...current, [conversationId]: [...(current[conversationId] ?? []), message] }));
     setConversations((current) => current.map((item) => item.id === conversationId ? { ...item, lastMessage: trimmed, timeLabel: 'Ahora' } : item));
+  };
+
+  /**
+   * Editar un mensaje propio.
+   *
+   * Queda marcado con `editedAt` para poder mostrar "editado", como
+   * WhatsApp: cambiar el texto sin avisar deja a la otra persona recordando
+   * algo que ya no está escrito.
+   */
+  const editMessage = (conversationId: string, messageId: string, body: string) => {
+    const trimmed = body.trim();
+    if (!trimmed) return;
+    setMessages((current) => ({
+      ...current,
+      [conversationId]: (current[conversationId] ?? []).map((item) => (
+        item.id === messageId && item.sender === 'me' && !item.deletedAt
+          ? { ...item, body: trimmed, editedAt: new Date().toISOString() }
+          : item
+      )),
+    }));
+  };
+
+  /**
+   * Borrar un mensaje propio.
+   *
+   * No se saca de la lista: se marca, y la burbuja pasa a decir "Borrado".
+   * Sacarlo dejaría huecos en una charla que la otra persona ya leyó.
+   */
+  const deleteMessage = (conversationId: string, messageId: string) => {
+    setMessages((current) => ({
+      ...current,
+      [conversationId]: (current[conversationId] ?? []).map((item) => (
+        item.id === messageId && item.sender === 'me'
+          ? { ...item, deletedAt: new Date().toISOString() }
+          : item
+      )),
+    }));
   };
 
   const scheduleAppointment = (conversationId: string, locationId: string, startAt: string) => {
@@ -313,7 +353,7 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
 
   const value = useMemo<AppDataContextValue>(() => ({
     profile, requests, conversations, messages, appointments, locations, myPets,
-    sendConnectionRequest, respondToRequest, cancelRequest, sendMessage, scheduleAppointment, createPet, updatePet, adoptRemotePets,
+    sendConnectionRequest, respondToRequest, cancelRequest, sendMessage, editMessage, deleteMessage, scheduleAppointment, createPet, updatePet, adoptRemotePets,
     savedPets, savePet, unsavePet, blockedOwners, blockOwner, unblockOwner,
     notifications, unreadNotifications, markNotificationsRead, markNotificationUnread,
     updateAppointmentStatus, addLocationReview,

@@ -184,3 +184,119 @@ export const Composer = styled.form`
     background: ${({ theme }) => theme.color.primary};
   }
 `;
+
+/**
+ * El mensaje citado, arriba del texto de la burbuja.
+ *
+ * Mismo recurso que WhatsApp: una franja al costado y el texto original en
+ * chico, para saber a que se responde sin salir de la conversacion.
+ */
+export const Quote = styled.div<{ $mine?: boolean }>`
+  border-left: 3px solid ${({ theme, $mine }) => ($mine ? 'rgba(5,5,5,.35)' : theme.color.primary)};
+  background: ${({ theme, $mine }) => ($mine ? 'rgba(5,5,5,.08)' : theme.color.primaryFaded)};
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-bottom: 6px;
+
+  strong {
+    display: block;
+    color: ${({ theme, $mine }) => ($mine ? 'rgba(5,5,5,.75)' : theme.color.primary)};
+    font-size: 0.68rem;
+    font-weight: 900;
+  }
+
+  span {
+    display: block;
+    color: ${({ theme, $mine }) => ($mine ? 'rgba(5,5,5,.6)' : theme.color.textSecondary)};
+    font-size: 0.72rem;
+    margin-top: 1px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+`;
+
+/** La hora, y el "editado" cuando corresponde. */
+export const BubbleMeta = styled.small<{ $mine?: boolean }>`
+  display: block;
+  margin-top: 4px;
+  text-align: right;
+  font-size: 0.56rem;
+  color: ${({ theme, $mine }) => ($mine ? 'rgba(5,5,5,.6)' : theme.color.textTertiary)};
+`;
+
+/** Lo que se esta respondiendo o editando, arriba del campo. */
+export const ContextBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  background: ${({ theme }) => theme.color.surfaceRaised};
+  border-top: 1px solid ${({ theme }) => theme.color.border};
+
+  .accent {
+    width: 3px;
+    align-self: stretch;
+    border-radius: 2px;
+    background: ${({ theme }) => theme.color.primary};
+  }
+
+  .copy { flex: 1; min-width: 0; }
+
+  strong {
+    display: block;
+    color: ${({ theme }) => theme.color.primary};
+    font-size: 0.72rem;
+    font-weight: 900;
+  }
+
+  span {
+    display: block;
+    color: ${({ theme }) => theme.color.textSecondary};
+    font-size: 0.72rem;
+    margin-top: 1px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  button {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: ${({ theme }) => theme.color.textSecondary};
+  }
+`;
+
+/** Menu del click derecho sobre un mensaje. */
+export const MessageMenu = styled.div<{ $x: number; $y: number }>`
+  position: fixed;
+  top: ${({ $y }) => $y}px;
+  left: ${({ $x }) => $x}px;
+  z-index: 4500;
+  min-width: 15rem;
+  padding: 6px;
+  border-radius: 16px;
+  background: ${({ theme }) => theme.color.surface};
+  border: 1px solid ${({ theme }) => theme.color.border};
+  box-shadow: ${({ theme }) => theme.elevation.lg};
+
+  button {
+    width: 100%;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    border-radius: 11px;
+    color: ${({ theme }) => theme.color.text};
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-align: left;
+  }
+
+  button:hover { background: ${({ theme }) => theme.color.surfaceRaised}; }
+  button.danger { color: ${({ theme }) => theme.color.error}; }
+`;

@@ -36,7 +36,26 @@ export interface WebConnectionRequest {
   createdAt: string;
 }
 export interface WebConversation { id: string; ownerName: string; petName: string; avatar: string; intent: 'Cita' | 'Cruza' | 'Juego'; lastMessage: string; timeLabel: string; unread: boolean; }
-export interface WebMessage { id: string; sender: 'me' | 'them' | 'system'; body: string; sentAt: string; }
+/**
+ * Un mensaje del chat.
+ *
+ * `replyTo`, `editedAt` y `deletedAt` sostienen responder, editar y borrar.
+ * Un mensaje borrado conserva su lugar en la conversación y muestra
+ * "Borrado" en vez del texto, como en WhatsApp: sacarlo de la lista dejaría
+ * huecos raros en una charla que la otra persona ya leyó.
+ */
+export interface WebMessage {
+  id: string;
+  sender: 'me' | 'them' | 'system';
+  body: string;
+  sentAt: string;
+  /** Id del mensaje citado, si este responde a otro. */
+  replyTo?: string;
+  /** Cuándo se editó por última vez; ausente si nunca se tocó. */
+  editedAt?: string;
+  /** Cuándo se borró. El cuerpo se conserva pero no se muestra. */
+  deletedAt?: string;
+}
 export interface WebLocationReview { id: string; authorName: string; rating: number; comment: string; verified: boolean; }
 export interface WebSafeLocation { id: string; googlePlaceId: string; name: string; address: string; lat: number; lng: number; rating: number; reviewCount: number; distanceKm: number; tags: string[]; reviews: WebLocationReview[]; }
 export interface WebAppointment { id: string; conversationId: string; ownerName: string; petNames: string[]; startAt: string; endAt: string; status: WebAppointmentStatus; location: WebSafeLocation; checkedIn: boolean; reviewSubmitted: boolean; shared: boolean; }
@@ -136,7 +155,11 @@ interface WebAppValue {
   requests: WebConnectionRequest[]; sendRequest: (pet: Pet) => void; respondRequest: (id: string, accepted: boolean) => void;
   /** Cancela una solicitud enviada: la retira del otro lado y avisa. */
   cancelRequest: (id: string) => void;
-  conversations: WebConversation[]; messages: Record<string, WebMessage[]>; sendMessage: (chatId: string, body: string) => void;
+  conversations: WebConversation[]; messages: Record<string, WebMessage[]>;
+  /** Envia un mensaje; `replyTo` cita a otro. */
+  sendMessage: (chatId: string, body: string, replyTo?: string) => void;
+  editMessage: (chatId: string, messageId: string, body: string) => void;
+  deleteMessage: (chatId: string, messageId: string) => void;
   locations: WebSafeLocation[]; appointments: WebAppointment[]; scheduleAppointment: (chatId: string, locationId: string, startAt: string) => WebAppointment | null; setAppointmentStatus: (id: string, status: WebAppointmentStatus) => void; addReview: (locationId: string, rating: number, comment: string) => void;
   /** Derivadas del estado real: solicitudes, chats sin leer y citas próximas. */
   notifications: WebNotification[]; unreadNotifications: number; markNotificationsRead: (notificationId?: string) => void;
@@ -417,7 +440,42 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
     notifications, unreadNotifications, markNotificationsRead, markNotificationUnread,
     profile, updateProfile: (value) => setProfile((current) => ({ ...current, ...value })), discoveryPets: discoveryPetsWithDistance, userZone, locationDenied, requestLocation, dismissPet: (id) => setDiscoveryPets((current) => current.filter((item) => item.id !== id)), resetDiscovery: () => setDiscoveryPets(pets), restorePet: (pet) => setDiscoveryPets((current) => (current.some((item) => item.id === pet.id) ? current : [pet, ...current])), requests,
     sendRequest: (pet) => { if (!requests.some((item) => item.pet.id === pet.id && item.direction === 'outgoing' && item.status === 'pending')) setRequests((current) => [{ id: `req-${Date.now()}`, direction: 'outgoing', status: 'pending', ownerName: `Tutor de ${pet.name}`, pet, avatar: pet.photos[0], createdAt: new Date().toISOString() }, ...current]); }, respondRequest, cancelRequest,
-    conversations, messages, sendMessage: (chatId, body) => { const clean = body.trim(); if (!clean) return; setMessages((current) => ({ ...current, [chatId]: [...(current[chatId] ?? []), { id: `m-${Date.now()}`, sender: 'me', body: clean, sentAt: new Date().toISOString() }] })); setConversations((current) => current.map((item) => item.id === chatId ? { ...item, lastMessage: clean, timeLabel: 'Ahora' } : item)); },
+    /**
+     * Editar un mensaje propio.
+     *
+     * Queda marcado con `editedAt` para poder mostrar "editado", como
+     * WhatsApp: cambiar el texto sin avisar deja a la otra persona
+     * recordando algo que ya no está escrito.
+     */
+    editMessage: (chatId: string, messageId: string, body: string) => {
+      const clean = body.trim();
+      if (!clean) return;
+      setMessages((current) => ({
+        ...current,
+        [chatId]: (current[chatId] ?? []).map((item) => (
+          item.id === messageId && item.sender === 'me' && !item.deletedAt
+            ? { ...item, body: clean, editedAt: new Date().toISOString() }
+            : item
+        )),
+      }));
+    },
+    /**
+     * Borrar un mensaje propio.
+     *
+     * No se saca de la lista: se marca, y la burbuja pasa a decir "Borrado".
+     * Sacarlo dejaría huecos en una charla que la otra persona ya leyó.
+     */
+    deleteMessage: (chatId: string, messageId: string) => {
+      setMessages((current) => ({
+        ...current,
+        [chatId]: (current[chatId] ?? []).map((item) => (
+          item.id === messageId && item.sender === 'me'
+            ? { ...item, deletedAt: new Date().toISOString() }
+            : item
+        )),
+      }));
+    },
+    conversations, messages, sendMessage: (chatId, body, replyTo) => { const clean = body.trim(); if (!clean) return; setMessages((current) => ({ ...current, [chatId]: [...(current[chatId] ?? []), { id: `m-${Date.now()}`, sender: 'me', body: clean, sentAt: new Date().toISOString(), ...(replyTo ? { replyTo } : {}) }] })); setConversations((current) => current.map((item) => item.id === chatId ? { ...item, lastMessage: clean, timeLabel: 'Ahora' } : item)); },
     locations, appointments, scheduleAppointment, setAppointmentStatus: (id, status) => setAppointments((current) => current.map((item) => item.id === id ? { ...item, status, checkedIn: status === 'completed' ? true : item.checkedIn } : item)),
     addReview: (locationId, rating, comment) => { setLocations((current) => current.map((item) => item.id === locationId ? { ...item, reviewCount: item.reviewCount + 1, rating: Number(((item.rating * item.reviewCount + rating) / (item.reviewCount + 1)).toFixed(1)), reviews: [{ id: `r-${Date.now()}`, authorName: profile.name.split(' ')[0], rating, comment, verified: true }, ...item.reviews] } : item)); setAppointments((current) => current.map((item) => item.location.id === locationId && item.status === 'completed' ? { ...item, reviewSubmitted: true } : item)); },
   };

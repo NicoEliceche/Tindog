@@ -16,6 +16,14 @@ export interface ConnectionRequest {
 
 export type MessageKind = 'text' | 'appointment' | 'system';
 
+/**
+ * Un mensaje del chat.
+ *
+ * `replyTo`, `editedAt` y `deletedAt` sostienen responder, editar y borrar.
+ * Un mensaje borrado conserva su lugar en la conversación y muestra
+ * "Borrado" en vez del texto, como en WhatsApp: sacarlo de la lista dejaría
+ * huecos raros en una charla que la otra persona ya leyó.
+ */
 export interface ChatMessage {
   id: string;
   conversationId: string;
@@ -24,6 +32,12 @@ export interface ChatMessage {
   body: string;
   sentAt: string;
   readAt?: string;
+  /** Id del mensaje citado, si este responde a otro. */
+  replyTo?: string;
+  /** Cuándo se editó por última vez; ausente si nunca se tocó. */
+  editedAt?: string;
+  /** Cuándo se borró. El cuerpo se conserva pero no se muestra. */
+  deletedAt?: string;
 }
 
 export interface Conversation {
