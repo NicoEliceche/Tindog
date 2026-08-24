@@ -55,6 +55,18 @@ export interface WebMessage {
   editedAt?: string;
   /** Cuándo se borró. El cuerpo se conserva pero no se muestra. */
   deletedAt?: string;
+  /** Archivo adjunto, si el mensaje lleva uno. */
+  attachment?: WebAttachment;
+}
+
+/** Un archivo adjunto a un mensaje. */
+export interface WebAttachment {
+  kind: 'photo' | 'video' | 'document';
+  url: string;
+  /** Nombre original, para poder mostrarlo en los documentos. */
+  name: string;
+  /** Tamaño en bytes, para mostrarlo junto al nombre. */
+  size: number;
 }
 export interface WebLocationReview { id: string; authorName: string; rating: number; comment: string; verified: boolean; }
 export interface WebSafeLocation { id: string; googlePlaceId: string; name: string; address: string; lat: number; lng: number; rating: number; reviewCount: number; distanceKm: number; tags: string[]; reviews: WebLocationReview[]; }
@@ -157,7 +169,7 @@ interface WebAppValue {
   cancelRequest: (id: string) => void;
   conversations: WebConversation[]; messages: Record<string, WebMessage[]>;
   /** Envia un mensaje; `replyTo` cita a otro. */
-  sendMessage: (chatId: string, body: string, replyTo?: string) => void;
+  sendMessage: (chatId: string, body: string, replyTo?: string, attachment?: WebAttachment) => void;
   editMessage: (chatId: string, messageId: string, body: string) => void;
   deleteMessage: (chatId: string, messageId: string) => void;
   locations: WebSafeLocation[]; appointments: WebAppointment[]; scheduleAppointment: (chatId: string, locationId: string, startAt: string) => WebAppointment | null; setAppointmentStatus: (id: string, status: WebAppointmentStatus) => void; addReview: (locationId: string, rating: number, comment: string) => void;
@@ -475,7 +487,7 @@ export function WebAppProvider({ children }: { children: React.ReactNode }) {
         )),
       }));
     },
-    conversations, messages, sendMessage: (chatId, body, replyTo) => { const clean = body.trim(); if (!clean) return; setMessages((current) => ({ ...current, [chatId]: [...(current[chatId] ?? []), { id: `m-${Date.now()}`, sender: 'me', body: clean, sentAt: new Date().toISOString(), ...(replyTo ? { replyTo } : {}) }] })); setConversations((current) => current.map((item) => item.id === chatId ? { ...item, lastMessage: clean, timeLabel: 'Ahora' } : item)); },
+    conversations, messages, sendMessage: (chatId, body, replyTo, attachment) => { const clean = body.trim(); if (!clean && !attachment) return; setMessages((current) => ({ ...current, [chatId]: [...(current[chatId] ?? []), { id: `m-${Date.now()}`, sender: 'me', body: clean, sentAt: new Date().toISOString(), ...(replyTo ? { replyTo } : {}), ...(attachment ? { attachment } : {}) }] })); setConversations((current) => current.map((item) => item.id === chatId ? { ...item, lastMessage: clean, timeLabel: 'Ahora' } : item)); },
     locations, appointments, scheduleAppointment, setAppointmentStatus: (id, status) => setAppointments((current) => current.map((item) => item.id === id ? { ...item, status, checkedIn: status === 'completed' ? true : item.checkedIn } : item)),
     addReview: (locationId, rating, comment) => { setLocations((current) => current.map((item) => item.id === locationId ? { ...item, reviewCount: item.reviewCount + 1, rating: Number(((item.rating * item.reviewCount + rating) / (item.reviewCount + 1)).toFixed(1)), reviews: [{ id: `r-${Date.now()}`, authorName: profile.name.split(' ')[0], rating, comment, verified: true }, ...item.reviews] } : item)); setAppointments((current) => current.map((item) => item.location.id === locationId && item.status === 'completed' ? { ...item, reviewSubmitted: true } : item)); },
   };

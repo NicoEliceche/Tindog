@@ -38,6 +38,18 @@ export interface ChatMessage {
   editedAt?: string;
   /** Cuándo se borró. El cuerpo se conserva pero no se muestra. */
   deletedAt?: string;
+  /** Archivo adjunto, si el mensaje lleva uno. */
+  attachment?: MessageAttachment;
+}
+
+/** Un archivo adjunto a un mensaje. */
+export interface MessageAttachment {
+  kind: 'photo' | 'video' | 'document';
+  url: string;
+  /** Nombre original, para poder mostrarlo en los documentos. */
+  name: string;
+  /** Tamaño en bytes, para mostrarlo junto al nombre. */
+  size: number;
 }
 
 export interface Conversation {

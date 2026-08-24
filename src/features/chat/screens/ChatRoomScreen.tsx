@@ -1,11 +1,16 @@
 'use client';
 
 import { effectiveStatus, useWebApp, type WebMessage } from '@core/providers/WebAppProvider';
-import { ArrowLeft, CalendarDays, Check, ChevronRight, Copy, CornerUpLeft, Pencil, Send, ShieldCheck, Trash2, X } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Check, ChevronRight, Copy, CornerUpLeft, FileText, Image as ImageIcon, Paperclip, Pencil, Send, ShieldCheck, Smile, Trash2, Video, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { FormEvent, useEffect, useRef, useState } from 'react';
-import { AppointmentBanner, Bubble, BubbleMeta, Composer, ContextBar, Header, MessageMenu, MessageRow, Messages, Quote, Safety, Screen } from './ChatRoomScreenStyled';
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
+import { AppointmentBanner, AttachPanel, Attachment, Bubble, BubbleMeta, Composer, ContextBar, EmojiPanel, Header, MessageMenu, MessageRow, Messages, Quote, Safety, Screen } from './ChatRoomScreenStyled';
 import { useToast } from '@shared/components/ui';
+import {
+  DOCUMENT_ACCEPT_ATTRIBUTE, PHOTO_ACCEPT_ATTRIBUTE, VIDEO_ACCEPT_ATTRIBUTE,
+  rejectDocument, rejectPhoto, rejectVideo,
+} from '@core/security/mediaLimits';
+import { EMOJI_GROUPS } from '../data/emojis';
 
 export interface ChatRoomScreenProps {
   chatId: string;
@@ -24,6 +29,11 @@ export function ChatRoomScreen({ chatId, panelMode = false, onBack }: ChatRoomSc
   const [replyTo, setReplyTo] = useState<WebMessage | null>(null);
   /** Mensaje que se está editando; el campo pasa a mostrar su texto. */
   const [editing, setEditing] = useState<WebMessage | null>(null);
+  const [showEmojis, setShowEmojis] = useState(false);
+  const [showAttach, setShowAttach] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  /** Que tipo de archivo se esta eligiendo, para validar con la regla justa. */
+  const pickKind = useRef<'photo' | 'video' | 'document'>('photo');
   const conversation = conversations.find((item) => item.id === chatId) ?? conversations[0];
   const listRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState('');
@@ -51,6 +61,44 @@ export function ChatRoomScreen({ chatId, panelMode = false, onBack }: ChatRoomSc
       setReplyTo(null);
     }
     setDraft('');
+  };
+
+  /** Abre el selector de archivos con el filtro del tipo pedido. */
+  const pickFile = (kind: 'photo' | 'video' | 'document') => {
+    pickKind.current = kind;
+    const input = fileInput.current;
+    if (!input) return;
+    input.accept = kind === 'photo' ? PHOTO_ACCEPT_ATTRIBUTE
+      : kind === 'video' ? VIDEO_ACCEPT_ATTRIBUTE
+      : DOCUMENT_ACCEPT_ATTRIBUTE;
+    input.value = '';
+    input.click();
+    setShowAttach(false);
+  };
+
+  /**
+   * Adjunta el archivo elegido.
+   *
+   * Se valida acá y no sólo en el servidor porque el aviso tiene que llegar
+   * antes de subir: descubrir a los 20 MB que el archivo no servía es una
+   * espera perdida. Son las mismas reglas que usa la galería de una mascota.
+   */
+  const onFileChosen = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const kind = pickKind.current;
+    const reason = kind === 'photo' ? rejectPhoto(file)
+      : kind === 'video' ? rejectVideo(file)
+      : rejectDocument(file);
+    if (reason) {
+      toast({ title: 'No pudimos adjuntarlo', body: reason, tone: 'error' });
+      return;
+    }
+    // En el mock el archivo no se sube: se referencia local para poder verlo.
+    const url = URL.createObjectURL(file);
+    sendMessage(conversation.id, draft, replyTo?.id, { kind, url, name: file.name, size: file.size });
+    setDraft('');
+    setReplyTo(null);
   };
 
   const startReply = (message: WebMessage) => {
@@ -146,9 +194,29 @@ export function ChatRoomScreen({ chatId, panelMode = false, onBack }: ChatRoomSc
                   <span>{quoted.deletedAt ? 'Borrado' : quoted.body}</span>
                 </Quote>
               ) : null}
-              <span style={deleted ? { fontStyle: 'italic', opacity: 0.6 } : undefined}>
-                {deleted ? 'Borrado' : message.body}
-              </span>
+              {message.attachment && !deleted ? (
+                <Attachment $mine={mine}>
+                  {message.attachment.kind === 'photo' ? (
+                    <img src={message.attachment.url} alt={message.attachment.name} />
+                  ) : message.attachment.kind === 'video' ? (
+                    <video src={message.attachment.url} controls playsInline preload="metadata" />
+                  ) : (
+                    <a className="doc" href={message.attachment.url} target="_blank" rel="noreferrer">
+                      <FileText size={22} />
+                      <span className="doc-copy">
+                        <strong>{message.attachment.name}</strong>
+                        <small>{Math.round(message.attachment.size / 1024)} KB</small>
+                      </span>
+                    </a>
+                  )}
+                </Attachment>
+              ) : null}
+
+              {deleted || message.body ? (
+                <span style={deleted ? { fontStyle: 'italic', opacity: 0.6 } : undefined}>
+                  {deleted ? 'Borrado' : message.body}
+                </span>
+              ) : null}
               {message.sender !== 'system' ? (
                 <BubbleMeta $mine={mine}>
                   {message.editedAt && !deleted ? 'editado · ' : ''}
@@ -160,6 +228,33 @@ export function ChatRoomScreen({ chatId, panelMode = false, onBack }: ChatRoomSc
           );
         })}
       </Messages>
+
+      {showEmojis ? (
+        <EmojiPanel>
+          {EMOJI_GROUPS.map((group) => (
+            <div key={group.label}>
+              <strong>{group.label}</strong>
+              <div className="row">
+                {group.emojis.map((emoji) => (
+                  <button key={emoji} type="button" onClick={() => setDraft((current) => current + emoji)}>
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </EmojiPanel>
+      ) : null}
+
+      {showAttach ? (
+        <AttachPanel>
+          <button type="button" onClick={() => pickFile('photo')}><ImageIcon size={22} /> Foto</button>
+          <button type="button" onClick={() => pickFile('video')}><Video size={22} /> Video</button>
+          <button type="button" onClick={() => pickFile('document')}><FileText size={22} /> Documento</button>
+        </AttachPanel>
+      ) : null}
+
+      <input ref={fileInput} type="file" hidden onChange={onFileChosen} />
 
       {replyTo || editing ? (
         <ContextBar>
@@ -177,6 +272,12 @@ export function ChatRoomScreen({ chatId, panelMode = false, onBack }: ChatRoomSc
       <Composer onSubmit={submit}>
         <button type="button" className="calendar" aria-label="Agendar cita" onClick={() => router.push(`/appointments/location?chat=${conversation.id}`)}>
           <CalendarDays size={21} />
+        </button>
+        <button type="button" className="calendar" aria-label="Emojis" disabled={blocked} onClick={() => { setShowEmojis((v) => !v); setShowAttach(false); }}>
+          <Smile size={21} />
+        </button>
+        <button type="button" className="calendar" aria-label="Adjuntar archivo" disabled={blocked} onClick={() => { setShowAttach((v) => !v); setShowEmojis(false); }}>
+          <Paperclip size={21} />
         </button>
         <div className="input">
           <input

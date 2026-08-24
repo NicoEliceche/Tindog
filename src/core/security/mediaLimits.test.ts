@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
-  MAX_GALLERY_PHOTOS, MAX_PHOTO_BYTES, MAX_VIDEO_BYTES,
-  rejectPhoto, rejectVideo,
+  MAX_GALLERY_PHOTOS,
+  MAX_PHOTO_BYTES,
+  MAX_VIDEO_BYTES,
+  rejectDocument,
+  rejectPhoto,
+  rejectVideo,
 } from './mediaLimits';
 
 describe('limites de la galeria', () => {
@@ -38,5 +42,24 @@ describe('limites de la galeria', () => {
 
   it('permite diez fotos', () => {
     expect(MAX_GALLERY_PHOTOS).toBe(10);
+  });
+});
+
+describe('rejectDocument', () => {
+  it('acepta un PDF de tamaño razonable', () => {
+    expect(rejectDocument({ type: 'application/pdf', size: 8 * 1024 * 1024 })).toBeNull();
+  });
+
+  it('rechaza un ejecutable, aunque pese poco', () => {
+    expect(rejectDocument({ type: 'application/x-msdownload', size: 1000 })).toContain('PDF');
+  });
+
+  it('rechaza un comprimido: puede traer cualquier cosa adentro', () => {
+    expect(rejectDocument({ type: 'application/zip', size: 1000 })).toContain('PDF');
+  });
+
+  it('rechaza un PDF que pasa el máximo', () => {
+    const reason = rejectDocument({ type: 'application/pdf', size: 20 * 1024 * 1024 });
+    expect(reason).toContain('máximo');
   });
 });

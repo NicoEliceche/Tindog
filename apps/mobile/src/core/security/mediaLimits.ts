@@ -93,3 +93,42 @@ export function rejectVideo(file: { type: string; size: number }): string | null
   }
   return null;
 }
+
+// ── Adjuntos del chat ───────────────────────────────────────────────────
+
+/**
+ * Documentos que se pueden adjuntar en un chat.
+ *
+ * La lista es corta a propósito. Un chat entre dueños de perros mueve
+ * carnets de vacunación, pedigríes y resultados de estudios: eso viaja en
+ * PDF o como foto. Aceptar ejecutables, comprimidos u Office con macros
+ * abriría una vía de entrada para archivos dañinos sin resolver ninguna
+ * necesidad real.
+ *
+ * Las fotos y videos del chat usan los mismos límites que la galería de una
+ * mascota: salen de la misma cámara y no hay motivo para tratarlos distinto.
+ */
+export const ALLOWED_DOCUMENT_MIMES = [
+  'application/pdf',
+] as const;
+
+export const DOCUMENT_ACCEPT_ATTRIBUTE = ALLOWED_DOCUMENT_MIMES.join(',');
+
+/**
+ * 15 MB cubre un PDF escaneado de varias páginas, que es el caso real: un
+ * carnet de vacunación fotografiado página por página ronda los 8 MB.
+ */
+export const MAX_DOCUMENT_BYTES = 15 * 1024 * 1024;
+
+export const DOCUMENT_HINT = `PDF · hasta ${MAX_DOCUMENT_BYTES / 1024 / 1024} MB`;
+
+/** Devuelve el motivo del rechazo, o null si el documento entra. */
+export function rejectDocument(file: { type: string; size: number }): string | null {
+  if (!ALLOWED_DOCUMENT_MIMES.includes(file.type as typeof ALLOWED_DOCUMENT_MIMES[number])) {
+    return 'Sólo se pueden adjuntar archivos PDF.';
+  }
+  if (file.size > MAX_DOCUMENT_BYTES) {
+    return `El archivo pesa ${formatBytes(file.size)} y el máximo es ${formatBytes(MAX_DOCUMENT_BYTES)}.`;
+  }
+  return null;
+}

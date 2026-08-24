@@ -317,3 +317,103 @@ export const MessageMenu = styled.div<{ $x: number; $y: number }>`
   button:hover { background: ${({ theme }) => theme.color.surfaceRaised}; }
   button.danger { color: ${({ theme }) => theme.color.error}; }
 `;
+
+/** Panel de emojis, sobre el campo de escritura. */
+export const EmojiPanel = styled.div`
+  max-height: 13rem;
+  overflow-y: auto;
+  padding: 10px 14px;
+  background: ${({ theme }) => theme.color.surfaceRaised};
+  border-top: 1px solid ${({ theme }) => theme.color.border};
+
+  strong {
+    display: block;
+    color: ${({ theme }) => theme.color.textTertiary};
+    font-size: 0.62rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 8px 0 4px;
+  }
+
+  strong:first-child { margin-top: 0; }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+
+  button {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  button:hover { background: ${({ theme }) => theme.color.surface}; }
+`;
+
+/** Las tres opciones de adjunto. */
+export const AttachPanel = styled.div`
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  background: ${({ theme }) => theme.color.surfaceRaised};
+  border-top: 1px solid ${({ theme }) => theme.color.border};
+
+  button {
+    flex: 1;
+    min-height: 74px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 16px;
+    color: ${({ theme }) => theme.color.primary};
+    background: ${({ theme }) => theme.color.primaryFaded};
+    border: 1px solid ${({ theme }) => theme.color.borderFocus};
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+`;
+
+/** Un adjunto dentro de la burbuja. */
+export const Attachment = styled.div<{ $mine?: boolean }>`
+  margin-bottom: 6px;
+  border-radius: 12px;
+  overflow: hidden;
+
+  img, video {
+    display: block;
+    width: 100%;
+    max-height: 15rem;
+    object-fit: cover;
+  }
+
+  .doc {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px;
+    border-radius: 12px;
+    background: ${({ theme, $mine }) => ($mine ? 'rgba(5,5,5,.10)' : theme.color.surface)};
+  }
+
+  .doc-copy { min-width: 0; }
+
+  .doc strong {
+    display: block;
+    font-size: 0.76rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .doc small {
+    color: ${({ theme, $mine }) => ($mine ? 'rgba(5,5,5,.6)' : theme.color.textTertiary)};
+    font-size: 0.64rem;
+  }
+`;

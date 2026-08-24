@@ -4,7 +4,7 @@ import { connectionRequests as seededRequests, initialAppointments, initialConve
 import type { Appointment, AppointmentStatus, SafeLocationReview } from '../types/appointment.types';
 import type { AuthUser } from '../types/auth.types';
 import type { Pet } from '../types/pet.types';
-import type { ChatMessage, ConnectionRequest, Conversation } from '../types/social.types';
+import type { ChatMessage, MessageAttachment, ConnectionRequest, Conversation } from '../types/social.types';
 
 interface AppDataContextValue {
   profile: AuthUser;
@@ -32,7 +32,7 @@ interface AppDataContextValue {
   /** Retira una solicitud propia que todavia esta pendiente. */
   cancelRequest: (requestId: string) => void;
   /** Envia un mensaje; `replyTo` cita a otro. */
-  sendMessage: (conversationId: string, body: string, replyTo?: string) => void;
+  sendMessage: (conversationId: string, body: string, replyTo?: string, attachment?: MessageAttachment) => void;
   editMessage: (conversationId: string, messageId: string, body: string) => void;
   deleteMessage: (conversationId: string, messageId: string) => void;
   scheduleAppointment: (conversationId: string, locationId: string, startAt: string) => Appointment | null;
@@ -201,12 +201,17 @@ export function AppDataProvider({ user, children }: PropsWithChildren<{ user: Au
     }));
   };
 
-  const sendMessage = (conversationId: string, body: string, replyTo?: string) => {
+  const sendMessage = (conversationId: string, body: string, replyTo?: string, attachment?: MessageAttachment) => {
     const trimmed = body.trim();
-    if (!trimmed) return;
-    const message: ChatMessage = { id: `message-${Date.now()}`, conversationId, sender: 'me', kind: 'text', body: trimmed, sentAt: new Date().toISOString(), ...(replyTo ? { replyTo } : {}) };
+    // Un adjunto solo, sin texto, es un mensaje valido.
+    if (!trimmed && !attachment) return;
+    const message: ChatMessage = { id: `message-${Date.now()}`, conversationId, sender: 'me', kind: 'text', body: trimmed, sentAt: new Date().toISOString(), ...(replyTo ? { replyTo } : {}), ...(attachment ? { attachment } : {}) };
     setMessages((current) => ({ ...current, [conversationId]: [...(current[conversationId] ?? []), message] }));
-    setConversations((current) => current.map((item) => item.id === conversationId ? { ...item, lastMessage: trimmed, timeLabel: 'Ahora' } : item));
+    // En la lista de chats, un adjunto sin texto se anuncia por su tipo.
+    const preview = trimmed || (attachment
+      ? attachment.kind === 'photo' ? 'Foto' : attachment.kind === 'video' ? 'Video' : 'Documento'
+      : '');
+    setConversations((current) => current.map((item) => item.id === conversationId ? { ...item, lastMessage: preview, timeLabel: 'Ahora' } : item));
   };
 
   /**
