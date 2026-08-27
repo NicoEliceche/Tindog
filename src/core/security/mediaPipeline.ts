@@ -14,7 +14,7 @@ export const MAX_IMAGE_PIXELS = 25_000_000;
 // que saber leerlo.
 export const ALLOWED_IMAGE_MIMES = new Set<string>(ALLOWED_PHOTO_MIMES);
 
-async function scanForMalware(bytes: Uint8Array): Promise<void> {
+export async function scanForMalware(bytes: Uint8Array): Promise<void> {
   const url = process.env.MALWARE_SCANNER_URL;
   const token = process.env.MALWARE_SCANNER_TOKEN;
   if (!url || !token) {

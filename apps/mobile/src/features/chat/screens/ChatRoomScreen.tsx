@@ -11,6 +11,7 @@ import { useToast } from '../../../shared/components/Toast';
 import { pickDocument } from '../../../core/data/services/documentPicker';
 import { pickGalleryPhotos, pickGalleryVideo } from '../../../core/data/services/galleryPicker';
 import { EMOJI_GROUPS } from '../data/emojis';
+import { uploadChatAttachment } from '../../../core/data/services/attachmentUpload';
 import { useAppTheme } from '../../../core/providers/AppPreferencesProvider';
 import type { AppTheme } from '../../../core/theme/tokens';
 import type { ChatMessage } from '../../../core/types/social.types';
@@ -36,6 +37,7 @@ export function ChatRoomScreen({ route, navigation }: Props) {
   const [editing, setEditing] = useState<ChatMessage | null>(null);
   const [showEmojis, setShowEmojis] = useState(false);
   const [showAttach, setShowAttach] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const activeAppointment = appointments.find((item) => item.conversationId === route.params.conversationId && ['scheduled', 'in_progress'].includes(item.status));
 
   if (!conversation) return (
@@ -73,18 +75,36 @@ export function ChatRoomScreen({ route, navigation }: Props) {
    */
   const attach = async (kind: 'photo' | 'video' | 'document') => {
     setShowAttach(false);
+    let uri: string;
+    let name: string;
+    let mime: string;
+    let size: number;
+
     if (kind === 'document') {
       const { document, error } = await pickDocument();
       if (error) { toast({ title: 'No pudimos adjuntarlo', body: error, tone: 'error' }); return; }
       if (!document) return;
-      sendMessage(conversation.id, draft, replyTo?.id, { kind, url: document.uri, name: document.name, size: document.size });
+      ({ uri, name, size } = document);
+      mime = 'application/pdf';
     } else {
       const { media, error } = kind === 'photo' ? await pickGalleryPhotos(1) : await pickGalleryVideo();
       if (error) { toast({ title: 'No pudimos adjuntarlo', body: error, tone: 'error' }); return; }
       const picked = media[0];
       if (!picked) return;
-      sendMessage(conversation.id, draft, replyTo?.id, { kind, url: picked.uri, name: kind === 'photo' ? 'Foto' : 'Video', size: 0 });
+      uri = picked.uri;
+      name = kind === 'photo' ? 'Foto' : 'Video';
+      mime = picked.mime;
+      size = picked.size;
     }
+
+    setUploading(true);
+    const { attachment, error: uploadError } = await uploadChatAttachment({ conversationId: conversation.id, kind, uri, name, mime, size });
+    setUploading(false);
+
+    if (uploadError) { toast({ title: 'No pudimos adjuntarlo', body: uploadError, tone: 'error' }); return; }
+    if (!attachment) return;
+
+    sendMessage(conversation.id, draft, replyTo?.id, attachment);
     setDraft('');
     setReplyTo(null);
     scrollToEnd();
@@ -203,7 +223,7 @@ export function ChatRoomScreen({ route, navigation }: Props) {
       <View style={styles.composerArea}>
         <Pressable accessibilityRole="button" accessibilityLabel="Agendar encuentro" onPress={() => navigation.navigate('SafeLocations', { conversationId: conversation.id })} style={styles.calendar}><Ionicons name="calendar-outline" size={22} color={theme.colors.primary} /></Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="Emojis" disabled={blocked} onPress={() => { setShowEmojis((v) => !v); setShowAttach(false); }} style={styles.calendar}><Ionicons name="happy-outline" size={22} color={theme.colors.primary} /></Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Adjuntar archivo" disabled={blocked} onPress={() => { setShowAttach((v) => !v); setShowEmojis(false); }} style={styles.calendar}><Ionicons name="attach-outline" size={24} color={theme.colors.primary} /></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Adjuntar archivo" disabled={blocked || uploading} onPress={() => { setShowAttach((v) => !v); setShowEmojis(false); }} style={styles.calendar}><Ionicons name="attach-outline" size={24} color={theme.colors.primary} /></Pressable>
         <View style={[styles.composer, blocked && styles.composerBlocked]}>
           <TextInput
             value={draft}

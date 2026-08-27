@@ -11,6 +11,7 @@ import {
   rejectDocument, rejectPhoto, rejectVideo,
 } from '@core/security/mediaLimits';
 import { EMOJI_GROUPS } from '../data/emojis';
+import { uploadChatAttachment } from '@core/data/services/attachmentUpload';
 
 export interface ChatRoomScreenProps {
   chatId: string;
@@ -31,6 +32,7 @@ export function ChatRoomScreen({ chatId, panelMode = false, onBack }: ChatRoomSc
   const [editing, setEditing] = useState<WebMessage | null>(null);
   const [showEmojis, setShowEmojis] = useState(false);
   const [showAttach, setShowAttach] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   /** Que tipo de archivo se esta eligiendo, para validar con la regla justa. */
   const pickKind = useRef<'photo' | 'video' | 'document'>('photo');
@@ -83,7 +85,7 @@ export function ChatRoomScreen({ chatId, panelMode = false, onBack }: ChatRoomSc
    * antes de subir: descubrir a los 20 MB que el archivo no servía es una
    * espera perdida. Son las mismas reglas que usa la galería de una mascota.
    */
-  const onFileChosen = (event: ChangeEvent<HTMLInputElement>) => {
+  const onFileChosen = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     const kind = pickKind.current;
@@ -94,9 +96,19 @@ export function ChatRoomScreen({ chatId, panelMode = false, onBack }: ChatRoomSc
       toast({ title: 'No pudimos adjuntarlo', body: reason, tone: 'error' });
       return;
     }
-    // En el mock el archivo no se sube: se referencia local para poder verlo.
-    const url = URL.createObjectURL(file);
-    sendMessage(conversation.id, draft, replyTo?.id, { kind, url, name: file.name, size: file.size });
+    // Se muestra de una con una referencia local, para no dejar la pantalla
+    // quieta mientras sube, y se reemplaza por la definitiva al terminar.
+    setUploading(true);
+    const { attachment, error } = await uploadChatAttachment({ conversationId: conversation.id, kind, file });
+    setUploading(false);
+
+    if (error) {
+      toast({ title: 'No pudimos adjuntarlo', body: error, tone: 'error' });
+      return;
+    }
+    if (!attachment) return;
+
+    sendMessage(conversation.id, draft, replyTo?.id, attachment);
     setDraft('');
     setReplyTo(null);
   };
@@ -276,7 +288,7 @@ export function ChatRoomScreen({ chatId, panelMode = false, onBack }: ChatRoomSc
         <button type="button" className="calendar" aria-label="Emojis" disabled={blocked} onClick={() => { setShowEmojis((v) => !v); setShowAttach(false); }}>
           <Smile size={21} />
         </button>
-        <button type="button" className="calendar" aria-label="Adjuntar archivo" disabled={blocked} onClick={() => { setShowAttach((v) => !v); setShowEmojis(false); }}>
+        <button type="button" className="calendar" aria-label="Adjuntar archivo" disabled={blocked || uploading} onClick={() => { setShowAttach((v) => !v); setShowEmojis(false); }}>
           <Paperclip size={21} />
         </button>
         <div className="input">

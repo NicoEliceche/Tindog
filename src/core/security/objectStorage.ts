@@ -35,7 +35,14 @@ export const storageBuckets = {
   exports: () => process.env.OBJECT_STORAGE_EXPORT_BUCKET || required('OBJECT_STORAGE_QUARANTINE_BUCKET'),
 };
 
-export async function createPresignedImageUpload(input: { key: string; mime: string; size: number; checksumSha256: string }) {
+/**
+ * URL firmada para subir a cuarentena.
+ *
+ * No mira el tipo: la firma ata la clave, el tamano y la suma de
+ * verificacion, y quien valida el contenido es la tuberia al finalizar. Se
+ * usa igual para fotos, videos y documentos.
+ */
+export async function createPresignedUpload(input: { key: string; mime: string; size: number; checksumSha256: string }) {
   const command = new PutObjectCommand({
     Bucket: storageBuckets.quarantine(),
     Key: input.key,
@@ -46,6 +53,9 @@ export async function createPresignedImageUpload(input: { key: string; mime: str
   });
   return getSignedUrl(storageClient(), command, { expiresIn: 5 * 60 });
 }
+
+/** Nombre anterior, conservado para no tocar las rutas que ya lo usan. */
+export const createPresignedImageUpload = createPresignedUpload;
 
 export async function headQuarantineObject(key: string) {
   return storageClient().send(new HeadObjectCommand({ Bucket: storageBuckets.quarantine(), Key: key, ChecksumMode: 'ENABLED' }));

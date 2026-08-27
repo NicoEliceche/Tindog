@@ -6,6 +6,10 @@ import {
 export interface PickedMedia {
   uri: string;
   kind: 'photo' | 'video';
+  /** Tipo real del archivo, que hace falta para firmar la subida. */
+  mime: string;
+  /** Tamano en bytes, para validar antes de subir. */
+  size: number;
 }
 
 export interface PickResult {
@@ -44,7 +48,7 @@ export async function pickGalleryPhotos(limit: number): Promise<PickResult> {
       size: asset.fileSize ?? 0,
     });
     if (rejected) return { media, error: rejected };
-    media.push({ uri: asset.uri, kind: 'photo' });
+    media.push({ uri: asset.uri, kind: 'photo', mime: asset.mimeType ?? 'image/jpeg', size: asset.fileSize ?? 0 });
   }
 
   return { media };
@@ -84,5 +88,5 @@ export async function pickGalleryVideo(): Promise<PickResult> {
     };
   }
 
-  return { media: [{ uri: asset.uri, kind: 'video' }] };
+  return { media: [{ uri: asset.uri, kind: 'video', mime: asset.mimeType ?? 'video/mp4', size: asset.fileSize ?? 0 }] };
 }

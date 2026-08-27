@@ -2,6 +2,7 @@ import { ApiAuthError, assertTrustedWriteOrigin, requireAuthenticatedUser } from
 import prisma from '@core/data/client/PrismaClient';
 import { writeSecurityAudit } from '@core/security/audit';
 import { processQuarantinedImage } from '@core/security/mediaPipeline';
+import { attachmentKindForMime, processQuarantinedAttachment } from '@core/security/attachmentPipeline';
 import { createModerationCase } from '@core/security/moderation';
 import { deleteStorageObject } from '@core/security/objectStorage';
 import { NextRequest, NextResponse } from 'next/server';
@@ -20,6 +21,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!asset) throw new ApiAuthError(403, 'Upload is not available');
     const lock = await prisma.mediaAsset.updateMany({ where: { id, ownerId: actor.id, status: asset.status }, data: { status: 'scanning', rejectionReason: null } });
     if (lock.count !== 1) return withAuthCors(NextResponse.json({ error: 'Upload is already being processed' }, { status: 409 }), request);
+    /*
+     * Los adjuntos de chat van por su propia tuberia: un video o un PDF no se
+     * pueden recodificar como una imagen, asi que se validan por firma y
+     * escaneo y se publican tal cual. Ver attachmentPipeline.
+     */
+    if (asset.purpose === 'chat_attachment') {
+      const kind = attachmentKindForMime(asset.declaredMime);
+      if (!kind) throw new ApiAuthError(400, 'Attachment type is not allowed');
+      const attachmentKey = `processed/${actor.id}/${asset.id}.${asset.declaredMime.split('/')[1] ?? 'bin'}`;
+      const attachment = await processQuarantinedAttachment({ quarantineKey: asset.quarantineKey, declaredMime: asset.declaredMime, declaredSize: asset.declaredSize, checksumSha256: asset.checksumSha256, kind, processedKey: attachmentKey });
+      await prisma.mediaAsset.update({ where: { id: asset.id }, data: { status: 'ready', processedKey: attachmentKey, publicUrl: attachment.publicUrl, detectedMime: attachment.detectedMime, observedSize: attachment.observedSize, retentionUntil: null } });
+      await deleteStorageObject('quarantine', asset.quarantineKey).catch(() => undefined);
+      await writeSecurityAudit({ request, actor, action: 'media.upload_published', outcome: 'success', targetType: 'media_asset', targetId: asset.id, metadata: { purpose: asset.purpose, kind } });
+      return withAuthCors(NextResponse.json({ id: asset.id, url: attachment.publicUrl, kind, status: 'ready' }), request);
+    }
+
     const processedKey = `processed/${actor.id}/${asset.id}.webp`;
     const result = await processQuarantinedImage({ quarantineKey: asset.quarantineKey, declaredMime: asset.declaredMime, declaredSize: asset.declaredSize, checksumSha256: asset.checksumSha256, processedKey });
     if (!result.allowed) {
