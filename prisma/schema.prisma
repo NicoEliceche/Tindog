@@ -208,11 +208,34 @@ model Message {
   kind             String       @default("text")
   readAt           DateTime?
   deletedAt        DateTime?
+  // Cuando se edito por ultima vez. Se muestra como "editado" al lado de la
+  // hora, igual que WhatsApp: cambiar el texto sin avisar deja a la otra
+  // persona recordando algo que ya no esta escrito.
+  editedAt         DateTime?
+
+  // El mensaje al que responde, si responde a alguno. La relacion apunta a
+  // la misma tabla y se borra en SetNull: si el citado se elimina de verdad,
+  // la respuesta sobrevive sin la cita.
+  replyTo          Message?     @relation("MessageReply", fields: [replyToId], references: [id], onDelete: SetNull)
+  replyToId        String?
+  replies          Message[]    @relation("MessageReply")
+
+  // Adjunto publicado, si el mensaje lleva uno. Apunta al MediaAsset que ya
+  // paso por la cuarentena; la direccion publica se copia para no tener que
+  // recorrer la relacion en cada lectura.
+  attachment       MediaAsset?  @relation(fields: [attachmentId], references: [id], onDelete: SetNull)
+  attachmentId     String?      @unique
+  attachmentKind   String?
+  attachmentName   String?
+  attachmentSize   Int?
+  attachmentUrl    String?
+
   moderationStatus String       @default("approved")
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
   @@index([conversationId, createdAt])
+  @@index([replyToId])
 }
 
 model ConnectionRequest {
@@ -366,6 +389,8 @@ model MediaAsset {
   moderationLabels String[]
   rejectionReason  String?
   retentionUntil   DateTime?
+  // El mensaje que lo lleva adjunto, si se uso como adjunto de chat.
+  message          Message?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
